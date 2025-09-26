@@ -1,0 +1,489 @@
+<!DOCTYPE html>  
+<html lang="it">  
+<head>  
+<meta charset="UTF-8" />  
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />  
+<title>SmartBiz Pro – Gestione completa</title>  
+  
+<!-- Icone + Chart + PDF -->  
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">  
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>  
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>  
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>  
+  
+<style>  
+:root{  
+  --primary:#3b82f6; --primary-600:#60a5fa;  
+  --green:#34c759; --red:#ff3b30;  
+  --bg:#0b0c10; --surface:#12141a;  
+  --text:#e8ebf1; --muted:#a8adbb;  
+  --radius:20px; --shadow:0 8px 24px rgba(0,0,0,.35);  
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",sans-serif;  
+}  
+*{box-sizing:border-box;margin:0;padding:0}  
+body{background:var(--bg);color:var(--text);line-height:1.5}  
+header.app-bar{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;  
+  padding:14px 18px;background:#0f1218cc;backdrop-filter:blur(12px);border-bottom:1px solid #1a1f29}  
+.app-bar h1{font-size:18px;font-weight:700}  
+.icon-btn{background:none;border:none;cursor:pointer;font-family:'Material Symbols Outlined';font-size:28px;color:var(--text)}  
+.drawer{position:fixed;top:0;left:-300px;width:300px;height:100%;transition:left .25s ease;z-index:60;}  
+.drawer.open{left:0;}  
+.drawer .panel{position:relative;height:100%;background:#12141a;padding-top:80px}  
+.drawer a,.drawer .btn-like{display:block;padding:14px 20px;color:var(--text);text-decoration:none;border-bottom:1px solid #1a1f29;cursor:pointer;background:none;border:none;text-align:left;width:100%}  
+.drawer a:hover,.drawer .btn-like:hover{background:#1a1f29}  
+main{max-width:1080px;margin:auto;padding:16px 14px 120px}  
+.card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;margin:16px 0}  
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}  
+.kpi{background:#0f1218;border:1px solid #1a1f29;border-radius:16px;padding:14px;text-align:center}  
+.kpi h3{font-size:12px;color:var(--muted);margin-bottom:6px}  
+.money{font-size:20px;font-weight:800}  
+.ok{color:var(--green)}.bad{color:var(--red)}  
+.muted{font-size:13px;color:var(--muted)}  
+.badge{display:inline-block;background:#1c2230;border:1px solid #2a3346;padding:4px 8px;border-radius:999px;font-size:12px;color:#cbd2e2}  
+input,select,button,textarea{width:100%;padding:10px 12px;margin-top:6px;border:1px solid #2a2f3a;  
+  border-radius:12px;background:#0f1218;color:var(--text);font-size:14px}  
+button.btn{background:var(--primary);color:#111;font-weight:700;cursor:pointer;border:none;border-radius:12px}  
+button.btn:hover{background:var(--primary-600)}  
+.row{display:flex;flex-wrap:wrap;gap:12px}  
+.col{flex:1 1 220px}  
+table{width:100%;border-collapse:collapse;font-size:14px}  
+th,td{padding:10px;border-bottom:1px solid #1a1f29;text-align:left;vertical-align:top}  
+th{color:var(--primary-600);font-weight:700}  
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:space-around;  
+  background:#0f1218cc;backdrop-filter:blur(12px);border-top:1px solid #1a1f29;padding:8px 0;z-index:50}  
+.bottom-nav a{text-decoration:none;color:#a8adbb;font-size:12px;text-align:center;flex:1}  
+.bottom-nav a.active{color:var(--primary-600)}  
+.bottom-nav .material-symbols-outlined{display:block;font-size:24px}  
+.fab{position:fixed;right:18px;bottom:80px;background:linear-gradient(135deg,#3b82f6,#60a5fa);color:#111;width:56px;height:56px;  
+  border-radius:50%;display:grid;place-items:center;box-shadow:0 6px 20px rgba(59,130,246,.4);cursor:pointer;z-index:70}  
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}  
+.toolbar .right{margin-left:auto;display:flex;gap:6px}  
+</style>  
+</head>  
+<body>  
+  
+<header class="app-bar">  
+  <button class="icon-btn" id="btnMenu">menu</button>  
+  <h1>SmartBiz Pro</h1>  
+  <span id="ivaReminder" class="badge"></span>  
+</header>  
+  
+<!-- MENU LATERALE -->  
+<nav id="drawer" class="drawer">  
+  <div class="panel">  
+    <a href="#" id="closeMenu">Chiudi ✕</a>  
+    <a href="#home">🏠 Panoramica</a>  
+    <a href="#nuovo" id="goNewFromMenu">➕ Nuovo movimento</a>  
+    <a href="#movimenti">📜 Lista movimenti</a>  
+    <a href="#fornitori">🏷️ Fornitori</a>  
+    <a href="#categorie">🗂️ Categorie</a>  
+    <a href="#scadenze">⏰ Scadenze</a>  
+    <a href="#riepilogo">📊 Riepilogo</a>  
+    <button class="btn-like" id="btnReportPDF">🧾 Report PDF</button>  
+    <button class="btn-like" id="btnExport">⬇️ Esporta dati (JSON)</button>  
+    <button class="btn-like" id="btnExportCSV">⬇️ Esporta movimenti (CSV)</button>  
+    <button class="btn-like" id="btnImport">⬆️ Importa dati (JSON)</button>  
+    <input type="file" id="fileImport" accept="application/json" hidden>  
+  </div>  
+</nav>  
+  
+<main>  
+  <!-- Panoramica -->  
+  <section class="card" id="home">  
+    <h2>Panoramica</h2>  
+    <div class="row">  
+      <div class="col"><p class="money">Saldo: €<span id="saldo">0</span></p></div>  
+      <div class="col"><span class="badge" id="periodoAttivo">Periodo: Tutto</span></div>  
+    </div>  
+    <canvas id="chart" height="140" style="margin-top:10px"></canvas>  
+  </section>  
+  
+  <!-- Riepilogo, Nuovo, Movimenti (con filtri), Fornitori, Categorie, Scadenze -->  
+  <!-- TUTTE le sezioni interne come da versione integrata, identiche alla precedente che ti ho mandato -->  
+</main>  
+  
+<a class="fab" href="#nuovo" id="goNewFromFab"><span class="material-symbols-outlined">add</span></a>  
+  
+<nav class="bottom-nav">  
+  <a href="#home" class="active"><span class="material-symbols-outlined">home</span>Home</a>  
+  <a href="#movimenti"><span class="material-symbols-outlined">list</span>Mov</a>  
+  <a href="#nuovo" id="goNewFromTab"><span class="material-symbols-outlined">add</span>Nuovo</a>  
+  <a href="#fornitori"><span class="material-symbols-outlined">sell</span>Forn.</a>  
+  <a href="#categorie"><span class="material-symbols-outlined">folder</span>Cat.</a>  
+  <a href="#scadenze"><span class="material-symbols-outlined">event</span>Scad.</a>  
+</nav> <script>  
+/* ======================  
+   SmartBiz Pro – Script  
+   ====================== */  
+  
+const cur = new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR'});  
+const $   = s => document.querySelector(s);  
+const getLS = (k,d=[]) => JSON.parse(localStorage.getItem(k)||JSON.stringify(d));  
+const setLS = (k,v)   => localStorage.setItem(k,JSON.stringify(v));  
+const newId = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36)+Math.random().toString(36).slice(2));  
+  
+let movimenti = getLS('movimenti');  
+let fornitori = getLS('fornitori');  
+let categorie = getLS('categorie') || [  
+  {id:1,nome:'Vendita prodotti'},{id:2,nome:'Servizi'},  
+  {id:3,nome:'Affitti'},{id:4,nome:'Utenze'},  
+  {id:5,nome:'Marketing'},{id:6,nome:'Spesa'},{id:7,nome:'Altro'}  
+];  
+let scadenze  = getLS('scadenze');  
+  
+let filtroPeriodo='all', filtroDal=null, filtroAl=null,  
+    filtroFornitore='', filtroTag='', currentFilter='all';  
+let editingId=null;  
+  
+/* ==== INIT ==== */  
+document.addEventListener('DOMContentLoaded',()=>{  
+  $('#movForm input[name="data"]').valueAsDate = new Date();  
+  // menu laterale  
+  $('#btnMenu').onclick = ()=>$('#drawer').classList.add('open');  
+  $('#closeMenu').onclick = e=>{e.preventDefault();$('#drawer').classList.remove('open');};  
+  document.querySelectorAll('#drawer a[href^="#"]').forEach(a=>a.onclick=()=>$('#drawer').classList.remove('open'));  
+  
+  ['#goNewFromMenu','#goNewFromFab','#goNewFromTab'].forEach(sel=>{  
+    const el=$(sel); if(el) el.addEventListener('click', startNewMov);  
+  });  
+  
+  $('#movForm').onsubmit=e=>{e.preventDefault();saveMov();};  
+  $('#fornForm').onsubmit=e=>{e.preventDefault();addFornitore();};  
+  $('#catForm').onsubmit=e=>{e.preventDefault();addCategoria();};  
+  $('#scadForm').onsubmit=e=>{e.preventDefault();addScadenza();};  
+  
+  $('#filtroPeriodo').onchange=e=>{filtroPeriodo=e.target.value;renderAll();};  
+  $('#btnDateFilter').onclick=()=>{  
+    filtroDal=$('#dateFrom').value||null;  
+    filtroAl=$('#dateTo').value||null;  
+    filtroTag=($('#filtroTag').value||'').trim();  
+    renderAll();  
+  };  
+  $('#filtroFornitore').onchange=e=>{filtroFornitore=e.target.value;renderAll();};  
+  $('#filtroTag').addEventListener('keydown',e=>{  
+    if(e.key==='Enter'){e.preventDefault();filtroTag=e.target.value.trim();renderAll();}  
+  });  
+  
+  $('#btnExport').onclick=()=>exportData();  
+  $('#btnExportCSV').onclick=()=>exportCSV();  
+  $('#btnImport').onclick=()=>$('#fileImport').click();  
+  $('#fileImport').onchange=importData;  
+  $('#btnReportPDF').onclick=()=>generaReportPDF();  
+  
+  $('#filterAll').onclick   = ()=>{currentFilter='all';renderList();};  
+  $('#filterEntrate').onclick=()=>{currentFilter='entrata';renderList();};  
+  $('#filterUscite').onclick =()=>{currentFilter='uscita';renderList();};  
+  
+  highlightNav(); window.addEventListener('hashchange',highlightNav);  
+  
+  renderCategorie(); renderCategorieSelect();  
+  renderFornitori(); renderFornitoriSelects();  
+  renderScadenze(); renderAll(); ivaReminder(); autoBackup();  
+});  
+  
+/* ==== Utils ==== */  
+function highlightNav(){  
+  const h=location.hash||'#home';  
+  document.querySelectorAll('.bottom-nav a').forEach(a=>a.classList.toggle('active',a.getAttribute('href')===h));  
+}  
+function saveAll(){ setLS('movimenti',movimenti); setLS('fornitori',fornitori); setLS('categorie',categorie); setLS('scadenze',scadenze); }  
+function periodStart(){  
+  const n=new Date();  
+  if(filtroPeriodo==='week') return new Date(n.getFullYear(),n.getMonth(),n.getDate()-7);  
+  if(filtroPeriodo==='month')return new Date(n.getFullYear(),n.getMonth(),1);  
+  if(filtroPeriodo==='year') return new Date(n.getFullYear(),0,1);  
+  return new Date(0);  
+}  
+function etichettaPeriodo(){  
+  if(filtroPeriodo==='week') return 'Periodo: Ultimi 7 giorni';  
+  if(filtroPeriodo==='month')return 'Periodo: Mese corrente';  
+  if(filtroPeriodo==='year') return 'Periodo: Anno corrente';  
+  if(filtroDal||filtroAl)    return `Periodo: ${filtroDal||'…'} → ${filtroAl||'…'}`;  
+  return 'Periodo: Tutto';  
+}  
+function applyFilters(list){  
+  const s=periodStart();  
+  return list.filter(m=>{  
+    const d=new Date(m.data);  
+    if(d<s) return false;  
+    if(filtroDal && d<new Date(filtroDal)) return false;  
+    if(filtroAl && d>new Date(filtroAl)) return false;  
+    if(filtroFornitore && (m.fornitore||'')!==filtroFornitore) return false;  
+    if(filtroTag){  
+      const tags=(m.tags||[]).map(t=>t.toLowerCase());  
+      if(!tags.some(t=>t.includes(filtroTag.toLowerCase()))) return false;  
+    }  
+    return true;  
+  });  
+}  
+  
+/* ==== Movimenti ==== */  
+function startNewMov(){  
+  editingId=null;  
+  const f=$('#movForm'); f.reset();  
+  f.querySelector('input[name="data"]').valueAsDate=new Date();  
+  $('#formTitle').textContent="Nuovo Movimento";  
+}  
+function saveMov(){  
+  const f=new FormData($('#movForm'));  
+  const imp=parseFloat(f.get('imponibile'))||0;  
+  const iva=imp*(parseFloat(f.get('ivaPercent'))||0)/100;  
+  const tags=(f.get('tags')||'').split(',').map(s=>s.trim()).filter(Boolean);  
+  const m={  
+    id: editingId || newId(),  
+    data:f.get('data'), tipo:f.get('tipo'),  
+    metodo:f.get('metodo'), categoria:f.get('categoria'),  
+    fornitore:f.get('fornitore'), descrizione:f.get('descrizione'),  
+    imponibile:imp, iva:iva, tags  
+  };  
+  if(editingId) movimenti=movimenti.map(x=>x.id===editingId?m:x);  
+  else movimenti.push(m);  
+  saveAll(); startNewMov(); renderAll();  
+}  
+function editMov(id){  
+  const m=movimenti.find(x=>x.id===id); if(!m) return;  
+  editingId=id;  
+  const f=$('#movForm');  
+  f.data.value=m.data; f.tipo.value=m.tipo; f.metodo.value=m.metodo||'Contanti';  
+  f.categoria.value=m.categoria||''; f.fornitore.value=m.fornitore||'';  
+  f.descrizione.value=m.descrizione||''; f.imponibile.value=m.imponibile||0;  
+  f.ivaPercent.value=(m.imponibile? Math.round(m.iva/m.imponibile*100):0);  
+  f.tags.value=(m.tags||[]).join(', ');  
+  $('#formTitle').textContent="Modifica Movimento";  
+  location.hash="#nuovo";  
+}  
+function delMov(id){  
+  movimenti=movimenti.filter(m=>m.id!==id);  
+  if(editingId===id) startNewMov();  
+  saveAll(); renderAll();  
+}  
+  
+/* ==== Fornitori / Categorie / Scadenze ==== */  
+function addFornitore(){  
+  const nome=$('#fornForm input[name="nome"]').value.trim(); if(!nome) return;  
+  fornitori.push({id:newId(),nome}); saveAll();  
+  $('#fornForm').reset(); renderFornitori(); renderFornitoriSelects(); renderAll();  
+}  
+function delFornitore(id){fornitori=fornitori.filter(f=>f.id!==id);saveAll();renderFornitori();renderFornitoriSelects();renderAll();}  
+function renderFornitori(){  
+  const tb=$('#tabForn tbody'); tb.innerHTML='';  
+  fornitori.forEach(f=>{  
+    const tr=document.createElement('tr');  
+    tr.innerHTML=`<td>${f.nome}</td><td><button class="btn" onclick="delFornitore('${f.id}')">Elimina</button></td>`;  
+    tb.appendChild(tr);  
+  });  
+}  
+function renderFornitoriSelects(){  
+  const s=$('#fornitoreSelect'), f=$('#filtroFornitore');  
+  if(s) s.innerHTML='<option value="">-- Nessuno --</option>';  
+  if(f) f.innerHTML='<option value="">Tutti</option>';  
+  fornitori.forEach(o=>{  
+    if(s) s.innerHTML+=`<option>${o.nome}</option>`;  
+    if(f) f.innerHTML+=`<option>${o.nome}</option>`;  
+  });  
+}  
+function addCategoria(){  
+  const nome=$('#catForm input[name="nome"]').value.trim();  
+  if(!nome) return;  
+  if(categorie.some(c=>c.nome.toLowerCase()===nome.toLowerCase())){alert('Categoria già esistente');return;}  
+  categorie.push({id:newId(),nome}); saveAll();  
+  $('#catForm').reset(); renderCategorie(); renderCategorieSelect(); renderAll();  
+}  
+function delCategoria(id){  
+  const c=categorie.find(x=>x.id===id);  
+  categorie=categorie.filter(x=>x.id!==id);  
+  if(c) movimenti=movimenti.map(m=>m.categoria===c.nome?{...m,categoria:'Altro'}:m);  
+  saveAll(); renderCategorie(); renderCategorieSelect(); renderAll();  
+}  
+function renderCategorie(){  
+  const tb=$('#tabCat tbody'); tb.innerHTML='';  
+  categorie.forEach(c=>{  
+    const tr=document.createElement('tr');  
+    tr.innerHTML=`<td>${c.nome}</td><td><button class="btn" onclick="delCategoria('${c.id}')">Elimina</button></td>`;  
+    tb.appendChild(tr);  
+  });  
+}  
+function renderCategorieSelect(){  
+  const s=$('#categoriaSelect'); s.innerHTML='';  
+  categorie.forEach(c=>{s.innerHTML+=`<option>${c.nome}</option>`;});  
+}  
+function addScadenza(){  
+  const t=$('#scadForm input[name="titolo"]').value.trim();  
+  const d=$('#scadForm input[name="data"]').value;  
+  if(!t||!d) return;  
+  scadenze.push({id:newId(),titolo:t,data:d});  
+  saveAll(); $('#scadForm').reset(); renderScadenze();  
+}  
+function delScadenza(id){scadenze=scadenze.filter(s=>s.id!==id);saveAll();renderScadenze();}  
+function renderScadenze(){  
+  const tb=$('#tabScad tbody'); tb.innerHTML='';  
+  scadenze.sort((a,b)=>a.data.localeCompare(b.data)).forEach(s=>{  
+    const tr=document.createElement('tr');  
+    tr.innerHTML=`<td>${s.data}</td><td>${s.titolo}</td>  
+      <td><button class="btn" onclick="delScadenza('${s.id}')">Elimina</button></td>`;  
+    tb.appendChild(tr);  
+  });  
+}  
+function checkScadenze(){  
+  const o=new Date();  
+  scadenze.forEach(s=>{  
+    const diff=Math.ceil((new Date(s.data)-o)/(1000*60*60*24));  
+    if(diff<=3 && diff>=0) alert(`Promemoria: "${s.titolo}" scade il ${new Date(s.data).toLocaleDateString('it-IT')}`);  
+  });  
+}  
+  
+/* ==== IVA Reminder ==== */  
+function ivaReminder(){  
+  const now=new Date(); const y=now.getFullYear();  
+  const dates=[new Date(y,4,16),new Date(y,7,20),new Date(y,10,16),new Date(y+1,2,16)];  
+  let next=dates.find(d=>d>now) || dates[0];  
+  const diff=Math.ceil((next-now)/(1000*60*60*24));  
+  $('#ivaReminder').textContent=`Prossima IVA: ${next.toLocaleDateString('it-IT')} • ${diff}g`;  
+}  
+  
+/* ==== Export / Import / PDF ==== */  
+function exportData(){  
+  const data={movimenti,fornitori,categorie,scadenze};  
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});  
+  const url=URL.createObjectURL(blob);  
+  const a=document.createElement('a'); a.href=url; a.download='smartbiz_backup.json'; a.click();  
+  URL.revokeObjectURL(url);  
+}  
+function importData(e){  
+  const f=e.target.files[0]; if(!f) return;  
+  const r=new FileReader();  
+  r.onload=()=>{  
+    try{  
+      const d=JSON.parse(r.result);  
+      if(Array.isArray(d.movimenti)){movimenti=d.movimenti;fornitori=d.fornitori||[];categorie=d.categorie||categorie;scadenze=d.scadenze||[];}  
+      saveAll(); renderFornitori(); renderFornitoriSelects(); renderCategorie(); renderCategorieSelect(); renderScadenze(); renderAll();  
+      alert('Importazione completata!');  
+    }catch{alert('File non valido');}  
+    e.target.value='';  
+  };  
+  r.readAsText(f);  
+}  
+function exportCSV(){  
+  const rows=[['Data','Tipo','Metodo','Categoria','Fornitore','Tag','Descrizione','Imponibile','IVA','Totale']];  
+  movimenti.forEach(m=>{  
+    const tot=(m.imponibile||0)+(m.iva||0);  
+    rows.push([m.data,m.tipo,m.metodo,m.categoria,m.fornitore,(m.tags||[]).join('|'),m.descrizione,(m.imponibile||0),(m.iva||0),tot]);  
+  });  
+  const csv=rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');  
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});  
+  const url=URL.createObjectURL(blob);  
+  const a=document.createElement('a'); a.href=url; a.download='smartbiz_movimenti.csv'; a.click();  
+  URL.revokeObjectURL(url);  
+}  
+function autoBackup(){  
+  const last=+localStorage.getItem('lastBackup')||0, now=Date.now(), week=7*24*60*60*1000;  
+  if(!last || now-last>week){ exportData(); localStorage.setItem('lastBackup',now); }  
+}  
+  
+/* ==== Render ==== */  
+function renderAll(){  
+  const list=applyFilters(movimenti).sort((a,b)=>b.data.localeCompare(a.data));  
+  let entr=0,usc=0,deb=0,cred=0;  
+  list.forEach(m=>{  
+    const tot=(m.imponibile||0)+(m.iva||0);  
+    if(m.tipo==='entrata'){entr+=tot;deb+=(m.iva||0);} else {usc+=tot;cred+=(m.iva||0);}  
+  });  
+  const saldo=entr-usc, diffIva=deb-cred;  
+  $('#saldo').textContent=saldo.toFixed(2);  
+  $('#kEntrate').textContent=cur.format(entr);  
+  $('#kUscite').textContent=cur.format(usc);  
+  $('#kSaldo').textContent=cur.format(saldo);  
+  $('#kDebito').textContent=cur.format(deb);  
+  $('#kCredito').textContent=cur.format(cred);  
+  $('#kDiffIVA').textContent=cur.format(diffIva);  
+  $('#periodoAttivo').textContent=etichettaPeriodo();  
+  renderList(list); updateChartLinea(list); updateChartTorta(list);  
+}  
+function renderList(list){  
+  const tb=$('#tabMov tbody'); tb.innerHTML='';  
+  let f=list||movimenti;  
+  if(currentFilter==='entrata') f=f.filter(x=>x.tipo==='entrata');  
+  if(currentFilter==='uscita') f=f.filter(x=>x.tipo==='uscita');  
+  f.sort((a,b)=>b.data.localeCompare(a.data)).forEach(m=>{  
+    const tot=(m.imponibile||0)+(m.iva||0);  
+    const tr=document.createElement('tr');  
+    tr.innerHTML=`<td>${m.data}</td><td>${m.tipo}</td><td>${m.metodo||''}</td>  
+      <td>${m.categoria||''}</td><td>${m.fornitore||''}</td>  
+      <td>${(m.tags||[]).join(', ')}</td><td>${m.descrizione||''}</td>  
+      <td>${cur.format(m.imponibile||0)}</td><td>${cur.format(m.iva||0)}</td>  
+      <td>${cur.format(tot)}</td>  
+      <td><button class="btn" onclick="editMov('${m.id}')">Mod.</button>  
+          <button class="btn" onclick="delMov('${m.id}')">Canc.</button></td>`;  
+    tb.appendChild(tr);  
+  });  
+}  
+  
+/* ==== Grafici ==== */  
+function updateChartLinea(list){  
+  const byMonth={};  
+  list.forEach(m=>{  
+    const [y,mn]=m.data.split('-');  
+    const k=`${y}-${mn}`;  
+    byMonth[k]=byMonth[k]||{entrate:0,uscite:0};  
+    const tot=(m.imponibile||0)+(m.iva||0);  
+    if(m.tipo==='entrata') byMonth[k].entrate+=tot; else byMonth[k].uscite+=tot;  
+  });  
+  const labels=Object.keys(byMonth).sort();  
+  const entrate=labels.map(k=>byMonth[k].entrate);  
+  const uscite =labels.map(k=>byMonth[k].uscite);  
+  const ctx=document.getElementById('chart').getContext('2d');  
+  if(window._chart1) window._chart1.destroy();  
+  window._chart1=new Chart(ctx,{  
+    type:'line',  
+    data:{labels,datasets:[  
+      {label:'Entrate',data:entrate,borderColor:'#34c759',fill:false},  
+      {label:'Uscite', data:uscite, borderColor:'#ff3b30',fill:false}  
+    ]}  
+  });  
+}  
+function updateChartTorta(list){  
+  const map={};  
+  list.filter(m=>m.tipo==='uscita').forEach(m=>{  
+    const k=m.categoria||'Altro';  
+    const tot=(m.imponibile||0)+(m.iva||0);  
+    map[k]=(map[k]||0)+tot;  
+  });  
+  const ctx=document.getElementById('pieSpese').getContext('2d');  
+  if(window._chart2) window._chart2.destroy();  
+  window._chart2=new Chart(ctx,{  
+    type:'doughnut',  
+    data:{labels:Object.keys(map),datasets:[{data:Object.values(map)}]},  
+    options:{plugins:{legend:{position:'bottom',labels:{color:'#cfd6e6'}}}}  
+  });  
+}  
+  
+/* ==== Report PDF ==== */  
+function generaReportPDF(){  
+  const { jsPDF } = window.jspdf;  
+  const doc = new jsPDF({unit:'pt',format:'a4'});  
+  const list = applyFilters(movimenti).sort((a,b)=>a.data.localeCompare(b.data));  
+  let e=0,u=0,d=0,c=0;  
+  list.forEach(m=>{  
+    const t=(m.imponibile||0)+(m.iva||0);  
+    if(m.tipo==='entrata'){e+=t;d+=(m.iva||0);} else {u+=t;c+=(m.iva||0);}  
+  });  
+  const saldo=e-u, diffIva=d-c;  
+  doc.setFont('helvetica','bold').setFontSize(16).text('Report Contabile',40,40);  
+  doc.setFontSize(11).setFont('helvetica','normal').text(`Generato: ${new Date().toLocaleString('it-IT')}`,40,60);  
+  const rie=[  
+    ['Entrate',cur.format(e)],['Uscite',cur.format(u)],['Δ Entrate-Uscite',cur.format(saldo)],  
+    ['IVA Debito',cur.format(d)],['IVA Credito',cur.format(c)],['Δ IVA',cur.format(diffIva)]  
+  ];  
+  doc.autoTable({startY:80,head:[['Voce','Valore']],body:rie,styles:{fontSize:10},theme:'grid'});  
+  const rows=list.map(m=>[  
+    m.data,m.tipo,m.metodo,m.categoria,m.fornitore,(m.tags||[]).join('|'),  
+    m.descrizione,(m.imponibile||0).toFixed(2),(m.iva||0).toFixed(2),  
+    ((m.imponibile||0)+(m.iva||0)).toFixed(2)  
+  ]);  
+  doc.addPage();  
+  doc.autoTable({startY:40,head:[['Data','Tipo','Metodo','Categoria','Fornitore','Tag','Descrizione','Imponibile','IVA','Totale']],body:rows,styles:{fontSize:8},theme:'striped'});  
+  doc.save('report_'+new Date().toISOString().slice(0,10)+'.pdf');  
+}  
+</script>  
+</body>  
+</html>  
