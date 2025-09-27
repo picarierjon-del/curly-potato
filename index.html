@@ -68,45 +68,68 @@ hr.sep{border:none;border-top:1px solid #283040;margin:12px 0}
     width:100%;
     text-align:center;
   }
-}/* ===== Menu compatto per mobile ===== */
-#toolsMenu {
-  display:flex;
-  flex-wrap:wrap;
-  justify-content:center;
-  gap:8px;
-  margin:12px 0;
 }
-#toolsMenu button {
-  background:#1a1f29;
-  color:#e8ebf1;
-  border:1px solid #2a2f3a;
-  border-radius:10px;
-  padding:8px 12px;
-  font-size:14px;
+  /* === MENU STRUMENTI MOBILE === */
+.tools-menu{
+  position:absolute;
+  top:100%; right:0;
+  background:#12141a;
+  border:1px solid #333;
+  border-radius:12px;
+  padding:6px 0;
+  box-shadow:0 6px 20px rgba(0,0,0,.4);
+  z-index:99;
 }
-#toolsMenu button:hover { background:#2a2f3a; }
+.tools-menu .iitem{
+  display:block;
+  background:none;
+  border:none;
+  color:#fff;
+  text-align:left;
+  width:100%;
+  padding:10px 16px;
+  font-size:15px;
+}
+.tools-menu .iitem:hover{
+  background:#1e222c;
+}
+.tools-menu .primary{
+  color:#3b82f6;
+  font-weight:600;
+}
 </style>
 </head>
 <body>
-<!-- Menu Strumenti compatto -->
-<div id="toolsMenu">
-  <button onclick="importData()">Importa JSON</button>
-  <button onclick="exportCSV()">Export CSV</button>
-  <button onclick="exportData()">Export JSON</button>
-  <button onclick="generaReportPDF()">Report PDF</button>
-</div>
+  
 <header>
-  <button class="tab active" data-view="add">Aggiungi</button>
-  <button class="tab" data-view="list">Movimenti</button>
-  <button class="tab" data-view="summary">Riepilogo</button>
+  <div class="left">
+    <h1>SmartBiz Pro</h1>
+  </div>
+
   <div class="right">
+    <!-- Pulsanti principali (desktop) -->
+    <button class="btn" data-view="add">Aggiungi</button>
+    <button class="btn" data-view="list">Movimenti</button>
+    <button class="btn" data-view="summary">Riepilogo</button>
     <button class="btn" id="btnImpostazioni">Impostazioni</button>
-    <button class="btn" id="btnScadenze">Scadenze <span id="ivaReminder" class="badge"></span></button>
+    <button class="btn" id="btnScadenze">
+      Scadenze <span id="ivaReminder"></span>
+    </button>
     <button class="btn" id="btnImport">Importa JSON</button>
-    <input type="file" id="fileImport" accept="application/json" hidden>
     <button class="btn" id="btnExportCSV">Export CSV</button>
     <button class="btn" id="btnExportJSON">Export JSON</button>
-    <button class="btn primary" id="btnReportPDF">Report PDF</button>
+    <button class="btn" id="btnReportPDF">Report PDF</button>
+
+    <!-- === NUOVO MENU MOBILE === -->
+    <button class="btn icon" id="toolsMenuBtn" aria-label="Strumenti">⋯</button>
+    <div id="toolsMenuPanel" class="tools-menu" hidden>
+      <button class="iitem" id="tmImpostazioni">Impostazioni</button>
+      <button class="iitem" id="tmScadenze">Scadenze</button>
+      <button class="iitem" id="tmImport">Importa JSON</button>
+      <button class="iitem" id="tmExportCSV">Export CSV</button>
+      <button class="iitem" id="tmExportJSON">Export JSON</button>
+      <button class="iitem primary" id="tmPDF">Report PDF</button>
+    </div>
   </div>
 </header>
 
@@ -695,6 +718,30 @@ function generaReportPDF(){
 /* ===== Avvio ===== */
 function saveAll(){ setLS(LS_KEYS.mov,data); setLS(LS_KEYS.sup,suppliers); setLS(LS_KEYS.cat,categories); setLS(LS_KEYS.sca,scadenze); }
 renderList(); refreshSummary(); fillSupplierSelects(); fillCategorySelect();
+/* === JS per menu mobile ⋯ === */
+const toolsBtn = document.getElementById('toolsMenuBtn');
+const toolsPanel = document.getElementById('toolsMenuPanel');
+
+toolsBtn.addEventListener('click', ()=>{
+  toolsPanel.hidden = !toolsPanel.hidden;
+});
+
+// Chiudi se clic fuori
+document.addEventListener('click', e=>{
+  if(!toolsPanel.hidden &&
+     !toolsPanel.contains(e.target) &&
+     e.target !== toolsBtn){
+    toolsPanel.hidden = true;
+  }
+});
+
+// Ricollega le funzioni già esistenti
+document.getElementById('tmImpostazioni').onclick = ()=>document.getElementById('btnImpostazioni').click();
+document.getElementById('tmScadenze').onclick    = ()=>document.getElementById('btnScadenze').click();
+document.getElementById('tmImport').onclick      = ()=>document.getElementById('btnImport').click();
+document.getElementById('tmExportCSV').onclick   = ()=>document.getElementById('btnExportCSV').click();
+document.getElementById('tmExportJSON').onclick  = ()=>document.getElementById('btnExportJSON').click();
+document.getElementById('tmPDF').onclick         = ()=>document.getElementById('btnReportPDF').click();
 </script>
 </body>
 </html>
