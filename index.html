@@ -33,11 +33,11 @@ input,select,button,textarea{width:100%;padding:10px;border-radius:12px;border:1
 table{width:100%;border-collapse:collapse}th,td{padding:8px;border-bottom:1px solid #333}
 .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
 .kpi{padding:12px;background:#0f1117;border:1px solid #1d2230;border-radius:12px;text-align:center}
-.kpi h3{margin:0 0 4px;font-size:12px;color:var(--muted)}
+.kpi h3{margin:0 0 4px;font-size:12px;color:#9aa3b2}
 .money{font-weight:800}
 .ok{color:var(--ok)}.bad{color:var(--bad)}
 canvas{width:100%;height:240px;background:#0f1117;border-radius:12px}
-.small{font-size:12px;color:var(--muted)}
+.small{font-size:12px;color:#9aa3b2}
 .tools{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
 
 /* pill filtri movimento */
@@ -54,6 +54,21 @@ canvas{width:100%;height:240px;background:#0f1117;border-radius:12px}
 @media (max-width:760px){.modal .grid{grid-template-columns:1fr}}
 .badge{display:inline-block;padding:5px 10px;border:1px solid #2a3344;border-radius:999px;font-size:12px;color:#c9d3ea;background:#0f1218}
 hr.sep{border:none;border-top:1px solid #283040;margin:12px 0}
+
+/* === Mobile header: pulsanti a colonna (iPhone friendly) === */
+@media (max-width:768px){
+  header{flex-wrap:wrap;}
+  header .right{
+    width:100%;
+    flex-direction:column;
+    gap:6px;
+    margin-top:8px;
+  }
+  header .right .btn{
+    width:100%;
+    text-align:center;
+  }
+}
 </style>
 </head>
 <body>
@@ -65,6 +80,8 @@ hr.sep{border:none;border-top:1px solid #283040;margin:12px 0}
   <div class="right">
     <button class="btn" id="btnImpostazioni">Impostazioni</button>
     <button class="btn" id="btnScadenze">Scadenze <span id="ivaReminder" class="badge"></span></button>
+    <button class="btn" id="btnImport">Importa JSON</button>
+    <input type="file" id="fileImport" accept="application/json" hidden>
     <button class="btn" id="btnExportCSV">Export CSV</button>
     <button class="btn" id="btnExportJSON">Export JSON</button>
     <button class="btn primary" id="btnReportPDF">Report PDF</button>
@@ -473,7 +490,6 @@ function drawChart(list){
   });
 }
 function quickReport(list){
-  // usa select "period" (riepilogo)
   const p=$('#period').value;
   const now=new Date();let from=new Date();
   if(p==='W')from.setDate(now.getDate()-7);
@@ -579,10 +595,45 @@ function delScad(id){
   });
 })();
 
-/* ===== Export ===== */
-$('#btnExportJSON').onclick=()=>downloadJSON();
-$('#btnExportCSV').onclick=()=>downloadCSV();
-$('#btnReportPDF').onclick=()=>generaReportPDF();
+/* ===== Import / Export ===== */
+document.getElementById('btnImport').onclick=()=>document.getElementById('fileImport').click();
+document.getElementById('fileImport').addEventListener('change',importData);
+document.getElementById('btnExportJSON').onclick=()=>downloadJSON();
+document.getElementById('btnExportCSV').onclick=()=>downloadCSV();
+document.getElementById('btnReportPDF').onclick=()=>generaReportPDF();
+
+function importData(e){
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      const obj=JSON.parse(reader.result);
+      // compatibilità: accetta sia struttura {movimenti, fornitori, categorie, scadenze}
+      // sia {sbp_*} o solo array movimenti
+      if(obj.movimenti || Array.isArray(obj)){
+        data = Array.isArray(obj) ? obj : (obj.movimenti||[]);
+        suppliers = obj.fornitori || suppliers;
+        categories = obj.categorie && obj.categorie.length ? obj.categorie : categories;
+        scadenze = obj.scadenze || scadenze;
+      }else{
+        // fallback: se le chiavi sono uguali a quelle del localStorage
+        data = obj[LS_KEYS.mov] || data;
+        suppliers = obj[LS_KEYS.sup] || suppliers;
+        categories = obj[LS_KEYS.cat] || categories;
+        scadenze = obj[LS_KEYS.sca] || scadenze;
+      }
+      setLS(LS_KEYS.mov,data); setLS(LS_KEYS.sup,suppliers);
+      setLS(LS_KEYS.cat,categories); setLS(LS_KEYS.sca,scadenze);
+      fillSupplierSelects(); fillCategorySelect();
+      renderMini(); renderList(); refreshSummary(); renderScadenze();
+      alert('Importazione completata!');
+    }catch(err){
+      alert('File JSON non valido.');
+    }
+    e.target.value='';
+  };
+  reader.readAsText(file);
+}
 
 function downloadJSON(){
   const blob=new Blob([JSON.stringify({movimenti:data,fornitori:suppliers,categorie:categories,scadenze},null,2)],{type:'application/json'});
