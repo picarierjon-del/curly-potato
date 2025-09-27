@@ -22,7 +22,7 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,s
 
 /* HEADER */
 header{position:sticky;top:0;background:#0b0c10ee;padding:10px;z-index:30;display:flex;gap:8px;align-items:center}
-header .right{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+header .right{margin-left:auto;display:flex;gap:6px;align-items:center}
 
 /* Tabs */
 .tab{margin:0 4px;padding:8px 14px;border:none;border-radius:20px;background:#1b1e24;color:#ccc;cursor:pointer}
@@ -66,7 +66,7 @@ canvas{width:100%;height:240px;background:#0f1117;border-radius:12px}
 .badge{display:inline-block;padding:5px 10px;border:1px solid #2a3344;border-radius:999px;font-size:12px;color:#c9d3ea;background:#0f1218}
 hr.sep{border:none;border-top:1px solid #283040;margin:12px 0}
 
-/* MENU STRUMENTI (pannello mobile) */
+/* MENU STRUMENTI (pannello) */
 .tools-menu{
   position:fixed;
   right:10px; top:62px;
@@ -80,43 +80,24 @@ hr.sep{border:none;border-top:1px solid #283040;margin:12px 0}
 }
 .tools-menu .iitem.primary{background:#3b82f6;border-color:transparent;color:#fff}
 
-/* Responsive: su mobile nascondi i pulsanti grandi e mostra ⋯ */
+/* Responsive */
 @media (max-width:768px){
-  header{flex-wrap:nowrap;align-items:stretch;gap:6px}
+  header{flex-wrap:nowrap;align-items:center;gap:6px}
   .tab{flex:0 0 auto;padding:8px 12px}
-  header .right{
-    margin-left:0;flex:1 1 auto;display:flex;gap:6px;overflow-x:auto;
-    -webkit-overflow-scrolling:touch;white-space:nowrap;padding-bottom:6px
-  }
-  header .right .btn:not(#toolsMenuBtn){display:none}
-  #toolsMenuBtn{display:inline-block}
-}
-@media (min-width:769px){
-  #toolsMenuBtn,#toolsMenuPanel{display:none !important}
+  header .right{margin-left:auto}
 }
 </style>
 </head>
 <body>
 
 <header>
-  <!-- TAB (devono restare .tab per funzionare) -->
+  <!-- TAB -->
   <button class="tab active" data-view="add">Aggiungi</button>
   <button class="tab" data-view="list">Movimenti</button>
   <button class="tab" data-view="summary">Riepilogo</button>
 
-  <!-- Pulsanti “grandi” (visibili su desktop) -->
+  <!-- Menu compatto -->
   <div class="right">
-    <button class="btn" id="btnImpostazioni">Impostazioni</button>
-    <button class="btn" id="btnScadenze">Scadenze <span id="ivaReminder" class="badge"></span></button>
-
-    <button class="btn" id="btnImport">Importa JSON</button>
-    <input type="file" id="fileImport" accept="application/json" hidden>
-
-    <button class="btn" id="btnExportCSV">Export CSV</button>
-    <button class="btn" id="btnExportJSON">Export JSON</button>
-    <button class="btn primary" id="btnReportPDF">Report PDF</button>
-
-    <!-- Menu mobile “⋯” -->
     <button class="btn icon" id="toolsMenuBtn" aria-label="Strumenti">⋯</button>
     <div id="toolsMenuPanel" class="tools-menu" hidden>
       <button class="iitem" id="tmImpostazioni">Impostazioni</button>
@@ -126,6 +107,9 @@ hr.sep{border:none;border-top:1px solid #283040;margin:12px 0}
       <button class="iitem" id="tmExportJSON">Export JSON</button>
       <button class="iitem primary" id="tmPDF">Report PDF</button>
     </div>
+    <!-- input file nascosto -->
+    <input type="file" id="fileImport" accept="application/json" hidden>
+    <span id="ivaReminder" class="badge" style="margin-left:8px"></span>
   </div>
 </header>
 
@@ -291,7 +275,7 @@ if(!Array.isArray(scadenze)) scadenze=[];
 
 let filterType='all', filterSupplier='', filterPeriod='all', filterFrom=null, filterTo=null;
 
-/* ===== Tabs (devono essere .tab) ===== */
+/* ===== Tabs ===== */
 const tabs=[...document.querySelectorAll('.tab')];
 const secs=[...document.querySelectorAll('[data-section]')];
 tabs.forEach(t=>t.onclick=()=>{
@@ -506,12 +490,15 @@ function ivaDue(){
   $('#ivaDue').textContent = `Prossima scadenza: ${next.toLocaleDateString('it-IT')} (tra ${diff} giorni)`;
 }
 
-/* ===== Impostazioni: fornitori e categorie ===== */
+/* ===== Impostazioni: fornitori & categorie ===== */
+function openSettings(){ renderSupCat(); openModal($('#modalImpostazioni')); }
+function openDeadlines(){ renderScadenze(); openModal($('#modalScadenze')); }
+
 function openModal(m){ m.classList.add('open'); m.setAttribute('aria-hidden','false'); }
 function closeModal(m){ m.classList.remove('open'); m.setAttribute('aria-hidden','true'); }
 
-$('#btnImpostazioni').onclick=()=>{ renderSupCat(); openModal($('#modalImpostazioni')); };
-$('#closeImpostazioni').onclick=()=>closeModal($('#modalImpostazioni'));
+document.getElementById('closeImpostazioni').onclick=()=>closeModal($('#modalImpostazioni'));
+document.getElementById('closeScadenze').onclick=()=>closeModal($('#modalScadenze'));
 
 function renderSupCat(){
   const supBody=$('#supBody'); supBody.innerHTML='';
@@ -542,21 +529,19 @@ function renderSupCat(){
     }
   };
 }
-$('#addSupplier').onclick=()=>{
+document.getElementById('addSupplier').onclick=()=>{
   const v=$('#newSupplier').value.trim(); if(!v) return;
   if(!suppliers.includes(v)) suppliers.push(v);
   setLS(LS_KEYS.sup,suppliers); $('#newSupplier').value=''; renderSupCat(); fillSupplierSelects();
 };
-$('#addCategory').onclick=()=>{
+document.getElementById('addCategory').onclick=()=>{
   const v=$('#newCategory').value.trim(); if(!v) return;
   if(!categories.includes(v)) categories.push(v);
   setLS(LS_KEYS.cat,categories); $('#newCategory').value=''; renderSupCat(); fillCategorySelect();
 };
 
 /* ===== Scadenze ===== */
-$('#btnScadenze').onclick=()=>{ renderScadenze(); openModal($('#modalScadenze')); };
-$('#closeScadenze').onclick=()=>closeModal($('#modalScadenze'));
-$('#scadAdd').onclick=()=>{
+document.getElementById('scadAdd').onclick=()=>{
   const t=$('#scadTitolo').value.trim(); const d=$('#scadData').value;
   if(!t||!d) return;
   scadenze.push({id:uid(),titolo:t,data:d});
@@ -587,12 +572,6 @@ function delScad(id){
 })();
 
 /* ===== Import / Export / PDF ===== */
-document.getElementById('btnImport').onclick=()=>document.getElementById('fileImport').click();
-document.getElementById('fileImport').addEventListener('change',importData);
-document.getElementById('btnExportJSON').onclick=()=>downloadJSON();
-document.getElementById('btnExportCSV').onclick=()=>downloadCSV();
-document.getElementById('btnReportPDF').onclick=()=>generaReportPDF();
-
 function importData(e){
   const file=e.target.files[0]; if(!file) return;
   const reader=new FileReader();
@@ -655,30 +634,25 @@ function generaReportPDF(){
   doc.save('report_smartbiz.pdf');
 }
 
-/* ===== Menu mobile ⋯ ===== */
+/* ===== Menu ⋯ ===== */
 (function(){
-  const btn = document.getElementById('toolsMenuBtn');
+  const btn   = document.getElementById('toolsMenuBtn');
   const panel = document.getElementById('toolsMenuPanel');
   if(!btn || !panel) return;
 
-  const open = ()=>{ panel.hidden = false; };
-  const close = ()=>{ panel.hidden = true; };
-  const toggle = ()=>{ panel.hidden ? open() : close(); };
+  const open=()=>{panel.hidden=false}; const close=()=>{panel.hidden=true};
+  btn.addEventListener('click',e=>{e.stopPropagation(); panel.hidden?open():close();});
+  document.addEventListener('click',e=>{ if(!panel.hidden && !panel.contains(e.target) && e.target!==btn) close(); });
 
-  btn.addEventListener('click', (e)=>{ e.stopPropagation(); toggle(); });
-  document.addEventListener('click', (e)=>{
-    if(panel.hidden) return;
-    if(!panel.contains(e.target) && e.target!==btn) close();
-  });
+  // Azioni menu
+  document.getElementById('tmImpostazioni')?.addEventListener('click', ()=>{ close(); openSettings(); });
+  document.getElementById('tmScadenze')?.addEventListener('click',   ()=>{ close(); openDeadlines(); });
+  document.getElementById('tmImport')?.addEventListener('click',     ()=>{ close(); document.getElementById('fileImport').click(); });
+  document.getElementById('tmExportCSV')?.addEventListener('click',  ()=>{ close(); downloadCSV(); });
+  document.getElementById('tmExportJSON')?.addEventListener('click', ()=>{ close(); downloadJSON(); });
+  document.getElementById('tmPDF')?.addEventListener('click',        ()=>{ close(); generaReportPDF(); });
 
-  const click = (id)=>document.getElementById(id)?.click();
-  document.getElementById('tmImpostazioni')?.addEventListener('click', ()=>{ close(); click('btnImpostazioni'); });
-  document.getElementById('tmScadenze')?.addEventListener('click',   ()=>{ close(); click('btnScadenze'); });
-  document.getElementById('tmImport')?.addEventListener('click',     ()=>{ close(); click('btnImport'); });
-  document.getElementById('tmExportCSV')?.addEventListener('click',  ()=>{ close(); click('btnExportCSV'); });
-  document.getElementById('tmExportJSON')?.addEventListener('click', ()=>{ close(); click('btnExportJSON'); });
-  document.getElementById('tmPDF')?.addEventListener('click',        ()=>{ close(); click('btnReportPDF'); });
-
+  // Chiudi quando cambi tab
   document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click', close));
 })();
 
