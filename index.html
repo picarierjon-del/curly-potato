@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>SmartBiz Pro – Menu unico</title>
 
 <!-- Librerie esterne -->
@@ -15,44 +15,55 @@
   --bg:#0b0c10;--card:#12141a;--text:#f2f5ff;--accent:#3b82f6;
   --ok:#10b981;--bad:#ef4444;--muted:#a0a7b7;
 }
+*{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,system-ui}
 header{position:sticky;top:0;z-index:30;display:flex;justify-content:space-between;
   padding:10px 14px;background:#0b0c10ee;backdrop-filter:blur(10px)}
 header h1{font-size:18px;margin:0}
 .btn{padding:8px 14px;border:1px solid #2a2f38;border-radius:12px;background:#0e1117;color:#fff;cursor:pointer}
 .btn.primary{background:var(--accent);border:none}
+.btn.bad{background:#2a1315;border-color:#512027;color:#ffc7c7}
 .card{background:var(--card);border-radius:14px;margin:14px;padding:14px}
 label{display:block;margin:8px 0 4px;font-size:13px;color:#d7def0}
-input,select,textarea{width:100%;padding:8px;border-radius:12px;border:1px solid #333;background:#0f1117;color:var(--text)}
-table{width:100%;border-collapse:collapse}th,td{padding:8px;border-bottom:1px solid #333}
-.kpi{background:#0f1117;border:1px solid #1c2230;border-radius:12px;padding:12px;text-align:center;margin:8px 0}
+input,select,textarea{width:100%;padding:10px;border-radius:12px;border:1px solid #333;background:#0f1117;color:var(--text)}
+table{width:100%;border-collapse:collapse}th,td{padding:8px;border-bottom:1px solid #333;vertical-align:top}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
+.kpi{background:#0f1117;border:1px solid #1c2230;border-radius:12px;padding:12px;text-align:center}
 .kpi h3{margin:0 0 4px;font-size:12px;color:var(--muted)}
 .money{font-weight:700}
 .ok{color:var(--ok)}.bad{color:var(--bad)}
 canvas{width:100%;height:240px;background:#0f1117;border-radius:12px}
+.badge{display:inline-block;background:#1c2230;border:1px solid #2a3346;padding:4px 8px;border-radius:999px;font-size:12px;color:#cbd2e2}
+
+/* Menu compatto */
 .tools-menu{position:absolute;top:58px;right:10px;background:#12141a;border:1px solid #2a3344;border-radius:14px;
-  box-shadow:0 10px 30px rgba(0,0,0,.45);padding:8px;z-index:60;display:none;width:min(260px,90vw)}
+  box-shadow:0 10px 30px rgba(0,0,0,.45);padding:8px;z-index:60;display:none;width:min(280px,92vw)}
 .tools-menu.show{display:block}
 .tools-menu button{display:block;width:100%;text-align:left;margin:4px 0;padding:10px;border-radius:10px;
   background:#0f1218;border:1px solid #2a3344;color:#e6ebff;cursor:pointer}
 .tools-menu button.primary{background:var(--accent);border:none;color:#fff}
-.badge{display:inline-block;background:#1c2230;border:1px solid #2a3346;padding:4px 8px;border-radius:999px;font-size:12px;color:#cbd2e2}
+
+/* Form grid */
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.muted{color:#a0a7b7;font-size:12px}
 </style>
 </head>
 <body>
 
 <header>
   <h1>SmartBiz Pro</h1>
-  <div>
-    <button class="btn" id="menuBtn">⋯</button>
+  <div class="row">
+    <button class="btn" id="menuBtn" aria-label="Strumenti">⋯</button>
     <span id="ivaReminder" class="badge"></span>
   </div>
-  <div id="menuPanel" class="tools-menu">
-    <button id="mAdd" class="primary">➕ Nuovo movimento</button>
+  <div id="menuPanel" class="tools-menu" role="menu" aria-hidden="true">
+    <button id="mAdd"    class="primary">➕ Nuovo movimento</button>
     <button id="mList">📜 Lista movimenti</button>
     <button id="mSummary">📊 Riepilogo</button>
     <button id="mSup">🏷️ Fornitori & Categorie</button>
     <button id="mDead">⏰ Scadenze</button>
+    <hr style="border:none;border-top:1px solid #2a3344;margin:6px 0">
     <button id="mImp">⬆️ Importa JSON</button>
     <button id="mExpCsv">⬇️ Export CSV</button>
     <button id="mExpJson">⬇️ Export JSON</button>
@@ -64,157 +75,362 @@ canvas{width:100%;height:240px;background:#0f1117;border-radius:12px}
 <main id="content"><!-- sezioni generate via JS --></main>
 
 <script>
+/* ===== Helpers & stato ===== */
 const cur=new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR'});
 const $=s=>document.querySelector(s);
-const LS='sbp_all';
-let store=JSON.parse(localStorage.getItem(LS)||'{"movimenti":[],"fornitori":[],"categorie":["Vendita","Servizi","Affitto","Utenze","Marketing","Spesa","Altro"],"scadenze":[]}');
-function save(){localStorage.setItem(LS,JSON.stringify(store));}
-function uid(){return crypto.randomUUID?.():Date.now().toString(36)+Math.random().toString(36).slice(2);}
+const LS='smartbiz_store_v1';
+let store;
+try{
+  store = JSON.parse(localStorage.getItem(LS)) || {};
+}catch{ store = {}; }
+if(!Array.isArray(store.movimenti)) store.movimenti=[];
+if(!Array.isArray(store.fornitori)) store.fornitori=[];
+if(!Array.isArray(store.categorie)) store.categorie=['Vendita','Servizi','Affitto','Utenze','Marketing','Spesa','Altro'];
+if(!Array.isArray(store.scadenze)) store.scadenze=[];
 
-function menu(show){$('#menuPanel').classList.toggle('show',show);}
-$('#menuBtn').onclick=e=>{e.stopPropagation();menu(!$('#menuPanel').classList.contains('show'));};
-document.addEventListener('click',e=>{if(!$('#menuPanel').contains(e.target)&&e.target.id!=='menuBtn')menu(false);});
+function save(){ localStorage.setItem(LS, JSON.stringify(store)); }
+function uid(){ return (crypto.randomUUID && crypto.randomUUID()) || (Date.now().toString(36)+Math.random().toString(36).slice(2)); }
+function view(html){ $('#content').innerHTML = html; }
+function menu(show){ const p=$('#menuPanel'); p.classList.toggle('show',show); p.setAttribute('aria-hidden', show?'false':'true'); }
 
-function view(html){$('#content').innerHTML=html;}
+/* ===== Menu ===== */
+$('#menuBtn').onclick = (e)=>{ e.stopPropagation(); menu(!$('#menuPanel').classList.contains('show')); };
+document.addEventListener('click', e=>{ const p=$('#menuPanel'); if(p.classList.contains('show') && !p.contains(e.target) && e.target.id!=='menuBtn'){menu(false);} });
 
-/* ========== Pagine ========== */
+/* ===== Pagine ===== */
 function pageAdd(mov){
-  const m=mov||{d:new Date().toISOString().slice(0,10),type:'entrata',method:'Contanti',cat:store.categorie[0]||'Altro',sup:'',desc:'',imp:'',iva:'22',tags:[]};
-  view(`<div class="card">
+  const m = mov || { d:new Date().toISOString().slice(0,10), type:'entrata', method:'Contanti', cat:store.categorie[0]||'Altro', sup:'', desc:'', imp:'', iva:'22', tags:[] };
+  view(`
+  <div class="card">
     <h2>${mov?'Modifica':'Nuovo'} movimento</h2>
-    <label>Data <input type="date" id="d" value="${m.d}"></label>
-    <label>Tipo <select id="t"><option ${m.type==='entrata'?'selected':''}>entrata</option><option ${m.type==='uscita'?'selected':''}>uscita</option></select></label>
-    <label>Metodo <input id="me" value="${m.method}"></label>
-    <label>Categoria <select id="c">${store.categorie.map(x=>`<option ${x===m.cat?'selected':''}>${x}</option>`).join('')}</select></label>
-    <label>Fornitore <select id="s"><option></option>${store.fornitori.map(x=>`<option ${x===m.sup?'selected':''}>${x}</option>`).join('')}</select></label>
-    <label>Tag <input id="tg" value="${(m.tags||[]).join(', ')}"></label>
-    <label>Descrizione <input id="desc" value="${m.desc}"></label>
-    <label>Imponibile (€) <input type="number" id="imp" step="0.01" value="${m.imp}"></label>
-    <label>IVA % <select id="iva">${[0,4,5,10,22].map(v=>`<option ${v==m.iva?'selected':''}>${v}</option>`).join('')}</select></label>
-    <button class="btn primary" id="saveBtn">💾 Salva</button>
+    <div class="grid">
+      <div><label>Data <input type="date" id="d" value="${m.d}"></label></div>
+      <div><label>Tipo <select id="t"><option ${m.type==='entrata'?'selected':''}>entrata</option><option ${m.type==='uscita'?'selected':''}>uscita</option></select></label></div>
+      <div><label>Metodo <select id="me">
+          ${['Contanti','Bancomat','Carta','Bonifico'].map(v=>`<option ${v===m.method?'selected':''}>${v}</option>`).join('')}
+      </select></label></div>
+      <div><label>Categoria <select id="c">${store.categorie.map(x=>`<option ${x===m.cat?'selected':''}>${x}</option>`).join('')}</select></label></div>
+      <div><label>Fornitore <select id="s"><option></option>${store.fornitori.map(x=>`<option ${x===m.sup?'selected':''}>${x}</option>`).join('')}</select></label></div>
+      <div><label>Tag (virgola) <input id="tg" value="${(m.tags||[]).join(', ')}"></label></div>
+      <div style="grid-column:1/-1"><label>Descrizione <input id="desc" value="${m.desc}"></label></div>
+      <div><label>Imponibile (€) <input type="number" id="imp" step="0.01" value="${m.imp}"></label></div>
+      <div><label>IVA % <select id="iva">${[0,4,5,10,22].map(v=>`<option ${v==m.iva?'selected':''}>${v}</option>`).join('')}</select></label></div>
+      <div style="align-self:end"><button class="btn primary" id="saveBtn">💾 Salva</button></div>
+    </div>
+    <p class="muted" style="margin-top:6px">Dopo il salvataggio il movimento appare subito in “Lista movimenti”.</p>
   </div>`);
-  $('#saveBtn').onclick=()=>{
-    const rec={id:m.id||uid(),d:$('#d').value,type:$('#t').value,method:$('#me').value,
-      cat:$('#c').value,sup:$('#s').value,desc:$('#desc').value,
-      imp:parseFloat($('#imp').value)||0,ivaPerc:parseFloat($('#iva').value),
-      tags:$('#tg').value.split(',').map(s=>s.trim()).filter(Boolean)};
-    rec.iva=rec.imp*rec.ivaPerc/100; rec.tot=rec.imp+rec.iva;
-    if(m.id) store.movimenti=store.movimenti.map(x=>x.id===m.id?rec:x); else store.movimenti.push(rec);
-    save(); alert('Salvato'); pageList();
+
+  $('#saveBtn').onclick = ()=>{
+    const rec={
+      id: m.id || uid(),
+      d: $('#d').value,
+      type: $('#t').value,
+      method: $('#me').value,
+      cat: $('#c').value,
+      sup: $('#s').value,
+      desc: $('#desc').value,
+      imp: parseFloat($('#imp').value)||0,
+      ivaPerc: parseFloat($('#iva').value),
+      tags: ($('#tg').value||'').split(',').map(s=>s.trim()).filter(Boolean)
+    };
+    rec.iva = rec.imp * (rec.ivaPerc||0) / 100;
+    rec.tot = rec.imp + rec.iva;
+
+    if(!rec.d || !(rec.imp>0)){ alert('Inserisci data e imponibile.'); return; }
+
+    if(m.id){
+      store.movimenti = store.movimenti.map(x=> x.id===m.id ? rec : x);
+    }else{
+      store.movimenti.push(rec);
+    }
+    save(); alert('Salvato!'); pageList();
   };
 }
 
 function pageList(){
-  let arr=[...store.movimenti].sort((a,b)=>b.d.localeCompare(a.d));
-  view(`<div class="card">
+  const arr = [...store.movimenti].sort((a,b)=>b.d.localeCompare(a.d));
+  view(`
+  <div class="card">
     <h2>Movimenti</h2>
-    <label>Da <input type="date" id="fFrom"> a <input type="date" id="fTo">
-      <button class="btn" id="fApp">Applica</button></label>
-    <table><thead><tr><th>Data</th><th>Tipo</th><th>Totale</th><th></th></tr></thead>
-    <tbody>${arr.map(m=>`<tr><td>${m.d}</td><td>${m.type}</td><td>${cur.format(m.tot)}</td>
-      <td><button class="btn" data-e="${m.id}">✎</button>
-          <button class="btn bad" data-d="${m.id}">✖</button></td></tr>`).join('')}</tbody></table>
+    <div class="row" style="gap:10px;margin:6px 0 12px">
+      <label>Dal <input type="date" id="fFrom"></label>
+      <label>Al <input type="date" id="fTo"></label>
+      <label>Tipo 
+        <select id="fTipo">
+          <option value="">Tutti</option>
+          <option value="entrata">Vendite (Entrate)</option>
+          <option value="uscita">Acquisti (Uscite)</option>
+        </select>
+      </label>
+      <label>Fornitore 
+        <select id="fSup">
+          <option value="">Tutti</option>
+          ${store.fornitori.map(n=>`<option>${n}</option>`).join('')}
+        </select>
+      </label>
+      <button class="btn" id="fApplica">Applica</button>
+      <button class="btn" id="fReset">Reset</button>
+    </div>
+    <table>
+      <thead>
+        <tr><th>Data</th><th>Tipo</th><th>Metodo</th><th>Categoria</th><th>Fornitore</th><th>Descrizione</th><th>Imponibile</th><th>IVA</th><th>Totale</th><th></th></tr>
+      </thead>
+      <tbody id="listBody"></tbody>
+    </table>
   </div>`);
-  $('#fApp').onclick=()=>{
-    const from=$('#fFrom').value,to=$('#fTo').value;
-    const filtered=arr.filter(x=>(!from||new Date(x.d)>=new Date(from))&&(!to||new Date(x.d)<=new Date(to)));
-    $('#content').querySelector('tbody').innerHTML=
-      filtered.map(m=>`<tr><td>${m.d}</td><td>${m.type}</td><td>${cur.format(m.tot)}</td>
-      <td><button class="btn" data-e="${m.id}">✎</button>
-      <button class="btn bad" data-d="${m.id}">✖</button></td></tr>`).join('');
-    bindRowBtns();
-  };
-  bindRowBtns();
-  function bindRowBtns(){
-    document.querySelectorAll('[data-e]').forEach(b=>b.onclick=()=>pageAdd(store.movimenti.find(x=>x.id===b.dataset.e)));
-    document.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{if(confirm('Eliminare?')){store.movimenti=store.movimenti.filter(x=>x.id!==b.dataset.d);save();pageList();}});
+
+  function apply(){
+    const from=$('#fFrom').value, to=$('#fTo').value, tipo=$('#fTipo').value, fs=$('#fSup').value;
+    const filt = arr.filter(m=>{
+      const d=new Date(m.d);
+      if(from && d < new Date(from)) return false;
+      if(to && d > new Date(to)) return false;
+      if(tipo && m.type!==tipo) return false;
+      if(fs && (m.sup||'')!==fs) return false;
+      return true;
+    });
+    const tb=$('#listBody'); tb.innerHTML='';
+    filt.forEach(m=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML = `<td>${m.d}</td><td>${m.type}</td><td>${m.method||''}</td><td>${m.cat||''}</td><td>${m.sup||''}</td>
+      <td>${m.desc||''}</td><td>${cur.format(m.imp||0)}</td><td>${cur.format(m.iva||0)}</td><td>${cur.format(m.tot||0)}</td>
+      <td style="white-space:nowrap">
+        <button class="btn" data-edit="${m.id}">Mod.</button>
+        <button class="btn bad" data-del="${m.id}">✖</button>
+      </td>`;
+      tb.appendChild(tr);
+    });
+    // bind
+    tb.querySelectorAll('[data-edit]').forEach(b=> b.onclick = ()=> pageAdd(store.movimenti.find(x=>x.id===b.dataset.edit)));
+    tb.querySelectorAll('[data-del]').forEach(b=> b.onclick = ()=>{
+      if(confirm('Eliminare questo movimento?')){
+        store.movimenti = store.movimenti.filter(x=>x.id!==b.dataset.del);
+        save(); apply();
+      }
+    });
   }
+
+  $('#fApplica').onclick=apply;
+  $('#fReset').onclick=()=>{ $('#fFrom').value=''; $('#fTo').value=''; $('#fTipo').value=''; $('#fSup').value=''; apply(); };
+  apply();
 }
 
 function pageSummary(){
-  const e=store.movimenti.filter(m=>m.type==='entrata').reduce((a,b)=>a+b.tot,0);
-  const u=store.movimenti.filter(m=>m.type==='uscita').reduce((a,b)=>a+b.tot,0);
-  const deb=store.movimenti.filter(m=>m.type==='entrata').reduce((a,b)=>a+b.iva,0);
-  const cred=store.movimenti.filter(m=>m.type==='uscita').reduce((a,b)=>a+b.iva,0);
-  view(`<div class="card"><h2>Riepilogo</h2>
-    <div class="kpi"><h3>Entrate</h3><div class="money ok">${cur.format(e)}</div></div>
-    <div class="kpi"><h3>Uscite</h3><div class="money bad">${cur.format(u)}</div></div>
-    <div class="kpi"><h3>Δ</h3><div class="money">${cur.format(e-u)}</div></div>
-    <div class="kpi"><h3>IVA Debito</h3><div class="money">${cur.format(deb)}</div></div>
-    <div class="kpi"><h3>IVA Credito</h3><div class="money">${cur.format(cred)}</div></div>
-    <div class="kpi"><h3>Δ IVA</h3><div class="money">${cur.format(deb-cred)}</div></div>
+  const list=[...store.movimenti];
+  const entr=list.filter(m=>m.type==='entrata').reduce((a,b)=>a+(b.tot||0),0);
+  const usc =list.filter(m=>m.type==='uscita').reduce((a,b)=>a+(b.tot||0),0);
+  const deb =list.filter(m=>m.type==='entrata').reduce((a,b)=>a+(b.iva||0),0);
+  const cred=list.filter(m=>m.type==='uscita').reduce((a,b)=>a+(b.iva||0),0);
+
+  view(`<div class="card">
+    <h2>Riepilogo</h2>
+    <div class="kpi-grid">
+      <div class="kpi"><h3>Entrate</h3><div class="money ok">${cur.format(entr)}</div></div>
+      <div class="kpi"><h3>Uscite</h3><div class="money bad">${cur.format(usc)}</div></div>
+      <div class="kpi"><h3>Δ Entrate − Uscite</h3><div class="money">${cur.format(entr-usc)}</div></div>
+      <div class="kpi"><h3>IVA Debito</h3><div class="money">${cur.format(deb)}</div></div>
+      <div class="kpi"><h3>IVA Credito</h3><div class="money">${cur.format(cred)}</div></div>
+      <div class="kpi"><h3>Δ IVA</h3><div class="money">${cur.format(deb-cred)}</div></div>
+    </div>
     <canvas id="chart"></canvas>
   </div>`);
-  const ctx=document.getElementById('chart').getContext('2d');
-  const byMonth={}; store.movimenti.forEach(m=>{
-    const k=m.d.slice(0,7); byMonth[k]=(byMonth[k]||0)+(m.type==='entrata'?m.tot:-m.tot);
-  });
+
+  const byMonth={};
+  list.forEach(m=>{ const k=(m.d||'').slice(0,7); if(!k) return; byMonth[k]=(byMonth[k]||0)+(m.type==='entrata'?(m.tot||0):-(m.tot||0)); });
   const labels=Object.keys(byMonth).sort();
-  new Chart(ctx,{type:'bar',data:{labels,datasets:[{label:'Saldo',data:labels.map(k=>byMonth[k]),backgroundColor:labels.map(k=>byMonth[k]>=0?'#10b981':'#ef4444')}]},options:{plugins:{legend:{display:false}}}});
+  const dataVals=labels.map(k=>byMonth[k]);
+  const ctx=document.getElementById('chart').getContext('2d');
+  if(window._chart) window._chart.destroy();
+  window._chart=new Chart(ctx,{
+    type:'bar',
+    data:{labels,datasets:[{label:'Saldo mensile',data:dataVals,backgroundColor:dataVals.map(v=>v>=0?'#10b981':'#ef4444')}]},
+    options:{plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{grid:{color:'rgba(255,255,255,.06)'}}}}
+  });
 }
 
+/* ===== Fornitori & categorie ===== */
 function pageSup(){
-  view(`<div class="card"><h2>Fornitori & Categorie</h2>
-    <label>Nuovo Fornitore <input id="newSup"><button class="btn primary" id="addSup">Aggiungi</button></label>
-    <ul>${store.fornitori.map(x=>`<li>${x} <button data-s="${x}" class="btn bad">✖</button></li>`).join('')}</ul>
-    <hr>
-    <label>Nuova Categoria <input id="newCat"><button class="btn primary" id="addCat">Aggiungi</button></label>
-    <ul>${store.categorie.map(x=>`<li>${x} <button data-c="${x}" class="btn bad">✖</button></li>`).join('')}</ul>
+  view(`<div class="card">
+    <h2>Fornitori & Categorie</h2>
+    <div class="grid">
+      <div class="card" style="margin:0">
+        <h3>Fornitori</h3>
+        <div class="row" style="gap:8px;margin:8px 0">
+          <input id="newSup" placeholder="Es. Molino Rossi"><button class="btn primary" id="addSup">Aggiungi</button>
+        </div>
+        <table><thead><tr><th>Nome</th><th></th></tr></thead><tbody id="supBody"></tbody></table>
+      </div>
+      <div class="card" style="margin:0">
+        <h3>Categorie</h3>
+        <div class="row" style="gap:8px;margin:8px 0">
+          <input id="newCat" placeholder="Nuova categoria"><button class="btn primary" id="addCat">Aggiungi</button>
+        </div>
+        <table><thead><tr><th>Nome</th><th></th></tr></thead><tbody id="catBody"></tbody></table>
+      </div>
+    </div>
   </div>`);
-  $('#addSup').onclick=()=>{const v=$('#newSup').value.trim();if(v&&!store.fornitori.includes(v)){store.fornitori.push(v);save();pageSup();}};
-  $('#addCat').onclick=()=>{const v=$('#newCat').value.trim();if(v&&!store.categorie.includes(v)){store.categorie.push(v);save();pageSup();}};
-  document.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{store.fornitori=store.fornitori.filter(x=>x!==b.dataset.s);save();pageSup();});
-  document.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{store.categorie=store.categorie.filter(x=>x!==b.dataset.c);save();pageSup();});
+
+  function renderLists(){
+    const sb=$('#supBody'); sb.innerHTML='';
+    store.fornitori.forEach((n,i)=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td>${n}</td><td style="text-align:right"><button class="btn bad" data-i="${i}">Elimina</button></td>`;
+      sb.appendChild(tr);
+    });
+    sb.onclick=(e)=>{
+      const i=e.target.dataset.i; if(i===undefined) return;
+      if(confirm('Eliminare fornitore?')){ store.fornitori.splice(i,1); save(); renderLists(); }
+    };
+
+    const cb=$('#catBody'); cb.innerHTML='';
+    store.categorie.forEach((n,i)=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td>${n}</td><td style="text-align:right"><button class="btn bad" data-i="${i}">Elimina</button></td>`;
+      cb.appendChild(tr);
+    });
+    cb.onclick=(e)=>{
+      const i=e.target.dataset.i; if(i===undefined) return;
+      if(confirm('Eliminare categoria? I movimenti passeranno a "Altro".')){
+        const name=store.categorie[i];
+        store.categorie.splice(i,1);
+        store.movimenti = store.movimenti.map(m=> m.cat===name ? {...m, cat:'Altro'} : m );
+        save(); renderLists();
+      }
+    };
+  }
+  renderLists();
+
+  $('#addSup').onclick=()=>{ const v=$('#newSup').value.trim(); if(!v) return; if(!store.fornitori.includes(v)) store.fornitori.push(v); save(); $('#newSup').value=''; renderLists(); };
+  $('#addCat').onclick=()=>{ const v=$('#newCat').value.trim(); if(!v) return; if(!store.categorie.includes(v)) store.categorie.push(v); save(); $('#newCat').value=''; renderLists(); };
 }
 
+/* ===== Scadenze ===== */
 function pageDead(){
-  view(`<div class="card"><h2>Scadenze</h2>
-    <label>Titolo <input id="tit"><label>Data <input type="date" id="dat">
-      <button class="btn primary" id="addScad">Aggiungi</button></label>
-    <ul>${store.scadenze.map(s=>`<li>${s.data} – ${s.titolo} <button data-d="${s.id}" class="btn bad">✖</button></li>`).join('')}</ul>
+  view(`<div class="card">
+    <h2>Scadenze</h2>
+    <div class="row" style="gap:8px;margin:8px 0">
+      <input id="scTit" placeholder="INPS, IMU, F24…">
+      <input id="scDat" type="date">
+      <button class="btn primary" id="scAdd">Aggiungi</button>
+    </div>
+    <table><thead><tr><th>Data</th><th>Titolo</th><th></th></tr></thead><tbody id="scBody"></tbody></table>
+    <p class="muted">Avviso automatico quando mancano ≤ 3 giorni.</p>
   </div>`);
-  $('#addScad').onclick=()=>{const t=$('#tit').value.trim(),d=$('#dat').value;if(t&&d){store.scadenze.push({id:uid(),titolo:t,data:d});save();pageDead();}};
-  document.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{store.scadenze=store.scadenze.filter(x=>x.id!==b.dataset.d);save();pageDead();});
+
+  function renderScad(){
+    const tb=$('#scBody'); tb.innerHTML='';
+    store.scadenze.sort((a,b)=>a.data.localeCompare(b.data)).forEach(s=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td>${s.data}</td><td>${s.titolo}</td><td style="text-align:right"><button class="btn bad" data-id="${s.id}">Elimina</button></td>`;
+      tb.appendChild(tr);
+    });
+    tb.onclick=(e)=>{
+      const id=e.target.dataset.id; if(!id) return;
+      store.scadenze = store.scadenze.filter(x=>x.id!==id); save(); renderScad();
+    };
+  }
+  renderScad();
+
+  $('#scAdd').onclick=()=>{
+    const t=$('#scTit').value.trim(), d=$('#scDat').value;
+    if(!t||!d) return;
+    store.scadenze.push({id:uid(), titolo:t, data:d});
+    save(); $('#scTit').value=''; $('#scDat').value=''; renderScad();
+  };
+
+  // promemoria <= 3 giorni
+  const oggi=new Date();
+  store.scadenze.forEach(s=>{
+    const diff=Math.ceil((new Date(s.data)-oggi)/86400000);
+    if(diff<=3 && diff>=0){ alert(`Promemoria: "${s.titolo}" scade il ${new Date(s.data).toLocaleDateString('it-IT')}`); }
+  });
 }
 
 /* ===== Import / Export / PDF ===== */
-function exportJSON(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(store,null,2)],{type:'application/json'}));a.download='smartbiz.json';a.click();}
-function exportCSV(){const rows=[['Data','Tipo','Metodo','Categoria','Fornitore','Descrizione','Imponibile','IVA','Totale']];
-  store.movimenti.forEach(m=>rows.push([m.d,m.type,m.method,m.cat,m.sup,m.desc,m.imp,m.iva,m.tot]));
-  const csv=rows.map(r=>r.join(',')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='smartbiz.csv';a.click();}
-function importJSON(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{store=JSON.parse(r.result);save();alert('Import OK');pageList();}catch{alert('File non valido');}};r.readAsText(f);}
-function reportPDF(){const {jsPDF}=window.jspdf;const doc=new jsPDF({unit:'pt',format:'a4'});
-  const e=store.movimenti.filter(m=>m.type==='entrata').reduce((a,b)=>a+b.tot,0);
-  const u=store.movimenti.filter(m=>m.type==='uscita').reduce((a,b)=>a+b.tot,0);
-  doc.text('Report SmartBiz',40,40);
-  doc.autoTable({startY:60,head:[['Voce','Valore']],body:[['Entrate',cur.format(e)],['Uscite',cur.format(u)],['Saldo',cur.format(e-u)]]});
-  const rows=store.movimenti.map(m=>[m.d,m.type,m.method,m.cat,m.sup,m.desc,m.imp,m.iva,m.tot]);
-  doc.addPage();doc.autoTable({head:[['Data','Tipo','Metodo','Categoria','Fornitore','Descrizione','Imp','IVA','Tot']],body:rows});
-  doc.save('report.pdf');
+function exportJSON(){
+  const blob=new Blob([JSON.stringify(store,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='smartbiz.json'; a.click(); URL.revokeObjectURL(a.href);
+}
+function exportCSV(){
+  const rows=[['Data','Tipo','Metodo','Categoria','Fornitore','Descrizione','Imponibile','IVA','Totale']];
+  store.movimenti.forEach(m=> rows.push([m.d,m.type,m.method,m.cat,m.sup,m.desc,(m.imp||0),(m.iva||0),(m.tot||0)]));
+  const csv=rows.map(r=>r.map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='smartbiz_movimenti.csv'; a.click(); URL.revokeObjectURL(a.href);
+}
+function importJSON(e){
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const obj=JSON.parse(r.result);
+      // supporta sia store completo che solo movimenti
+      if(obj.movimenti || obj.fornitori || obj.categorie || obj.scadenze){
+        store = { 
+          movimenti: Array.isArray(obj.movimenti)?obj.movimenti:store.movimenti,
+          fornitori: Array.isArray(obj.fornitori)?obj.fornitori:store.fornitori,
+          categorie: Array.isArray(obj.categorie)&&obj.categorie.length?obj.categorie:store.categorie,
+          scadenze: Array.isArray(obj.scadenze)?obj.scadenze:store.scadenze
+        };
+      }else if(Array.isArray(obj)){ // array di movimenti
+        store.movimenti = obj;
+      }
+      save(); alert('Importazione completata!'); pageList();
+    }catch(err){ alert('File JSON non valido.'); }
+    e.target.value='';
+  };
+  r.readAsText(f);
+}
+function reportPDF(){
+  const { jsPDF } = window.jspdf;
+  const doc=new jsPDF({unit:'pt',format:'a4'});
+  const eTot=store.movimenti.filter(m=>m.type==='entrata').reduce((a,b)=>a+(b.tot||0),0);
+  const uTot=store.movimenti.filter(m=>m.type==='uscita').reduce((a,b)=>a+(b.tot||0),0);
+  const deb=store.movimenti.filter(m=>m.type==='entrata').reduce((a,b)=>a+(b.iva||0),0);
+  const cred=store.movimenti.filter(m=>m.type==='uscita').reduce((a,b)=>a+(b.iva||0),0);
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(16); doc.text('Report SmartBiz Pro',40,40);
+  doc.setFont('helvetica','normal'); doc.setFontSize(11); doc.text(`Generato: ${new Date().toLocaleString('it-IT')}`,40,60);
+
+  doc.setFont('helvetica','bold'); doc.text('Riepilogo',40,90);
+  doc.autoTable({startY:100, head:[['Voce','Valore']], body:[
+    ['Entrate',cur.format(eTot)],['Uscite',cur.format(uTot)],['Saldo',cur.format(eTot-uTot)],
+    ['IVA Debito',cur.format(deb)],['IVA Credito',cur.format(cred)],['Δ IVA',cur.format(deb-cred)]
+  ], styles:{fontSize:10}, theme:'grid'});
+
+  const rows=store.movimenti
+    .sort((a,b)=>a.d.localeCompare(b.d))
+    .map(m=>[m.d,m.type,m.method,m.cat,m.sup,m.desc,(m.imp||0).toFixed(2),(m.iva||0).toFixed(2),(m.tot||0).toFixed(2)]);
+  doc.addPage();
+  doc.setFont('helvetica','bold'); doc.text('Dettaglio movimenti',40,40);
+  doc.autoTable({startY:50, head:[['Data','Tipo','Metodo','Categoria','Fornitore','Descrizione','Imponibile','IVA','Totale']], body:rows, styles:{fontSize:8,cellPadding:2}, headStyles:{fillColor:[59,130,246]}, theme:'striped'});
+
+  doc.save('report_smartbiz.pdf');
 }
 
-/* ===== Menu actions ===== */
-$('#mAdd').onclick=()=>{menu(false);pageAdd();};
-$('#mList').onclick=()=>{menu(false);pageList();};
-$('#mSummary').onclick=()=>{menu(false);pageSummary();};
-$('#mSup').onclick=()=>{menu(false);pageSup();};
-$('#mDead').onclick=()=>{menu(false);pageDead();};
-$('#mExpJson').onclick=()=>{menu(false);exportJSON();};
-$('#mExpCsv').onclick=()=>{menu(false);exportCSV();};
-$('#mPdf').onclick=()=>{menu(false);reportPDF();};
-$('#mImp').onclick=()=>{menu(false);$('#fileImport').click();};
-$('#fileImport').onchange=importJSON;
-
-/* IVA reminder */
-(function(){
-  const now=new Date(), y=now.getFullYear();
-  const scad=[new Date(y,4,16),new Date(y,7,20),new Date(y,10,16),new Date(y+1,2,16)];
-  let next=scad.find(d=>d>now)||scad[0];
+/* ===== IVA reminder ===== */
+function ivaReminder(){
+  const now=new Date(); const y=now.getFullYear();
+  const scad=[ new Date(y,4,16), new Date(y,7,20), new Date(y,10,16), new Date(y+1,2,16) ];
+  let next=scad.find(d=>d>now) || scad[0];
   const diff=Math.ceil((next-now)/86400000);
-  $('#ivaReminder').textContent=`IVA: ${next.toLocaleDateString('it-IT')} • ${diff}g`;
-})();
+  $('#ivaReminder').textContent = `IVA: ${next.toLocaleDateString('it-IT')} • ${diff}g`;
+}
 
-/* start */
+/* ===== Bind menu ===== */
+$('#mAdd').onclick   = ()=>{ menu(false); pageAdd(); };
+$('#mList').onclick  = ()=>{ menu(false); pageList(); };
+$('#mSummary').onclick=()=>{ menu(false); pageSummary(); };
+$('#mSup').onclick   = ()=>{ menu(false); pageSup(); };
+$('#mDead').onclick  = ()=>{ menu(false); pageDead(); };
+$('#mExpJson').onclick=()=>{ menu(false); exportJSON(); };
+$('#mExpCsv').onclick =()=>{ menu(false); exportCSV(); };
+$('#mPdf').onclick    =()=>{ menu(false); reportPDF(); };
+$('#mImp').onclick    =()=>{ menu(false); $('#fileImport').click(); };
+$('#fileImport').onchange = importJSON;
+
+/* ===== Avvio ===== */
+ivaReminder();
 pageList();
 </script>
 </body>
