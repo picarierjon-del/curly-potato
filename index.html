@@ -19,18 +19,29 @@
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,system-ui}
-header{position:sticky;top:0;background:#0b0c10ee;padding:10px;z-index:20;display:flex;gap:8px;align-items:center}
+
+/* HEADER */
+header{position:sticky;top:0;background:#0b0c10ee;padding:10px;z-index:30;display:flex;gap:8px;align-items:center}
 header .right{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+
+/* Tabs */
 .tab{margin:0 4px;padding:8px 14px;border:none;border-radius:20px;background:#1b1e24;color:#ccc;cursor:pointer}
 .tab.active{background:var(--accent);color:#fff}
+
+/* Bottoni */
 .btn{padding:9px 12px;border:1px solid #2b2f38;border-radius:12px;background:#0e1117;color:#fff;cursor:pointer}
 .btn.primary{background:var(--accent);border-color:transparent}
 .btn.bad{background:#2a1315;border-color:#502127;color:#ffb3b3}
 .btn.ok{background:#102218;border-color:#1a3b2a;color:#bff0d2}
+.btn.icon{font-weight:900;font-size:18px;padding:8px 12px}
+
+/* Cards / tabelle */
 .card{background:var(--card);border-radius:14px;margin:12px;padding:14px}
 label{display:block;margin:10px 0 6px;font-size:13px;color:#d7def0}
 input,select,button,textarea{width:100%;padding:10px;border-radius:12px;border:1px solid #333;background:#0f1117;color:var(--text)}
 table{width:100%;border-collapse:collapse}th,td{padding:8px;border-bottom:1px solid #333}
+
+/* KPI */
 .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
 .kpi{padding:12px;background:#0f1117;border:1px solid #1d2230;border-radius:12px;text-align:center}
 .kpi h3{margin:0 0 4px;font-size:12px;color:#9aa3b2}
@@ -40,12 +51,12 @@ canvas{width:100%;height:240px;background:#0f1117;border-radius:12px}
 .small{font-size:12px;color:#9aa3b2}
 .tools{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
 
-/* pill filtri movimento */
+/* Filtri pill */
 .pills{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
 .pill{padding:6px 10px;border-radius:999px;background:#0e1117;border:1px solid #273043;color:#d3dbec;cursor:pointer}
 .pill.active{background:var(--accent);border-color:transparent;color:#fff}
 
-/* MODAL base (Impostazioni, Scadenze) */
+/* Modal base */
 .modal{position:fixed;inset:0;display:none;place-items:center;background:rgba(0,0,0,.5);z-index:40}
 .modal.open{display:grid}
 .modal .panel{width:min(960px,96%);max-height:90vh;overflow:auto;background:#12141a;border:1px solid #2a3344;border-radius:16px;padding:16px}
@@ -55,72 +66,57 @@ canvas{width:100%;height:240px;background:#0f1117;border-radius:12px}
 .badge{display:inline-block;padding:5px 10px;border:1px solid #2a3344;border-radius:999px;font-size:12px;color:#c9d3ea;background:#0f1218}
 hr.sep{border:none;border-top:1px solid #283040;margin:12px 0}
 
-/* === Mobile header: pulsanti a colonna (iPhone friendly) === */
-@media (max-width:768px){
-  header{flex-wrap:wrap;}
-  header .right{
-    width:100%;
-    flex-direction:column;
-    gap:6px;
-    margin-top:8px;
-  }
-  header .right .btn{
-    width:100%;
-    text-align:center;
-  }
-}
-  /* === MENU STRUMENTI MOBILE === */
+/* MENU STRUMENTI (pannello mobile) */
 .tools-menu{
-  position:absolute;
-  top:100%; right:0;
-  background:#12141a;
-  border:1px solid #333;
-  border-radius:12px;
-  padding:6px 0;
-  box-shadow:0 6px 20px rgba(0,0,0,.4);
-  z-index:99;
+  position:fixed;
+  right:10px; top:62px;
+  background:#12141a; border:1px solid #2a3344; border-radius:14px;
+  box-shadow:0 10px 30px rgba(0,0,0,.45);
+  padding:8px; z-index:60; width:min(260px,90vw);
 }
 .tools-menu .iitem{
-  display:block;
-  background:none;
-  border:none;
-  color:#fff;
-  text-align:left;
-  width:100%;
-  padding:10px 16px;
-  font-size:15px;
+  display:block;width:100%;text-align:left;padding:10px 12px;margin:4px 0;
+  border:1px solid #2a3344;border-radius:10px;background:#0f1218;color:#e6ebff;cursor:pointer;
 }
-.tools-menu .iitem:hover{
-  background:#1e222c;
+.tools-menu .iitem.primary{background:#3b82f6;border-color:transparent;color:#fff}
+
+/* Responsive: su mobile nascondi i pulsanti grandi e mostra ⋯ */
+@media (max-width:768px){
+  header{flex-wrap:nowrap;align-items:stretch;gap:6px}
+  .tab{flex:0 0 auto;padding:8px 12px}
+  header .right{
+    margin-left:0;flex:1 1 auto;display:flex;gap:6px;overflow-x:auto;
+    -webkit-overflow-scrolling:touch;white-space:nowrap;padding-bottom:6px
+  }
+  header .right .btn:not(#toolsMenuBtn){display:none}
+  #toolsMenuBtn{display:inline-block}
 }
-.tools-menu .primary{
-  color:#3b82f6;
-  font-weight:600;
+@media (min-width:769px){
+  #toolsMenuBtn,#toolsMenuPanel{display:none !important}
 }
 </style>
 </head>
 <body>
-  
-<header>
-  <div class="left">
-    <h1>SmartBiz Pro</h1>
-  </div>
 
+<header>
+  <!-- TAB (devono restare .tab per funzionare) -->
+  <button class="tab active" data-view="add">Aggiungi</button>
+  <button class="tab" data-view="list">Movimenti</button>
+  <button class="tab" data-view="summary">Riepilogo</button>
+
+  <!-- Pulsanti “grandi” (visibili su desktop) -->
   <div class="right">
-    <!-- Pulsanti principali (desktop) -->
-    <button class="btn" data-view="add">Aggiungi</button>
-    <button class="btn" data-view="list">Movimenti</button>
-    <button class="btn" data-view="summary">Riepilogo</button>
     <button class="btn" id="btnImpostazioni">Impostazioni</button>
-    <button class="btn" id="btnScadenze">
-      Scadenze <span id="ivaReminder"></span>
-    </button>
+    <button class="btn" id="btnScadenze">Scadenze <span id="ivaReminder" class="badge"></span></button>
+
     <button class="btn" id="btnImport">Importa JSON</button>
+    <input type="file" id="fileImport" accept="application/json" hidden>
+
     <button class="btn" id="btnExportCSV">Export CSV</button>
     <button class="btn" id="btnExportJSON">Export JSON</button>
-    <button class="btn" id="btnReportPDF">Report PDF</button>
+    <button class="btn primary" id="btnReportPDF">Report PDF</button>
 
-    <!-- === NUOVO MENU MOBILE === -->
+    <!-- Menu mobile “⋯” -->
     <button class="btn icon" id="toolsMenuBtn" aria-label="Strumenti">⋯</button>
     <div id="toolsMenuPanel" class="tools-menu" hidden>
       <button class="iitem" id="tmImpostazioni">Impostazioni</button>
@@ -134,63 +130,27 @@ hr.sep{border:none;border-top:1px solid #283040;margin:12px 0}
 </header>
 
 <main>
-<!-- ======== AGGIUNGI ======== -->
+<!-- ===== AGGIUNGI ===== -->
 <section class="card" data-section="add">
   <h2>Nuovo movimento</h2>
-  <div class="tools">
-    <span class="badge">Conferma immediata: appare qui sotto e in Lista</span>
-  </div>
+  <div class="tools"><span class="badge">Conferma immediata: appare qui sotto e in Lista</span></div>
+
   <div class="grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
-    <div>
-      <label>Data <input type="date" id="date"></label>
-    </div>
-    <div>
-      <label>Tipo
-        <select id="type">
-          <option value="entrata">Entrata (Vendita)</option>
-          <option value="uscita">Uscita (Acquisto)</option>
-        </select>
-      </label>
-    </div>
-    <div>
-      <label>Metodo
-        <select id="method">
-          <option>Contanti</option><option>Bancomat</option><option>Carta</option><option>Bonifico</option>
-        </select>
-      </label>
-    </div>
-    <div>
-      <label>Categoria
-        <select id="category"></select>
-      </label>
-    </div>
-    <div>
-      <label>Fornitore
-        <select id="supplier"><option value="">-- Nessuno --</option></select>
-      </label>
-    </div>
-    <div>
-      <label>Tag (virgola)
-        <input id="tags" placeholder="evento, catering">
-      </label>
-    </div>
-    <div style="grid-column:1/-1">
-      <label>Descrizione <input id="desc" placeholder="Note…" ></label>
-    </div>
-    <div>
-      <label>Imponibile (€) <input type="number" id="amount" step="0.01"></label>
-    </div>
-    <div>
-      <label>IVA % 
-        <select id="iva">
-          <option value="22">22%</option>
-          <option value="10">10%</option>
-          <option value="5">5%</option>
-          <option value="4">4%</option>
-          <option value="0">0%</option>
-        </select>
-      </label>
-    </div>
+    <div><label>Data <input type="date" id="date"></label></div>
+    <div><label>Tipo
+      <select id="type"><option value="entrata">Entrata (Vendita)</option><option value="uscita">Uscita (Acquisto)</option></select>
+    </label></div>
+    <div><label>Metodo
+      <select id="method"><option>Contanti</option><option>Bancomat</option><option>Carta</option><option>Bonifico</option></select>
+    </label></div>
+    <div><label>Categoria <select id="category"></select></label></div>
+    <div><label>Fornitore <select id="supplier"><option value="">-- Nessuno --</option></select></label></div>
+    <div><label>Tag (virgola) <input id="tags" placeholder="evento, catering"></label></div>
+    <div style="grid-column:1/-1"><label>Descrizione <input id="desc" placeholder="Note…"></label></div>
+    <div><label>Imponibile (€) <input type="number" id="amount" step="0.01"></label></div>
+    <div><label>IVA %
+      <select id="iva"><option value="22">22%</option><option value="10">10%</option><option value="5">5%</option><option value="4">4%</option><option value="0">0%</option></select>
+    </label></div>
     <div style="align-self:end">
       <button id="addBtn" class="btn primary">+ Aggiungi / Salva</button>
       <input type="hidden" id="editId">
@@ -207,25 +167,19 @@ hr.sep{border:none;border-top:1px solid #283040;margin:12px 0}
   </div>
 </section>
 
-<!-- ======== LISTA COMPLETA ======== -->
+<!-- ===== LISTA ===== -->
 <section class="card" data-section="list" hidden>
   <h2 style="margin-bottom:8px">Movimenti</h2>
-
   <div class="tools">
     <div class="pills">
       <span class="pill active" data-ft="all">Tutti</span>
       <span class="pill" data-ft="entrata">Vendite</span>
       <span class="pill" data-ft="uscita">Acquisti</span>
     </div>
-    <select id="filterSupplier" style="max-width:240px">
-      <option value="">— Fornitore: tutti —</option>
-    </select>
+    <select id="filterSupplier" style="max-width:240px"><option value="">— Fornitore: tutti —</option></select>
     <select id="filterPeriod" style="max-width:220px">
-      <option value="all">Periodo: Tutto</option>
-      <option value="W">Ultima settimana</option>
-      <option value="M">Mese corrente</option>
-      <option value="Q">Ultimo trimestre</option>
-      <option value="Y">Anno corrente</option>
+      <option value="all">Periodo: Tutto</option><option value="W">Ultima settimana</option>
+      <option value="M">Mese corrente</option><option value="Q">Ultimo trimestre</option><option value="Y">Anno corrente</option>
     </select>
     <input id="from" type="date" style="max-width:160px">
     <input id="to" type="date" style="max-width:160px">
@@ -234,13 +188,13 @@ hr.sep{border:none;border-top:1px solid #283040;margin:12px 0}
 
   <table><thead>
     <tr>
-      <th>Data</th><th>Tipo</th><th>Metodo</th><th>Categoria</th>
-      <th>Fornitore</th><th>Tag</th><th>Descrizione</th><th>Imponibile</th><th>IVA</th><th>Totale</th><th></th>
+      <th>Data</th><th>Tipo</th><th>Metodo</th><th>Categoria</th><th>Fornitore</th>
+      <th>Tag</th><th>Descrizione</th><th>Imponibile</th><th>IVA</th><th>Totale</th><th></th>
     </tr>
   </thead><tbody id="tbody"></tbody></table>
 </section>
 
-<!-- ======== RIEPILOGO ======== -->
+<!-- ===== RIEPILOGO ===== -->
 <section class="card" data-section="summary" hidden>
   <h2>Riepilogo</h2>
   <div class="kpi-grid">
@@ -268,7 +222,7 @@ hr.sep{border:none;border-top:1px solid #283040;margin:12px 0}
 </section>
 </main>
 
-<!-- ======== MODAL IMPOSTAZIONI ======== -->
+<!-- ===== MODAL IMPOSTAZIONI ===== -->
 <div id="modalImpostazioni" class="modal" aria-hidden="true">
   <div class="panel">
     <div style="display:flex;gap:8px;align-items:center">
@@ -297,7 +251,7 @@ hr.sep{border:none;border-top:1px solid #283040;margin:12px 0}
   </div>
 </div>
 
-<!-- ======== MODAL SCADENZE ======== -->
+<!-- ===== MODAL SCADENZE ===== -->
 <div id="modalScadenze" class="modal" aria-hidden="true">
   <div class="panel">
     <div style="display:flex;gap:8px;align-items:center">
@@ -337,7 +291,7 @@ if(!Array.isArray(scadenze)) scadenze=[];
 
 let filterType='all', filterSupplier='', filterPeriod='all', filterFrom=null, filterTo=null;
 
-/* ===== Tabs ===== */
+/* ===== Tabs (devono essere .tab) ===== */
 const tabs=[...document.querySelectorAll('.tab')];
 const secs=[...document.querySelectorAll('[data-section]')];
 tabs.forEach(t=>t.onclick=()=>{
@@ -348,7 +302,7 @@ tabs.forEach(t=>t.onclick=()=>{
 });
 $('#date').valueAsDate=new Date();
 
-/* ===== Populate selects ===== */
+/* ===== Selects ===== */
 function fillSupplierSelects(){
   const s1=$('#supplier'), s2=$('#filterSupplier');
   if(s1){ s1.innerHTML='<option value="">-- Nessuno --</option>'+suppliers.map(n=>`<option>${n}</option>`).join(''); }
@@ -384,17 +338,11 @@ $('#addBtn').onclick=()=>{
 
 function startEdit(id){
   const r=data.find(x=>x.id===id); if(!r) return;
-  $('#date').value=r.d;
-  $('#type').value=r.type;
-  $('#method').value=r.method;
-  $('#category').value=r.cat;
-  $('#supplier').value=r.fornitore||'';
-  $('#tags').value=(r.tags||[]).join(', ');
-  $('#desc').value=r.desc||'';
-  $('#amount').value=r.imp||0;
-  $('#iva').value = (r.imp? Math.round(r.iva/r.imp*100):0);
+  $('#date').value=r.d; $('#type').value=r.type; $('#method').value=r.method;
+  $('#category').value=r.cat; $('#supplier').value=r.fornitore||'';
+  $('#tags').value=(r.tags||[]).join(', '); $('#desc').value=r.desc||'';
+  $('#amount').value=r.imp||0; $('#iva').value=(r.imp? Math.round(r.iva/r.imp*100):0);
   $('#editId').value=r.id;
-  // switch a "Aggiungi"
   tabs.find(t=>t.dataset.view==='add').click();
   $('#addBtn').textContent='💾 Salva modifiche';
 }
@@ -463,7 +411,7 @@ function del(id){
   renderMini(); renderList(); refreshSummary();
 }
 
-/* filtri tipo (pill) */
+/* Filtri */
 document.querySelectorAll('.pill').forEach(p=>{
   p.addEventListener('click',()=>{
     document.querySelectorAll('.pill').forEach(x=>x.classList.remove('active'));
@@ -479,7 +427,7 @@ function periodStart(){
   const now=new Date();
   if(filterPeriod==='W') return new Date(now.getFullYear(),now.getMonth(),now.getDate()-7);
   if(filterPeriod==='M') return new Date(now.getFullYear(),now.getMonth(),1);
-  if(filterPeriod==='Q') return new Date(now.getFullYear(),now.getMonth()-2,1); // ultimi 3 mesi
+  if(filterPeriod==='Q') return new Date(now.getFullYear(),now.getMonth()-2,1);
   if(filterPeriod==='Y') return new Date(now.getFullYear(),0,1);
   return new Date(0);
 }
@@ -496,7 +444,7 @@ function applyFilters(list){
   });
 }
 
-/* ===== Riepilogo, grafico, report ===== */
+/* ===== Riepilogo & grafico ===== */
 function refreshSummary(){
   const list=applyFilters([...data]);
   let entr=0,usc=0,deb=0,cred=0;
@@ -547,11 +495,10 @@ function quickReport(list){
 }
 $('#period').onchange=()=>refreshSummary();
 
-/* ===== IVA Reminder (trimestri italiani) ===== */
+/* ===== IVA Reminder (IT) ===== */
 function ivaDue(){
   const now=new Date();
   const year=now.getFullYear();
-  // 16/05, 20/08, 16/11, 16/03 (anno successivo)
   const scad=[ new Date(year,4,16), new Date(year,7,20), new Date(year,10,16), new Date(year+1,2,16) ];
   let next=scad.find(d=>d>now) || new Date(year+1,2,16);
   const diff=Math.ceil((next-now)/(1000*60*60*24));
@@ -567,7 +514,6 @@ $('#btnImpostazioni').onclick=()=>{ renderSupCat(); openModal($('#modalImpostazi
 $('#closeImpostazioni').onclick=()=>closeModal($('#modalImpostazioni'));
 
 function renderSupCat(){
-  // fornitori
   const supBody=$('#supBody'); supBody.innerHTML='';
   suppliers.forEach((n,i)=>{
     const tr=document.createElement('tr');
@@ -578,7 +524,7 @@ function renderSupCat(){
     const i=e.target.dataset.i; if(i===undefined) return;
     if(confirm('Eliminare fornitore?')){ suppliers.splice(i,1); setLS(LS_KEYS.sup,suppliers); renderSupCat(); fillSupplierSelects(); renderList(); refreshSummary(); }
   };
-  // categorie
+
   const catBody=$('#catBody'); catBody.innerHTML='';
   categories.forEach((n,i)=>{
     const tr=document.createElement('tr');
@@ -640,7 +586,7 @@ function delScad(id){
   });
 })();
 
-/* ===== Import / Export ===== */
+/* ===== Import / Export / PDF ===== */
 document.getElementById('btnImport').onclick=()=>document.getElementById('fileImport').click();
 document.getElementById('fileImport').addEventListener('change',importData);
 document.getElementById('btnExportJSON').onclick=()=>downloadJSON();
@@ -653,15 +599,12 @@ function importData(e){
   reader.onload=()=>{
     try{
       const obj=JSON.parse(reader.result);
-      // compatibilità: accetta sia struttura {movimenti, fornitori, categorie, scadenze}
-      // sia {sbp_*} o solo array movimenti
       if(obj.movimenti || Array.isArray(obj)){
         data = Array.isArray(obj) ? obj : (obj.movimenti||[]);
         suppliers = obj.fornitori || suppliers;
         categories = obj.categorie && obj.categorie.length ? obj.categorie : categories;
         scadenze = obj.scadenze || scadenze;
       }else{
-        // fallback: se le chiavi sono uguali a quelle del localStorage
         data = obj[LS_KEYS.mov] || data;
         suppliers = obj[LS_KEYS.sup] || suppliers;
         categories = obj[LS_KEYS.cat] || categories;
@@ -672,14 +615,11 @@ function importData(e){
       fillSupplierSelects(); fillCategorySelect();
       renderMini(); renderList(); refreshSummary(); renderScadenze();
       alert('Importazione completata!');
-    }catch(err){
-      alert('File JSON non valido.');
-    }
+    }catch(err){ alert('File JSON non valido.'); }
     e.target.value='';
   };
   reader.readAsText(file);
 }
-
 function downloadJSON(){
   const blob=new Blob([JSON.stringify({movimenti:data,fornitori:suppliers,categorie:categories,scadenze},null,2)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='smartbiz_backup.json'; a.click(); URL.revokeObjectURL(a.href);
@@ -715,33 +655,36 @@ function generaReportPDF(){
   doc.save('report_smartbiz.pdf');
 }
 
+/* ===== Menu mobile ⋯ ===== */
+(function(){
+  const btn = document.getElementById('toolsMenuBtn');
+  const panel = document.getElementById('toolsMenuPanel');
+  if(!btn || !panel) return;
+
+  const open = ()=>{ panel.hidden = false; };
+  const close = ()=>{ panel.hidden = true; };
+  const toggle = ()=>{ panel.hidden ? open() : close(); };
+
+  btn.addEventListener('click', (e)=>{ e.stopPropagation(); toggle(); });
+  document.addEventListener('click', (e)=>{
+    if(panel.hidden) return;
+    if(!panel.contains(e.target) && e.target!==btn) close();
+  });
+
+  const click = (id)=>document.getElementById(id)?.click();
+  document.getElementById('tmImpostazioni')?.addEventListener('click', ()=>{ close(); click('btnImpostazioni'); });
+  document.getElementById('tmScadenze')?.addEventListener('click',   ()=>{ close(); click('btnScadenze'); });
+  document.getElementById('tmImport')?.addEventListener('click',     ()=>{ close(); click('btnImport'); });
+  document.getElementById('tmExportCSV')?.addEventListener('click',  ()=>{ close(); click('btnExportCSV'); });
+  document.getElementById('tmExportJSON')?.addEventListener('click', ()=>{ close(); click('btnExportJSON'); });
+  document.getElementById('tmPDF')?.addEventListener('click',        ()=>{ close(); click('btnReportPDF'); });
+
+  document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click', close));
+})();
+
 /* ===== Avvio ===== */
 function saveAll(){ setLS(LS_KEYS.mov,data); setLS(LS_KEYS.sup,suppliers); setLS(LS_KEYS.cat,categories); setLS(LS_KEYS.sca,scadenze); }
 renderList(); refreshSummary(); fillSupplierSelects(); fillCategorySelect();
-/* === JS per menu mobile ⋯ === */
-const toolsBtn = document.getElementById('toolsMenuBtn');
-const toolsPanel = document.getElementById('toolsMenuPanel');
-
-toolsBtn.addEventListener('click', ()=>{
-  toolsPanel.hidden = !toolsPanel.hidden;
-});
-
-// Chiudi se clic fuori
-document.addEventListener('click', e=>{
-  if(!toolsPanel.hidden &&
-     !toolsPanel.contains(e.target) &&
-     e.target !== toolsBtn){
-    toolsPanel.hidden = true;
-  }
-});
-
-// Ricollega le funzioni già esistenti
-document.getElementById('tmImpostazioni').onclick = ()=>document.getElementById('btnImpostazioni').click();
-document.getElementById('tmScadenze').onclick    = ()=>document.getElementById('btnScadenze').click();
-document.getElementById('tmImport').onclick      = ()=>document.getElementById('btnImport').click();
-document.getElementById('tmExportCSV').onclick   = ()=>document.getElementById('btnExportCSV').click();
-document.getElementById('tmExportJSON').onclick  = ()=>document.getElementById('btnExportJSON').click();
-document.getElementById('tmPDF').onclick         = ()=>document.getElementById('btnReportPDF').click();
 </script>
 </body>
 </html>
