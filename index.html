@@ -3,33 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>SmartBiz Pro – Menu unico</title>
+<title>SmartBiz Pro</title>
 
-<!-- Librerie esterne -->
+<!-- Librerie -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
-/* Barra inferiore */
-.bottom-nav{
-  position:fixed;
-  bottom:0; left:0; right:0;
-  background:#0b0c10ee;
-  backdrop-filter:blur(10px);
-  display:flex;
-  justify-content:space-around;
-  border-top:1px solid #222;
-  z-index:50;
-}
-.bottom-nav button{
-  flex:1;
-  padding:10px 6px;
-  background:none;
-  border:none;
-  color:#ccc;
-  font-size:14px;
-  cursor:pointer;
-}
-.bottom-nav button.active{color:var(--accent);}
+
 <style>
 :root{
   --bg:#0b0c10;--card:#12141a;--text:#f2f5ff;--accent:#3b82f6;
@@ -37,7 +17,7 @@
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,system-ui}
-header{position:sticky;top:0;z-index:30;display:flex;justify-content:space-between;
+header{position:sticky;top:0;z-index:30;display:flex;justify-content:space-between;align-items:center;
   padding:10px 14px;background:#0b0c10ee;backdrop-filter:blur(10px)}
 header h1{font-size:18px;margin:0}
 .btn{padding:8px 14px;border:1px solid #2a2f38;border-radius:12px;background:#0e1117;color:#fff;cursor:pointer}
@@ -63,10 +43,33 @@ canvas{width:100%;height:240px;background:#0f1117;border-radius:12px}
   background:#0f1218;border:1px solid #2a3344;color:#e6ebff;cursor:pointer}
 .tools-menu button.primary{background:var(--accent);border:none;color:#fff}
 
-/* Form grid */
+/* Layout */
+main{padding-bottom:80px} /* spazio per la barra in basso */
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
 .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .muted{color:#a0a7b7;font-size:12px}
+
+/* Barra inferiore con 3 pulsanti */
+.bottom-nav{
+  position:fixed;
+  bottom:0; left:0; right:0;
+  background:#0b0c10ee;
+  backdrop-filter:blur(10px);
+  display:flex;
+  justify-content:space-around;
+  border-top:1px solid #222;
+  z-index:50;
+}
+.bottom-nav button{
+  flex:1;
+  padding:10px 6px;
+  background:none;
+  border:none;
+  color:#ccc;
+  font-size:14px;
+  cursor:pointer;
+}
+.bottom-nav button.active{color:var(--accent);}
 </style>
 </head>
 <body>
@@ -94,28 +97,32 @@ canvas{width:100%;height:240px;background:#0f1117;border-radius:12px}
 
 <main id="content"><!-- sezioni generate via JS --></main>
 
+<!-- Barra inferiore 3 pulsanti -->
+<nav class="bottom-nav">
+  <button id="tabAdd">➕ Aggiungi</button>
+  <button id="tabMov">📜 Movimenti</button>
+  <button id="tabForn">🏷️ Fornitori</button>
+</nav>
+
 <script>
 /* ===== Helpers & stato ===== */
 const cur=new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR'});
 const $=s=>document.querySelector(s);
 const LS='smartbiz_store_v1';
 let store;
-try{
-  store = JSON.parse(localStorage.getItem(LS)) || {};
-}catch{ store = {}; }
+try{store=JSON.parse(localStorage.getItem(LS))||{};}catch{store={};}
 if(!Array.isArray(store.movimenti)) store.movimenti=[];
 if(!Array.isArray(store.fornitori)) store.fornitori=[];
-if(!Array.isArray(store.categorie)) store.categorie=['Vendita','Servizi','Affitto','Utenze','Marketing','Spesa','Altro'];
+if(!Array.isArray(store.categorie)) store.categorie=['Vendita prodotti','Servizi','Affitto','Utenze','Marketing','Spesa','Altro'];
 if(!Array.isArray(store.scadenze)) store.scadenze=[];
-
-function save(){ localStorage.setItem(LS, JSON.stringify(store)); }
-function uid(){ return (crypto.randomUUID && crypto.randomUUID()) || (Date.now().toString(36)+Math.random().toString(36).slice(2)); }
-function view(html){ $('#content').innerHTML = html; }
-function menu(show){ const p=$('#menuPanel'); p.classList.toggle('show',show); p.setAttribute('aria-hidden', show?'false':'true'); }
+function save(){localStorage.setItem(LS,JSON.stringify(store));}
+function uid(){return (crypto.randomUUID&&crypto.randomUUID())||(Date.now().toString(36)+Math.random().toString(36).slice(2));}
+function view(h){$('#content').innerHTML=h;}
+function menu(show){const p=$('#menuPanel');p.classList.toggle('show',show);p.setAttribute('aria-hidden',show?'false':'true');}
 
 /* ===== Menu ===== */
-$('#menuBtn').onclick = (e)=>{ e.stopPropagation(); menu(!$('#menuPanel').classList.contains('show')); };
-document.addEventListener('click', e=>{ const p=$('#menuPanel'); if(p.classList.contains('show') && !p.contains(e.target) && e.target.id!=='menuBtn'){menu(false);} });
+$('#menuBtn').onclick=(e)=>{e.stopPropagation();menu(!$('#menuPanel').classList.contains('show'));};
+document.addEventListener('click',e=>{const p=$('#menuPanel');if(p.classList.contains('show')&&!p.contains(e.target)&&e.target.id!=='menuBtn'){menu(false);}});
 
 /* ===== Pagine ===== */
 function pageAdd(mov){
@@ -449,27 +456,21 @@ $('#mPdf').onclick    =()=>{ menu(false); reportPDF(); };
 $('#mImp').onclick    =()=>{ menu(false); $('#fileImport').click(); };
 $('#fileImport').onchange = importJSON;
 
-/* ===== Avvio ===== */
-ivaReminder();
-pageList();
-  // --- Bottom navigation ---
+/* ===== Bottom navigation ===== */
 const tAdd  = document.getElementById('tabAdd');
 const tMov  = document.getElementById('tabMov');
 const tForn = document.getElementById('tabForn');
-
 function setActive(btn){
   document.querySelectorAll('.bottom-nav button')
     .forEach(b=>b.classList.toggle('active', b===btn));
 }
-
 tAdd.onclick  = ()=>{ setActive(tAdd);  pageAdd();    };
 tMov.onclick  = ()=>{ setActive(tMov);  pageList();   };
 tForn.onclick = ()=>{ setActive(tForn); pageSup();    };
+
+/* ===== Avvio ===== */
+ivaReminder();
+pageList();
 </script>
-  <nav class="bottom-nav">
-  <button id="tabAdd">➕ Aggiungi</button>
-  <button id="tabMov">📜 Movimenti</button>
-  <button id="tabForn">🏷️ Fornitori</button>
-</nav>
 </body>
 </html>
