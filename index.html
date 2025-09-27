@@ -68,11 +68,33 @@ hr.sep{border:none;border-top:1px solid #283040;margin:12px 0}
     width:100%;
     text-align:center;
   }
+}/* ===== Menu compatto per mobile ===== */
+#toolsMenu {
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:8px;
+  margin:12px 0;
 }
+#toolsMenu button {
+  background:#1a1f29;
+  color:#e8ebf1;
+  border:1px solid #2a2f3a;
+  border-radius:10px;
+  padding:8px 12px;
+  font-size:14px;
+}
+#toolsMenu button:hover { background:#2a2f3a; }
 </style>
 </head>
 <body>
-
+<!-- Menu Strumenti compatto -->
+<div id="toolsMenu">
+  <button onclick="importData()">Importa JSON</button>
+  <button onclick="exportCSV()">Export CSV</button>
+  <button onclick="exportData()">Export JSON</button>
+  <button onclick="generaReportPDF()">Report PDF</button>
+</div>
 <header>
   <button class="tab active" data-view="add">Aggiungi</button>
   <button class="tab" data-view="list">Movimenti</button>
