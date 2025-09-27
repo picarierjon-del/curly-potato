@@ -1,664 +1,221 @@
 <!doctype html>
 <html lang="it">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-<title>SmartBiz Pro</title>
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="SmartBiz Pro">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SmartBiz Pro – Menu unico</title>
 
-<!-- Grafici + PDF -->
+<!-- Librerie esterne -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
 
 <style>
 :root{
-  --bg:#0b0c10;--card:#12141a;--text:#f2f5ff;--muted:#9aa3b2;
-  --accent:#3b82f6;--ok:#10b981;--bad:#ef4444;--warn:#f59e0b
+  --bg:#0b0c10;--card:#12141a;--text:#f2f5ff;--accent:#3b82f6;
+  --ok:#10b981;--bad:#ef4444;--muted:#a0a7b7;
 }
-*{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,system-ui}
-
-/* HEADER */
-header{position:sticky;top:0;background:#0b0c10ee;padding:10px;z-index:30;display:flex;gap:8px;align-items:center}
-header .right{margin-left:auto;display:flex;gap:6px;align-items:center}
-
-/* Tabs */
-.tab{margin:0 4px;padding:8px 14px;border:none;border-radius:20px;background:#1b1e24;color:#ccc;cursor:pointer}
-.tab.active{background:var(--accent);color:#fff}
-
-/* Bottoni */
-.btn{padding:9px 12px;border:1px solid #2b2f38;border-radius:12px;background:#0e1117;color:#fff;cursor:pointer}
-.btn.primary{background:var(--accent);border-color:transparent}
-.btn.bad{background:#2a1315;border-color:#502127;color:#ffb3b3}
-.btn.ok{background:#102218;border-color:#1a3b2a;color:#bff0d2}
-.btn.icon{font-weight:900;font-size:18px;padding:8px 12px}
-
-/* Cards / tabelle */
-.card{background:var(--card);border-radius:14px;margin:12px;padding:14px}
-label{display:block;margin:10px 0 6px;font-size:13px;color:#d7def0}
-input,select,button,textarea{width:100%;padding:10px;border-radius:12px;border:1px solid #333;background:#0f1117;color:var(--text)}
+header{position:sticky;top:0;z-index:30;display:flex;justify-content:space-between;
+  padding:10px 14px;background:#0b0c10ee;backdrop-filter:blur(10px)}
+header h1{font-size:18px;margin:0}
+.btn{padding:8px 14px;border:1px solid #2a2f38;border-radius:12px;background:#0e1117;color:#fff;cursor:pointer}
+.btn.primary{background:var(--accent);border:none}
+.card{background:var(--card);border-radius:14px;margin:14px;padding:14px}
+label{display:block;margin:8px 0 4px;font-size:13px;color:#d7def0}
+input,select,textarea{width:100%;padding:8px;border-radius:12px;border:1px solid #333;background:#0f1117;color:var(--text)}
 table{width:100%;border-collapse:collapse}th,td{padding:8px;border-bottom:1px solid #333}
-
-/* KPI */
-.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
-.kpi{padding:12px;background:#0f1117;border:1px solid #1d2230;border-radius:12px;text-align:center}
-.kpi h3{margin:0 0 4px;font-size:12px;color:#9aa3b2}
-.money{font-weight:800}
+.kpi{background:#0f1117;border:1px solid #1c2230;border-radius:12px;padding:12px;text-align:center;margin:8px 0}
+.kpi h3{margin:0 0 4px;font-size:12px;color:var(--muted)}
+.money{font-weight:700}
 .ok{color:var(--ok)}.bad{color:var(--bad)}
 canvas{width:100%;height:240px;background:#0f1117;border-radius:12px}
-.small{font-size:12px;color:#9aa3b2}
-.tools{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
-
-/* Filtri pill */
-.pills{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
-.pill{padding:6px 10px;border-radius:999px;background:#0e1117;border:1px solid #273043;color:#d3dbec;cursor:pointer}
-.pill.active{background:var(--accent);border-color:transparent;color:#fff}
-
-/* Modal base */
-.modal{position:fixed;inset:0;display:none;place-items:center;background:rgba(0,0,0,.5);z-index:40}
-.modal.open{display:grid}
-.modal .panel{width:min(960px,96%);max-height:90vh;overflow:auto;background:#12141a;border:1px solid #2a3344;border-radius:16px;padding:16px}
-.modal h3{margin:0 0 8px}
-.modal .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-@media (max-width:760px){.modal .grid{grid-template-columns:1fr}}
-.badge{display:inline-block;padding:5px 10px;border:1px solid #2a3344;border-radius:999px;font-size:12px;color:#c9d3ea;background:#0f1218}
-hr.sep{border:none;border-top:1px solid #283040;margin:12px 0}
-
-/* MENU STRUMENTI (pannello) */
-.tools-menu{
-  position:fixed;
-  right:10px; top:62px;
-  background:#12141a; border:1px solid #2a3344; border-radius:14px;
-  box-shadow:0 10px 30px rgba(0,0,0,.45);
-  padding:8px; z-index:60; width:min(260px,90vw);
-}
-.tools-menu .iitem{
-  display:block;width:100%;text-align:left;padding:10px 12px;margin:4px 0;
-  border:1px solid #2a3344;border-radius:10px;background:#0f1218;color:#e6ebff;cursor:pointer;
-}
-.tools-menu .iitem.primary{background:#3b82f6;border-color:transparent;color:#fff}
-
-/* Responsive */
-@media (max-width:768px){
-  header{flex-wrap:nowrap;align-items:center;gap:6px}
-  .tab{flex:0 0 auto;padding:8px 12px}
-  header .right{margin-left:auto}
-}
+.tools-menu{position:absolute;top:58px;right:10px;background:#12141a;border:1px solid #2a3344;border-radius:14px;
+  box-shadow:0 10px 30px rgba(0,0,0,.45);padding:8px;z-index:60;display:none;width:min(260px,90vw)}
+.tools-menu.show{display:block}
+.tools-menu button{display:block;width:100%;text-align:left;margin:4px 0;padding:10px;border-radius:10px;
+  background:#0f1218;border:1px solid #2a3344;color:#e6ebff;cursor:pointer}
+.tools-menu button.primary{background:var(--accent);border:none;color:#fff}
+.badge{display:inline-block;background:#1c2230;border:1px solid #2a3346;padding:4px 8px;border-radius:999px;font-size:12px;color:#cbd2e2}
 </style>
 </head>
 <body>
 
 <header>
-  <!-- TAB -->
-  <button class="tab active" data-view="add">Aggiungi</button>
-  <button class="tab" data-view="list">Movimenti</button>
-  <button class="tab" data-view="summary">Riepilogo</button>
-
-  <!-- Menu compatto -->
-  <div class="right">
-    <button class="btn icon" id="toolsMenuBtn" aria-label="Strumenti">⋯</button>
-    <div id="toolsMenuPanel" class="tools-menu" hidden>
-      <button class="iitem" id="tmImpostazioni">Impostazioni</button>
-      <button class="iitem" id="tmScadenze">Scadenze</button>
-      <button class="iitem" id="tmImport">Importa JSON</button>
-      <button class="iitem" id="tmExportCSV">Export CSV</button>
-      <button class="iitem" id="tmExportJSON">Export JSON</button>
-      <button class="iitem primary" id="tmPDF">Report PDF</button>
-    </div>
-    <!-- input file nascosto -->
+  <h1>SmartBiz Pro</h1>
+  <div>
+    <button class="btn" id="menuBtn">⋯</button>
+    <span id="ivaReminder" class="badge"></span>
+  </div>
+  <div id="menuPanel" class="tools-menu">
+    <button id="mAdd" class="primary">➕ Nuovo movimento</button>
+    <button id="mList">📜 Lista movimenti</button>
+    <button id="mSummary">📊 Riepilogo</button>
+    <button id="mSup">🏷️ Fornitori & Categorie</button>
+    <button id="mDead">⏰ Scadenze</button>
+    <button id="mImp">⬆️ Importa JSON</button>
+    <button id="mExpCsv">⬇️ Export CSV</button>
+    <button id="mExpJson">⬇️ Export JSON</button>
+    <button id="mPdf">🧾 Report PDF</button>
     <input type="file" id="fileImport" accept="application/json" hidden>
-    <span id="ivaReminder" class="badge" style="margin-left:8px"></span>
   </div>
 </header>
 
-<main>
-<!-- ===== AGGIUNGI ===== -->
-<section class="card" data-section="add">
-  <h2>Nuovo movimento</h2>
-  <div class="tools"><span class="badge">Conferma immediata: appare qui sotto e in Lista</span></div>
-
-  <div class="grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
-    <div><label>Data <input type="date" id="date"></label></div>
-    <div><label>Tipo
-      <select id="type"><option value="entrata">Entrata (Vendita)</option><option value="uscita">Uscita (Acquisto)</option></select>
-    </label></div>
-    <div><label>Metodo
-      <select id="method"><option>Contanti</option><option>Bancomat</option><option>Carta</option><option>Bonifico</option></select>
-    </label></div>
-    <div><label>Categoria <select id="category"></select></label></div>
-    <div><label>Fornitore <select id="supplier"><option value="">-- Nessuno --</option></select></label></div>
-    <div><label>Tag (virgola) <input id="tags" placeholder="evento, catering"></label></div>
-    <div style="grid-column:1/-1"><label>Descrizione <input id="desc" placeholder="Note…"></label></div>
-    <div><label>Imponibile (€) <input type="number" id="amount" step="0.01"></label></div>
-    <div><label>IVA %
-      <select id="iva"><option value="22">22%</option><option value="10">10%</option><option value="5">5%</option><option value="4">4%</option><option value="0">0%</option></select>
-    </label></div>
-    <div style="align-self:end">
-      <button id="addBtn" class="btn primary">+ Aggiungi / Salva</button>
-      <input type="hidden" id="editId">
-    </div>
-  </div>
-
-  <h3 style="margin-top:14px">Ultimi movimenti (conferma immediata)</h3>
-  <table id="miniTable"><thead>
-    <tr><th>Data</th><th>Tipo</th><th>Metodo</th><th>Totale</th><th></th></tr>
-  </thead><tbody></tbody></table>
-  <div style="margin-top:8px;display:flex;gap:8px">
-    <button id="miniClear" type="button" class="btn bad">Pulisci ultimi 5</button>
-    <button id="miniAllClear" type="button" class="btn bad">Svuota tutto</button>
-  </div>
-</section>
-
-<!-- ===== LISTA ===== -->
-<section class="card" data-section="list" hidden>
-  <h2 style="margin-bottom:8px">Movimenti</h2>
-  <div class="tools">
-    <div class="pills">
-      <span class="pill active" data-ft="all">Tutti</span>
-      <span class="pill" data-ft="entrata">Vendite</span>
-      <span class="pill" data-ft="uscita">Acquisti</span>
-    </div>
-    <select id="filterSupplier" style="max-width:240px"><option value="">— Fornitore: tutti —</option></select>
-    <select id="filterPeriod" style="max-width:220px">
-      <option value="all">Periodo: Tutto</option><option value="W">Ultima settimana</option>
-      <option value="M">Mese corrente</option><option value="Q">Ultimo trimestre</option><option value="Y">Anno corrente</option>
-    </select>
-    <input id="from" type="date" style="max-width:160px">
-    <input id="to" type="date" style="max-width:160px">
-    <button id="applyDates" class="btn">Applica</button>
-  </div>
-
-  <table><thead>
-    <tr>
-      <th>Data</th><th>Tipo</th><th>Metodo</th><th>Categoria</th><th>Fornitore</th>
-      <th>Tag</th><th>Descrizione</th><th>Imponibile</th><th>IVA</th><th>Totale</th><th></th>
-    </tr>
-  </thead><tbody id="tbody"></tbody></table>
-</section>
-
-<!-- ===== RIEPILOGO ===== -->
-<section class="card" data-section="summary" hidden>
-  <h2>Riepilogo</h2>
-  <div class="kpi-grid">
-    <div class="kpi"><h3>Entrate</h3><div class="money ok" id="kEntrate">€0</div></div>
-    <div class="kpi"><h3>Uscite</h3><div class="money bad" id="kUscite">€0</div></div>
-    <div class="kpi"><h3>Δ Entrate − Uscite</h3><div class="money" id="kSaldo">€0</div></div>
-    <div class="kpi"><h3>IVA Debito</h3><div class="money" id="kDebito">€0</div></div>
-    <div class="kpi"><h3>IVA Credito</h3><div class="money" id="kCredito">€0</div></div>
-    <div class="kpi"><h3>Δ IVA</h3><div class="money" id="kDiffIVA">€0</div></div>
-  </div>
-
-  <canvas id="chart" style="margin-top:12px"></canvas>
-
-  <h3 style="margin-top:14px">Report rapido</h3>
-  <select id="period">
-    <option value="W">Ultima settimana</option>
-    <option value="M">Mese corrente</option>
-    <option value="Q">Ultimo trimestre</option>
-    <option value="Y">Anno corrente</option>
-  </select>
-  <div class="small" id="report"></div>
-
-  <h3 style="margin-top:14px">Scadenza IVA trimestrale</h3>
-  <div class="small" id="ivaDue"></div>
-</section>
-</main>
-
-<!-- ===== MODAL IMPOSTAZIONI ===== -->
-<div id="modalImpostazioni" class="modal" aria-hidden="true">
-  <div class="panel">
-    <div style="display:flex;gap:8px;align-items:center">
-      <h3 style="margin-right:auto">Impostazioni</h3>
-      <button class="btn" id="closeImpostazioni">Chiudi</button>
-    </div>
-    <hr class="sep">
-    <div class="grid">
-      <div class="card" style="margin:0">
-        <h3>Fornitori</h3>
-        <div style="display:flex;gap:8px;margin:8px 0">
-          <input id="newSupplier" placeholder="Es. Molino Rossi">
-          <button class="btn ok" id="addSupplier">Aggiungi</button>
-        </div>
-        <table><thead><tr><th>Fornitore</th><th></th></tr></thead><tbody id="supBody"></tbody></table>
-      </div>
-      <div class="card" style="margin:0">
-        <h3>Categorie</h3>
-        <div style="display:flex;gap:8px;margin:8px 0">
-          <input id="newCategory" placeholder="Nuova categoria">
-          <button class="btn ok" id="addCategory">Aggiungi</button>
-        </div>
-        <table><thead><tr><th>Categoria</th><th></th></tr></thead><tbody id="catBody"></tbody></table>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ===== MODAL SCADENZE ===== -->
-<div id="modalScadenze" class="modal" aria-hidden="true">
-  <div class="panel">
-    <div style="display:flex;gap:8px;align-items:center">
-      <h3 style="margin-right:auto">Scadenze</h3>
-      <button class="btn" id="closeScadenze">Chiudi</button>
-    </div>
-    <hr class="sep">
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <input id="scadTitolo" placeholder="INPS, IMU, F24…" style="flex:1 1 240px">
-      <input id="scadData" type="date" style="flex:0 0 180px">
-      <button class="btn ok" id="scadAdd">Aggiungi</button>
-    </div>
-    <table style="margin-top:10px"><thead><tr><th>Data</th><th>Titolo</th><th></th></tr></thead><tbody id="scadBody"></tbody></table>
-    <div class="small" style="margin-top:6px">Promemoria automatico quando mancano ≤ 3 giorni.</div>
-  </div>
-</div>
+<main id="content"><!-- sezioni generate via JS --></main>
 
 <script>
-/* ===== Helpers & Stato ===== */
 const cur=new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR'});
 const $=s=>document.querySelector(s);
+const LS='sbp_all';
+let store=JSON.parse(localStorage.getItem(LS)||'{"movimenti":[],"fornitori":[],"categorie":["Vendita","Servizi","Affitto","Utenze","Marketing","Spesa","Altro"],"scadenze":[]}');
+function save(){localStorage.setItem(LS,JSON.stringify(store));}
+function uid(){return crypto.randomUUID?.():Date.now().toString(36)+Math.random().toString(36).slice(2);}
 
-const LS_KEYS={mov:'sbp_movimenti',sup:'sbp_fornitori',cat:'sbp_categorie',sca:'sbp_scadenze'};
-const getLS=(k,def=[])=>JSON.parse(localStorage.getItem(k)||JSON.stringify(def));
-const setLS=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
-const uid=()=> (crypto.randomUUID ? crypto.randomUUID() : (Date.now().toString(36)+Math.random().toString(36).slice(2)));
+function menu(show){$('#menuPanel').classList.toggle('show',show);}
+$('#menuBtn').onclick=e=>{e.stopPropagation();menu(!$('#menuPanel').classList.contains('show'));};
+document.addEventListener('click',e=>{if(!$('#menuPanel').contains(e.target)&&e.target.id!=='menuBtn')menu(false);});
 
-let data=getLS(LS_KEYS.mov);
-let suppliers=getLS(LS_KEYS.sup);
-let categories=getLS(LS_KEYS.cat, ['Vendita prodotti','Servizi','Affitto','Utenze','Marketing','Spesa','Altro']);
-let scadenze=getLS(LS_KEYS.sca);
+function view(html){$('#content').innerHTML=html;}
 
-if(!Array.isArray(data)) data=[];
-if(!Array.isArray(suppliers)) suppliers=[];
-if(!Array.isArray(categories)) categories=['Vendita prodotti','Servizi','Affitto','Utenze','Marketing','Spesa','Altro'];
-if(!Array.isArray(scadenze)) scadenze=[];
-
-let filterType='all', filterSupplier='', filterPeriod='all', filterFrom=null, filterTo=null;
-
-/* ===== Tabs ===== */
-const tabs=[...document.querySelectorAll('.tab')];
-const secs=[...document.querySelectorAll('[data-section]')];
-tabs.forEach(t=>t.onclick=()=>{
-  tabs.forEach(x=>x.classList.remove('active'));
-  t.classList.add('active');
-  secs.forEach(s=>s.hidden=s.dataset.section!==t.dataset.view);
-  if(t.dataset.view==='summary')refreshSummary();
-});
-$('#date').valueAsDate=new Date();
-
-/* ===== Selects ===== */
-function fillSupplierSelects(){
-  const s1=$('#supplier'), s2=$('#filterSupplier');
-  if(s1){ s1.innerHTML='<option value="">-- Nessuno --</option>'+suppliers.map(n=>`<option>${n}</option>`).join(''); }
-  if(s2){ s2.innerHTML='<option value="">— Fornitore: tutti —</option>'+suppliers.map(n=>`<option>${n}</option>`).join(''); }
-}
-function fillCategorySelect(){
-  $('#category').innerHTML = categories.map(n=>`<option>${n}</option>`).join('');
-}
-fillSupplierSelects(); fillCategorySelect();
-
-/* ===== Aggiungi / Modifica ===== */
-$('#addBtn').onclick=()=>{
-  const d=$('#date').value, type=$('#type').value, method=$('#method').value;
-  const cat=$('#category').value, sup=$('#supplier').value;
-  const tags=($('#tags').value||'').split(',').map(s=>s.trim()).filter(Boolean);
-  const desc=$('#desc').value;
-  const imp=parseFloat($('#amount').value)||0;
-  const ivaP=parseFloat($('#iva').value);
-  const iva=imp*ivaP/100, tot=imp+iva;
-  if(!d||imp<=0){alert('Completa data e imponibile');return;}
-
-  const id = $('#editId').value || uid();
-  const rec={id,d,type,method,cat,fornitore:sup,desc,imp,iva,tot,tags};
-  const exists = data.some(x=>x.id===id);
-  if(exists) data=data.map(x=>x.id===id?rec:x); else data.push(rec);
-
-  setLS(LS_KEYS.mov,data);
-  renderMini(); renderList(); refreshSummary();
-  $('#editId').value='';
-  $('#addBtn').textContent='+ Aggiungi / Salva';
-  alert(exists?'Movimento aggiornato':'Movimento salvato');
-};
-
-function startEdit(id){
-  const r=data.find(x=>x.id===id); if(!r) return;
-  $('#date').value=r.d; $('#type').value=r.type; $('#method').value=r.method;
-  $('#category').value=r.cat; $('#supplier').value=r.fornitore||'';
-  $('#tags').value=(r.tags||[]).join(', '); $('#desc').value=r.desc||'';
-  $('#amount').value=r.imp||0; $('#iva').value=(r.imp? Math.round(r.iva/r.imp*100):0);
-  $('#editId').value=r.id;
-  tabs.find(t=>t.dataset.view==='add').click();
-  $('#addBtn').textContent='💾 Salva modifiche';
-}
-
-/* ===== Mini list (ultimi 5) ===== */
-function renderMini(){
-  const tb=document.querySelector('#miniTable tbody');
-  tb.innerHTML='';
-  const latest=[...data].sort((a,b)=>new Date(b.d)-new Date(a.d)).slice(0,5);
-  latest.forEach(r=>{
-    const tr=document.createElement('tr');
-    tr.innerHTML = `<td>${r.d}</td><td>${r.type}</td><td>${r.method}</td><td>${cur.format(r.tot)}</td>
-      <td style="white-space:nowrap">
-        <button class="btn" onclick="startEdit('${r.id}')">Mod.</button>
-        <button class="btn bad" onclick="del('${r.id}')">✖</button>
-      </td>`;
-    tb.appendChild(tr);
-  });
-}
-renderMini();
-
-/* pulisci */
-$('#miniClear').onclick=()=>{
-  const latest=[...data].sort((a,b)=>new Date(b.d)-new Date(a.d)).slice(0,5);
-  if(!latest.length) return alert('Nessun movimento da pulire.');
-  if(confirm('Rimuovere gli ultimi 5 movimenti mostrati?')){
-    const ids=new Set(latest.map(x=>x.id));
-    data=data.filter(x=>!ids.has(x.id));
-    setLS(LS_KEYS.mov,data);
-    renderMini(); renderList(); refreshSummary();
-  }
-};
-$('#miniAllClear').onclick=()=>{
-  if(confirm('Svuotare TUTTI i movimenti?')){
-    data=[]; setLS(LS_KEYS.mov,data);
-    renderMini(); renderList(); refreshSummary();
-  }
-};
-
-/* ===== Lista completa ===== */
-function renderList(){
-  const tb=$('#tbody'); tb.innerHTML='';
-  const list = applyFilters([...data]).sort((a,b)=>new Date(b.d)-new Date(a.d));
-  list.forEach(r=>{
-    const tr=document.createElement('tr');
-    const tags=(r.tags||[]).map(t=>`<span class="badge" style="margin-right:4px">${t}</span>`).join('');
-    tr.innerHTML = `
-      <td>${r.d}</td><td>${r.type}</td><td>${r.method}</td>
-      <td>${r.cat}</td><td>${r.fornitore||''}</td><td>${tags}</td>
-      <td>${r.desc||''}</td>
-      <td>${cur.format(r.imp||0)}</td><td>${cur.format(r.iva||0)}</td>
-      <td>${cur.format(r.tot||0)}</td>
-      <td style="white-space:nowrap">
-        <button class="btn" onclick="startEdit('${r.id}')">Mod.</button>
-        <button class="btn bad" onclick="del('${r.id}')">✖</button>
-      </td>`;
-    tb.appendChild(tr);
-  });
-}
-renderList();
-
-function del(id){
-  if(!confirm('Eliminare questo movimento?')) return;
-  data=data.filter(x=>x.id!==id);
-  setLS(LS_KEYS.mov,data);
-  renderMini(); renderList(); refreshSummary();
-}
-
-/* Filtri */
-document.querySelectorAll('.pill').forEach(p=>{
-  p.addEventListener('click',()=>{
-    document.querySelectorAll('.pill').forEach(x=>x.classList.remove('active'));
-    p.classList.add('active');
-    filterType=p.dataset.ft; renderList(); refreshSummary();
-  });
-});
-$('#filterSupplier').onchange=(e)=>{filterSupplier=e.target.value; renderList(); refreshSummary();}
-$('#filterPeriod').onchange=(e)=>{filterPeriod=e.target.value; filterFrom=null; filterTo=null; $('#from').value=''; $('#to').value=''; renderList(); refreshSummary();}
-$('#applyDates').onclick=()=>{filterFrom=$('#from').value||null; filterTo=$('#to').value||null; renderList(); refreshSummary();};
-
-function periodStart(){
-  const now=new Date();
-  if(filterPeriod==='W') return new Date(now.getFullYear(),now.getMonth(),now.getDate()-7);
-  if(filterPeriod==='M') return new Date(now.getFullYear(),now.getMonth(),1);
-  if(filterPeriod==='Q') return new Date(now.getFullYear(),now.getMonth()-2,1);
-  if(filterPeriod==='Y') return new Date(now.getFullYear(),0,1);
-  return new Date(0);
-}
-function applyFilters(list){
-  const start=periodStart();
-  return list.filter(m=>{
-    const d=new Date(m.d);
-    if(filterPeriod!=='all' && d<start) return false;
-    if(filterFrom && d<new Date(filterFrom)) return false;
-    if(filterTo && d>new Date(filterTo)) return false;
-    if(filterSupplier && (m.fornitore||'')!==filterSupplier) return false;
-    if(filterType!=='all' && m.type!==filterType) return false;
-    return true;
-  });
-}
-
-/* ===== Riepilogo & grafico ===== */
-function refreshSummary(){
-  const list=applyFilters([...data]);
-  let entr=0,usc=0,deb=0,cred=0;
-  list.forEach(r=>{
-    if(r.type==='entrata'){entr+=r.tot;deb+=r.iva;}
-    else{usc+=r.tot;cred+=r.iva;}
-  });
-  $('#kEntrate').textContent=cur.format(entr);
-  $('#kUscite').textContent=cur.format(usc);
-  $('#kSaldo').textContent=cur.format(entr-usc);
-  $('#kDebito').textContent=cur.format(deb);
-  $('#kCredito').textContent=cur.format(cred);
-  $('#kDiffIVA').textContent=cur.format(deb-cred);
-  drawChart(list);
-  quickReport(list);
-  ivaDue();
-}
-function drawChart(list){
-  const c=$('#chart');const ctx=c.getContext('2d');
-  c.width=c.clientWidth*devicePixelRatio;c.height=240*devicePixelRatio;
-  ctx.fillStyle='#0f1117';ctx.fillRect(0,0,c.width,c.height);
-  let monthly={};list.forEach(r=>{
-    const m=r.d.slice(0,7);monthly[m]=monthly[m]||0;
-    monthly[m]+=r.type==='entrata'?r.tot:-r.tot;
-  });
-  const keys=Object.keys(monthly).sort();
-  const vals=keys.map(k=>monthly[k]);
-  const max=Math.max(...vals.map(v=>Math.abs(v)),1);
-  const barW=(c.width-60)/Math.max(keys.length,1)*0.6, pad=40;
-  keys.forEach((k,i)=>{
-    const x=pad+i*(c.width-pad*2)/Math.max(keys.length,1);
-    const h=vals[i]/max*(c.height-80);
-    ctx.fillStyle=vals[i]>=0?'#10b981':'#ef4444';
-    ctx.fillRect(x+10,c.height/2-h,barW,Math.abs(h));
-    ctx.fillStyle='#aaa';ctx.fillText(k.slice(5),x+15,c.height-12);
-  });
-}
-function quickReport(list){
-  const p=$('#period').value;
-  const now=new Date();let from=new Date();
-  if(p==='W')from.setDate(now.getDate()-7);
-  if(p==='M')from=new Date(now.getFullYear(),now.getMonth(),1);
-  if(p==='Q')from=new Date(now.getFullYear(),now.getMonth()-2,1);
-  if(p==='Y')from=new Date(now.getFullYear(),0,1);
-  let e=0,u=0;
-  list.forEach(r=>{const d=new Date(r.d); if(d>=from){if(r.type==='entrata')e+=r.tot;else u+=r.tot;}});
-  $('#report').textContent=`Periodo: ${cur.format(e-u)} (Entrate ${cur.format(e)} – Uscite ${cur.format(u)})`;
-}
-$('#period').onchange=()=>refreshSummary();
-
-/* ===== IVA Reminder (IT) ===== */
-function ivaDue(){
-  const now=new Date();
-  const year=now.getFullYear();
-  const scad=[ new Date(year,4,16), new Date(year,7,20), new Date(year,10,16), new Date(year+1,2,16) ];
-  let next=scad.find(d=>d>now) || new Date(year+1,2,16);
-  const diff=Math.ceil((next-now)/(1000*60*60*24));
-  $('#ivaReminder').textContent=`Prossima IVA: ${next.toLocaleDateString('it-IT')} • ${diff}g`;
-  $('#ivaDue').textContent = `Prossima scadenza: ${next.toLocaleDateString('it-IT')} (tra ${diff} giorni)`;
-}
-
-/* ===== Impostazioni: fornitori & categorie ===== */
-function openSettings(){ renderSupCat(); openModal($('#modalImpostazioni')); }
-function openDeadlines(){ renderScadenze(); openModal($('#modalScadenze')); }
-
-function openModal(m){ m.classList.add('open'); m.setAttribute('aria-hidden','false'); }
-function closeModal(m){ m.classList.remove('open'); m.setAttribute('aria-hidden','true'); }
-
-document.getElementById('closeImpostazioni').onclick=()=>closeModal($('#modalImpostazioni'));
-document.getElementById('closeScadenze').onclick=()=>closeModal($('#modalScadenze'));
-
-function renderSupCat(){
-  const supBody=$('#supBody'); supBody.innerHTML='';
-  suppliers.forEach((n,i)=>{
-    const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${n}</td><td style="text-align:right"><button class="btn bad" data-i="${i}">Elimina</button></td>`;
-    supBody.appendChild(tr);
-  });
-  supBody.onclick=(e)=>{
-    const i=e.target.dataset.i; if(i===undefined) return;
-    if(confirm('Eliminare fornitore?')){ suppliers.splice(i,1); setLS(LS_KEYS.sup,suppliers); renderSupCat(); fillSupplierSelects(); renderList(); refreshSummary(); }
-  };
-
-  const catBody=$('#catBody'); catBody.innerHTML='';
-  categories.forEach((n,i)=>{
-    const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${n}</td><td style="text-align:right"><button class="btn bad" data-i="${i}">Elimina</button></td>`;
-    catBody.appendChild(tr);
-  });
-  catBody.onclick=(e)=>{
-    const i=e.target.dataset.i; if(i===undefined) return;
-    if(confirm('Eliminare categoria? I movimenti passeranno a "Altro".')){
-      const name=categories[i];
-      categories.splice(i,1);
-      data=data.map(m=> m.cat===name ? {...m,cat:'Altro'} : m );
-      setLS(LS_KEYS.cat,categories); setLS(LS_KEYS.mov,data);
-      renderSupCat(); fillCategorySelect(); renderList(); refreshSummary();
-    }
+/* ========== Pagine ========== */
+function pageAdd(mov){
+  const m=mov||{d:new Date().toISOString().slice(0,10),type:'entrata',method:'Contanti',cat:store.categorie[0]||'Altro',sup:'',desc:'',imp:'',iva:'22',tags:[]};
+  view(`<div class="card">
+    <h2>${mov?'Modifica':'Nuovo'} movimento</h2>
+    <label>Data <input type="date" id="d" value="${m.d}"></label>
+    <label>Tipo <select id="t"><option ${m.type==='entrata'?'selected':''}>entrata</option><option ${m.type==='uscita'?'selected':''}>uscita</option></select></label>
+    <label>Metodo <input id="me" value="${m.method}"></label>
+    <label>Categoria <select id="c">${store.categorie.map(x=>`<option ${x===m.cat?'selected':''}>${x}</option>`).join('')}</select></label>
+    <label>Fornitore <select id="s"><option></option>${store.fornitori.map(x=>`<option ${x===m.sup?'selected':''}>${x}</option>`).join('')}</select></label>
+    <label>Tag <input id="tg" value="${(m.tags||[]).join(', ')}"></label>
+    <label>Descrizione <input id="desc" value="${m.desc}"></label>
+    <label>Imponibile (€) <input type="number" id="imp" step="0.01" value="${m.imp}"></label>
+    <label>IVA % <select id="iva">${[0,4,5,10,22].map(v=>`<option ${v==m.iva?'selected':''}>${v}</option>`).join('')}</select></label>
+    <button class="btn primary" id="saveBtn">💾 Salva</button>
+  </div>`);
+  $('#saveBtn').onclick=()=>{
+    const rec={id:m.id||uid(),d:$('#d').value,type:$('#t').value,method:$('#me').value,
+      cat:$('#c').value,sup:$('#s').value,desc:$('#desc').value,
+      imp:parseFloat($('#imp').value)||0,ivaPerc:parseFloat($('#iva').value),
+      tags:$('#tg').value.split(',').map(s=>s.trim()).filter(Boolean)};
+    rec.iva=rec.imp*rec.ivaPerc/100; rec.tot=rec.imp+rec.iva;
+    if(m.id) store.movimenti=store.movimenti.map(x=>x.id===m.id?rec:x); else store.movimenti.push(rec);
+    save(); alert('Salvato'); pageList();
   };
 }
-document.getElementById('addSupplier').onclick=()=>{
-  const v=$('#newSupplier').value.trim(); if(!v) return;
-  if(!suppliers.includes(v)) suppliers.push(v);
-  setLS(LS_KEYS.sup,suppliers); $('#newSupplier').value=''; renderSupCat(); fillSupplierSelects();
-};
-document.getElementById('addCategory').onclick=()=>{
-  const v=$('#newCategory').value.trim(); if(!v) return;
-  if(!categories.includes(v)) categories.push(v);
-  setLS(LS_KEYS.cat,categories); $('#newCategory').value=''; renderSupCat(); fillCategorySelect();
-};
 
-/* ===== Scadenze ===== */
-document.getElementById('scadAdd').onclick=()=>{
-  const t=$('#scadTitolo').value.trim(); const d=$('#scadData').value;
-  if(!t||!d) return;
-  scadenze.push({id:uid(),titolo:t,data:d});
-  setLS(LS_KEYS.sca,scadenze);
-  $('#scadTitolo').value=''; $('#scadData').value='';
-  renderScadenze();
-};
-function renderScadenze(){
-  const tb=$('#scadBody'); tb.innerHTML='';
-  scadenze.sort((a,b)=>a.data.localeCompare(b.data)).forEach(s=>{
-    const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${s.data}</td><td>${s.titolo}</td>
-      <td style="text-align:right"><button class="btn bad" onclick="delScad('${s.id}')">Elimina</button></td>`;
-    tb.appendChild(tr);
-  });
+function pageList(){
+  let arr=[...store.movimenti].sort((a,b)=>b.d.localeCompare(a.d));
+  view(`<div class="card">
+    <h2>Movimenti</h2>
+    <label>Da <input type="date" id="fFrom"> a <input type="date" id="fTo">
+      <button class="btn" id="fApp">Applica</button></label>
+    <table><thead><tr><th>Data</th><th>Tipo</th><th>Totale</th><th></th></tr></thead>
+    <tbody>${arr.map(m=>`<tr><td>${m.d}</td><td>${m.type}</td><td>${cur.format(m.tot)}</td>
+      <td><button class="btn" data-e="${m.id}">✎</button>
+          <button class="btn bad" data-d="${m.id}">✖</button></td></tr>`).join('')}</tbody></table>
+  </div>`);
+  $('#fApp').onclick=()=>{
+    const from=$('#fFrom').value,to=$('#fTo').value;
+    const filtered=arr.filter(x=>(!from||new Date(x.d)>=new Date(from))&&(!to||new Date(x.d)<=new Date(to)));
+    $('#content').querySelector('tbody').innerHTML=
+      filtered.map(m=>`<tr><td>${m.d}</td><td>${m.type}</td><td>${cur.format(m.tot)}</td>
+      <td><button class="btn" data-e="${m.id}">✎</button>
+      <button class="btn bad" data-d="${m.id}">✖</button></td></tr>`).join('');
+    bindRowBtns();
+  };
+  bindRowBtns();
+  function bindRowBtns(){
+    document.querySelectorAll('[data-e]').forEach(b=>b.onclick=()=>pageAdd(store.movimenti.find(x=>x.id===b.dataset.e)));
+    document.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{if(confirm('Eliminare?')){store.movimenti=store.movimenti.filter(x=>x.id!==b.dataset.d);save();pageList();}});
+  }
 }
-function delScad(id){
-  scadenze=scadenze.filter(s=>s.id!==id);
-  setLS(LS_KEYS.sca,scadenze); renderScadenze();
-}
-// promemoria <= 3 giorni
-(function checkScadenze(){
-  const oggi=new Date();
-  scadenze.forEach(s=>{
-    const diff=Math.ceil((new Date(s.data)-oggi)/(1000*60*60*24));
-    if(diff<=3 && diff>=0) alert(`Promemoria: "${s.titolo}" scade il ${new Date(s.data).toLocaleDateString('it-IT')}`);
+
+function pageSummary(){
+  const e=store.movimenti.filter(m=>m.type==='entrata').reduce((a,b)=>a+b.tot,0);
+  const u=store.movimenti.filter(m=>m.type==='uscita').reduce((a,b)=>a+b.tot,0);
+  const deb=store.movimenti.filter(m=>m.type==='entrata').reduce((a,b)=>a+b.iva,0);
+  const cred=store.movimenti.filter(m=>m.type==='uscita').reduce((a,b)=>a+b.iva,0);
+  view(`<div class="card"><h2>Riepilogo</h2>
+    <div class="kpi"><h3>Entrate</h3><div class="money ok">${cur.format(e)}</div></div>
+    <div class="kpi"><h3>Uscite</h3><div class="money bad">${cur.format(u)}</div></div>
+    <div class="kpi"><h3>Δ</h3><div class="money">${cur.format(e-u)}</div></div>
+    <div class="kpi"><h3>IVA Debito</h3><div class="money">${cur.format(deb)}</div></div>
+    <div class="kpi"><h3>IVA Credito</h3><div class="money">${cur.format(cred)}</div></div>
+    <div class="kpi"><h3>Δ IVA</h3><div class="money">${cur.format(deb-cred)}</div></div>
+    <canvas id="chart"></canvas>
+  </div>`);
+  const ctx=document.getElementById('chart').getContext('2d');
+  const byMonth={}; store.movimenti.forEach(m=>{
+    const k=m.d.slice(0,7); byMonth[k]=(byMonth[k]||0)+(m.type==='entrata'?m.tot:-m.tot);
   });
-})();
+  const labels=Object.keys(byMonth).sort();
+  new Chart(ctx,{type:'bar',data:{labels,datasets:[{label:'Saldo',data:labels.map(k=>byMonth[k]),backgroundColor:labels.map(k=>byMonth[k]>=0?'#10b981':'#ef4444')}]},options:{plugins:{legend:{display:false}}}});
+}
+
+function pageSup(){
+  view(`<div class="card"><h2>Fornitori & Categorie</h2>
+    <label>Nuovo Fornitore <input id="newSup"><button class="btn primary" id="addSup">Aggiungi</button></label>
+    <ul>${store.fornitori.map(x=>`<li>${x} <button data-s="${x}" class="btn bad">✖</button></li>`).join('')}</ul>
+    <hr>
+    <label>Nuova Categoria <input id="newCat"><button class="btn primary" id="addCat">Aggiungi</button></label>
+    <ul>${store.categorie.map(x=>`<li>${x} <button data-c="${x}" class="btn bad">✖</button></li>`).join('')}</ul>
+  </div>`);
+  $('#addSup').onclick=()=>{const v=$('#newSup').value.trim();if(v&&!store.fornitori.includes(v)){store.fornitori.push(v);save();pageSup();}};
+  $('#addCat').onclick=()=>{const v=$('#newCat').value.trim();if(v&&!store.categorie.includes(v)){store.categorie.push(v);save();pageSup();}};
+  document.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{store.fornitori=store.fornitori.filter(x=>x!==b.dataset.s);save();pageSup();});
+  document.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{store.categorie=store.categorie.filter(x=>x!==b.dataset.c);save();pageSup();});
+}
+
+function pageDead(){
+  view(`<div class="card"><h2>Scadenze</h2>
+    <label>Titolo <input id="tit"><label>Data <input type="date" id="dat">
+      <button class="btn primary" id="addScad">Aggiungi</button></label>
+    <ul>${store.scadenze.map(s=>`<li>${s.data} – ${s.titolo} <button data-d="${s.id}" class="btn bad">✖</button></li>`).join('')}</ul>
+  </div>`);
+  $('#addScad').onclick=()=>{const t=$('#tit').value.trim(),d=$('#dat').value;if(t&&d){store.scadenze.push({id:uid(),titolo:t,data:d});save();pageDead();}};
+  document.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{store.scadenze=store.scadenze.filter(x=>x.id!==b.dataset.d);save();pageDead();});
+}
 
 /* ===== Import / Export / PDF ===== */
-function importData(e){
-  const file=e.target.files[0]; if(!file) return;
-  const reader=new FileReader();
-  reader.onload=()=>{
-    try{
-      const obj=JSON.parse(reader.result);
-      if(obj.movimenti || Array.isArray(obj)){
-        data = Array.isArray(obj) ? obj : (obj.movimenti||[]);
-        suppliers = obj.fornitori || suppliers;
-        categories = obj.categorie && obj.categorie.length ? obj.categorie : categories;
-        scadenze = obj.scadenze || scadenze;
-      }else{
-        data = obj[LS_KEYS.mov] || data;
-        suppliers = obj[LS_KEYS.sup] || suppliers;
-        categories = obj[LS_KEYS.cat] || categories;
-        scadenze = obj[LS_KEYS.sca] || scadenze;
-      }
-      setLS(LS_KEYS.mov,data); setLS(LS_KEYS.sup,suppliers);
-      setLS(LS_KEYS.cat,categories); setLS(LS_KEYS.sca,scadenze);
-      fillSupplierSelects(); fillCategorySelect();
-      renderMini(); renderList(); refreshSummary(); renderScadenze();
-      alert('Importazione completata!');
-    }catch(err){ alert('File JSON non valido.'); }
-    e.target.value='';
-  };
-  reader.readAsText(file);
-}
-function downloadJSON(){
-  const blob=new Blob([JSON.stringify({movimenti:data,fornitori:suppliers,categorie:categories,scadenze},null,2)],{type:'application/json'});
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='smartbiz_backup.json'; a.click(); URL.revokeObjectURL(a.href);
-}
-function downloadCSV(){
-  const rows=[['Data','Tipo','Metodo','Categoria','Fornitore','Tag','Descrizione','Imponibile','IVA','Totale']];
-  data.forEach(m=>rows.push([m.d,m.type,m.method,m.cat,m.fornitore,(m.tags||[]).join('|'),m.desc,(m.imp||0),(m.iva||0),(m.tot||0)]));
-  const csv=rows.map(r=>r.map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(',')).join('\n');
-  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}); const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob); a.download='smartbiz_movimenti.csv'; a.click(); URL.revokeObjectURL(a.href);
-}
-function generaReportPDF(){
-  const { jsPDF } = window.jspdf; const doc=new jsPDF({unit:'pt',format:'a4'});
-  const list=applyFilters([...data]).sort((a,b)=>a.d.localeCompare(b.d));
-  let entr=0,usc=0,deb=0,cred=0;
-  list.forEach(m=>{ if(m.type==='entrata'){entr+=m.tot;deb+=m.iva;} else {usc+=m.tot;cred+=m.iva;} });
-  const saldo=entr-usc, diffIva=deb-cred;
-
-  doc.setFont('helvetica','bold'); doc.setFontSize(16); doc.text('Report SmartBiz Pro',40,40);
-  doc.setFont('helvetica','normal'); doc.setFontSize(11);
-  doc.text(`Generato: ${new Date().toLocaleString('it-IT')}`,40,60);
-
-  doc.setFont('helvetica','bold'); doc.text('Riepilogo',40,90);
-  doc.autoTable({startY:100, head:[['Voce','Valore']], body:[
-    ['Entrate',cur.format(entr)],['Uscite',cur.format(usc)],['Δ Entrate−Uscite',cur.format(saldo)],
-    ['IVA Debito',cur.format(deb)],['IVA Credito',cur.format(cred)],['Δ IVA',cur.format(diffIva)]
-  ], styles:{fontSize:10}, theme:'grid'});
-
-  const rows=list.map(m=>[m.d,m.type,m.method,m.cat,m.fornitore,(m.tags||[]).join('|'),m.desc,(m.imp||0).toFixed(2),(m.iva||0).toFixed(2),(m.tot||0).toFixed(2)]);
-  doc.addPage(); doc.setFont('helvetica','bold'); doc.text('Dettaglio movimenti',40,40);
-  doc.autoTable({startY:50, head:[['Data','Tipo','Metodo','Categoria','Fornitore','Tag','Descrizione','Imponibile','IVA','Totale']], body:rows, styles:{fontSize:8,cellPadding:2}, headStyles:{fillColor:[59,130,246]}, theme:'striped'});
-
-  doc.save('report_smartbiz.pdf');
+function exportJSON(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(store,null,2)],{type:'application/json'}));a.download='smartbiz.json';a.click();}
+function exportCSV(){const rows=[['Data','Tipo','Metodo','Categoria','Fornitore','Descrizione','Imponibile','IVA','Totale']];
+  store.movimenti.forEach(m=>rows.push([m.d,m.type,m.method,m.cat,m.sup,m.desc,m.imp,m.iva,m.tot]));
+  const csv=rows.map(r=>r.join(',')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='smartbiz.csv';a.click();}
+function importJSON(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{store=JSON.parse(r.result);save();alert('Import OK');pageList();}catch{alert('File non valido');}};r.readAsText(f);}
+function reportPDF(){const {jsPDF}=window.jspdf;const doc=new jsPDF({unit:'pt',format:'a4'});
+  const e=store.movimenti.filter(m=>m.type==='entrata').reduce((a,b)=>a+b.tot,0);
+  const u=store.movimenti.filter(m=>m.type==='uscita').reduce((a,b)=>a+b.tot,0);
+  doc.text('Report SmartBiz',40,40);
+  doc.autoTable({startY:60,head:[['Voce','Valore']],body:[['Entrate',cur.format(e)],['Uscite',cur.format(u)],['Saldo',cur.format(e-u)]]});
+  const rows=store.movimenti.map(m=>[m.d,m.type,m.method,m.cat,m.sup,m.desc,m.imp,m.iva,m.tot]);
+  doc.addPage();doc.autoTable({head:[['Data','Tipo','Metodo','Categoria','Fornitore','Descrizione','Imp','IVA','Tot']],body:rows});
+  doc.save('report.pdf');
 }
 
-/* ===== Menu ⋯ ===== */
+/* ===== Menu actions ===== */
+$('#mAdd').onclick=()=>{menu(false);pageAdd();};
+$('#mList').onclick=()=>{menu(false);pageList();};
+$('#mSummary').onclick=()=>{menu(false);pageSummary();};
+$('#mSup').onclick=()=>{menu(false);pageSup();};
+$('#mDead').onclick=()=>{menu(false);pageDead();};
+$('#mExpJson').onclick=()=>{menu(false);exportJSON();};
+$('#mExpCsv').onclick=()=>{menu(false);exportCSV();};
+$('#mPdf').onclick=()=>{menu(false);reportPDF();};
+$('#mImp').onclick=()=>{menu(false);$('#fileImport').click();};
+$('#fileImport').onchange=importJSON;
+
+/* IVA reminder */
 (function(){
-  const btn   = document.getElementById('toolsMenuBtn');
-  const panel = document.getElementById('toolsMenuPanel');
-  if(!btn || !panel) return;
-
-  const open=()=>{panel.hidden=false}; const close=()=>{panel.hidden=true};
-  btn.addEventListener('click',e=>{e.stopPropagation(); panel.hidden?open():close();});
-  document.addEventListener('click',e=>{ if(!panel.hidden && !panel.contains(e.target) && e.target!==btn) close(); });
-
-  // Azioni menu
-  document.getElementById('tmImpostazioni')?.addEventListener('click', ()=>{ close(); openSettings(); });
-  document.getElementById('tmScadenze')?.addEventListener('click',   ()=>{ close(); openDeadlines(); });
-  document.getElementById('tmImport')?.addEventListener('click',     ()=>{ close(); document.getElementById('fileImport').click(); });
-  document.getElementById('tmExportCSV')?.addEventListener('click',  ()=>{ close(); downloadCSV(); });
-  document.getElementById('tmExportJSON')?.addEventListener('click', ()=>{ close(); downloadJSON(); });
-  document.getElementById('tmPDF')?.addEventListener('click',        ()=>{ close(); generaReportPDF(); });
-
-  // Chiudi quando cambi tab
-  document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click', close));
+  const now=new Date(), y=now.getFullYear();
+  const scad=[new Date(y,4,16),new Date(y,7,20),new Date(y,10,16),new Date(y+1,2,16)];
+  let next=scad.find(d=>d>now)||scad[0];
+  const diff=Math.ceil((next-now)/86400000);
+  $('#ivaReminder').textContent=`IVA: ${next.toLocaleDateString('it-IT')} • ${diff}g`;
 })();
 
-/* ===== Avvio ===== */
-function saveAll(){ setLS(LS_KEYS.mov,data); setLS(LS_KEYS.sup,suppliers); setLS(LS_KEYS.cat,categories); setLS(LS_KEYS.sca,scadenze); }
-renderList(); refreshSummary(); fillSupplierSelects(); fillCategorySelect();
+/* start */
+pageList();
 </script>
 </body>
 </html>
