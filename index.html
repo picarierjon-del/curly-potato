@@ -9,7 +9,27 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
-
+/* Barra inferiore */
+.bottom-nav{
+  position:fixed;
+  bottom:0; left:0; right:0;
+  background:#0b0c10ee;
+  backdrop-filter:blur(10px);
+  display:flex;
+  justify-content:space-around;
+  border-top:1px solid #222;
+  z-index:50;
+}
+.bottom-nav button{
+  flex:1;
+  padding:10px 6px;
+  background:none;
+  border:none;
+  color:#ccc;
+  font-size:14px;
+  cursor:pointer;
+}
+.bottom-nav button.active{color:var(--accent);}
 <style>
 :root{
   --bg:#0b0c10;--card:#12141a;--text:#f2f5ff;--accent:#3b82f6;
@@ -432,6 +452,24 @@ $('#fileImport').onchange = importJSON;
 /* ===== Avvio ===== */
 ivaReminder();
 pageList();
+  // --- Bottom navigation ---
+const tAdd  = document.getElementById('tabAdd');
+const tMov  = document.getElementById('tabMov');
+const tForn = document.getElementById('tabForn');
+
+function setActive(btn){
+  document.querySelectorAll('.bottom-nav button')
+    .forEach(b=>b.classList.toggle('active', b===btn));
+}
+
+tAdd.onclick  = ()=>{ setActive(tAdd);  pageAdd();    };
+tMov.onclick  = ()=>{ setActive(tMov);  pageList();   };
+tForn.onclick = ()=>{ setActive(tForn); pageSup();    };
 </script>
+  <nav class="bottom-nav">
+  <button id="tabAdd">➕ Aggiungi</button>
+  <button id="tabMov">📜 Movimenti</button>
+  <button id="tabForn">🏷️ Fornitori</button>
+</nav>
 </body>
 </html>
