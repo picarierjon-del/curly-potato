@@ -814,22 +814,22 @@
 
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script>
+        // *** 1. COSTANTI FUORI DA VUE (Più stabili) ***
+        const PREZZI_FISSI = {
+            "mezzo_metro": {
+                "1": 17.00, 
+                "2": 19.00, 
+                "3": 21.00  
+            },
+            "schiacciata_grande": {
+                "1": 12.00, 
+                "2": 15.00, 
+                "3": 17.00  
+            }
+        };
+
         const app = Vue.createApp({
             data() {
-                // *** NUOVE COSTANTI PREZZI FISSI (Logica Corretta e Interna a Vue) ***
-                const PREZZI_FISSI = {
-                    "mezzo_metro": {
-                        "1": 17.00, 
-                        "2": 19.00, 
-                        "3": 21.00  
-                    },
-                    "schiacciata_grande": {
-                        "1": 12.00, 
-                        "2": 15.00, 
-                        "3": 17.00  
-                    }
-                };
-                
                 return {
                     // Dati Base
                     view: 'inserimento', // 'inserimento', 'ordini', 'storico', 'impostazioni'
@@ -843,9 +843,6 @@
                     newAdminPin: '',
                     newOwnerPin: '',
                     
-                    // Riferimento alle costanti per l'uso interno
-                    PREZZI_FISSI: PREZZI_FISSI,
-
                     // Dati Menu
                     menu: {
                         'Pizza Classica': [
@@ -1120,13 +1117,14 @@
                     if (!this.tempMeterItem) return 0;
                     
                     const item = this.tempMeterItem;
-                    const maxGusti = item.sections.length; // Usa il numero di sezioni
+                    const maxGusti = item.sections.length; 
 
                     const itemName = item.nome.includes('Mezzo Metro') ? 'mezzo_metro' : 'schiacciata_grande';
                     const key = maxGusti.toString();
                     
                     // 1. Calcola il Prezzo Base Fisso
-                    let basePrice = this.PREZZI_FISSI[itemName][key] || 0;
+                    // *** USA LA COSTANTE GLOBALE ***
+                    let basePrice = PREZZI_FISSI[itemName][key] || 0;
                     
                     // 2. Calcola il totale dei Modificatori
                     let modTotal = 0;
@@ -1477,7 +1475,7 @@
                         const maxGusti = item.sections.length; 
                         
                         const key = maxGusti.toString();
-                        basePrice = this.PREZZI_FISSI[itemName][key] || 0;
+                        basePrice = PREZZI_FISSI[itemName][key] || 0;
                         
                         (item.sections || []).forEach(section => {
                             modTotal += (section.modifiers || []).reduce((sum, mod) => sum + mod.prezzo, 0);
@@ -2289,440 +2287,4 @@
                             <tr class="total-row"><td>DA SALDARE</td><td style="text-align: right;">€${daSaldare.toFixed(2)}</td></tr>
                         `;
                         if (daSaldare < 0) {
-                            accontoHtml += `<tr class="total-row"><td>RESTO DA DARE</td><td style="text-align: right;">€${Math.abs(daSaldare).toFixed(2)}</td></tr>`;
-                        }
-                    }
-
-                    return `
-                        <div style="text-align: center; border-bottom: 1px dashed #000; margin-bottom: 5px; padding-bottom: 5px;">
-                            <h1>PIZZERIA SMART</h1>
-                            <p style="margin: 0; font-size: 8pt;">Indirizzo Pizzeria - P.IVA XXXXXX</p>
-                        </div>
-                        <table>
-                            <tr><td colspan="2">N. Ordine: ${order.id} | ${this.formatDateTime(order.timestamp)}</td></tr>
-                            <tr><td colspan="2">Cliente: ${order.customer}</td></tr>
-                            ${addressHtml}
-                            ${order.mode === 'consegna' ? `<tr><td colspan="2">Costo Consegna: €${order.deliveryCost.toFixed(2)} (${order.zone})</td></tr>` : ''}
-                        </table>
-                        <table style="margin-top: 5px; border-top: 1px dashed #000; padding-top: 5px;">
-                            ${itemsHtml}
-                        </table>
-                        <table>
-                            <tr class="total-row">
-                                <td>TOTALE ORDINE</td>
-                                <td style="text-align: right;">€${order.total.toFixed(2)}</td>
-                            </tr>
-                            ${accontoHtml}
-                        </table>
-                        <p style="text-align: center; margin-top: 10px; font-size: 8pt;">Grazie e Arrivederci!</p>
-                    `;
-                },
-                printContent(contentId) {
-                    // Questa funzione apre una nuova finestra e usa gli stili @media print per nascondere il resto della pagina
-                    const printContents = document.getElementById(`print-content-${contentId}`).outerHTML;
-                    
-                    const printWindow = window.open('', '_blank', 'height=600,width=400');
-                    printWindow.document.write('<html><head><title>Stampa</title>');
-                    
-                    // Incolla tutti gli stili necessari per la stampa nella nuova finestra
-                    const styles = document.querySelectorAll('style, link[rel="stylesheet"]');
-                    styles.forEach(style => {
-                        printWindow.document.write(style.outerHTML);
-                    });
-
-                    printWindow.document.write('</head><body>');
-                    printWindow.document.write(printContents);
-                    printWindow.document.write('</body></html>');
-                    printWindow.document.close();
-                    printWindow.print();
-                },
-                showShareMenu(orderId) {
-                    this.selectedOrderForShare = this.activeOrders.find(o => o.id === orderId);
-                    if (this.selectedOrderForShare) {
-                        this.showShareModal = true;
-                    }
-                },
-                shareViaWhatsapp(order) {
-                    let message = `*Riepilogo Ordine Pizzeria Smart*\n\n`;
-                    message += `*#${order.id}* - ${order.mode.toUpperCase()}\n`;
-                    message += `*Cliente:* ${order.customer}\n`;
-                    message += `*Orario Ritiro/Consegna:* ${this.formatDateTime(order.date + 'T' + order.hour)}\n`;
-
-                    if (order.mode === 'consegna') {
-                        message += `*Indirizzo:* ${order.address} ${order.streetNumber}, ${order.zone}\n`;
-                    } else if (order.tableNumber) {
-                        message += `*Riferimento:* ${order.tableNumber}\n`;
-                    }
-                    if (order.phone) {
-                        message += `*Tel:* ${order.phone}\n`;
-                    }
-                    if (order.notes) {
-                        message += `*Note:* ${order.notes}\n`;
-                    }
-
-                    message += `\n*Articoli:*\n`;
-                    order.items.forEach(item => {
-                        let itemLine = `1x ${item.nome}`;
-                        if (item.isHalfPizza) {
-                            itemLine += ` (${item.gusto1 || '?'}/${item.gusto2 || '?'})`;
-                        } else if (item.isMeter) {
-                            itemLine += ` (${(item.sections || []).map(s => s.gusto || '?').join(' / ')})`;
-                        }
-                        
-                        let mods = [];
-                        if (item.isHalfPizza) {
-                             mods = [...(item.modifiers1 || []), ...(item.modifiers2 || [])];
-                        } else if (item.isMeter) {
-                             (item.sections || []).forEach(s => mods.push(...(s.modifiers || [])));
-                        } else if (item.modifiers) {
-                            mods = item.modifiers;
-                        }
-
-                        if (mods.length > 0) {
-                            const modNames = mods.map(m => {
-                                const cat = this.getModifierCategory(m.nome);
-                                return `${this.getModifierIcon(cat)}${m.nome}`;
-                            }).join(', ');
-                            itemLine += ` [${modNames}]`;
-                        }
-                        message += `- ${itemLine}\n`;
-                    });
-
-                    message += `\n*TOTALE: €${order.total.toFixed(2)}*`;
-
-                    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
-                    window.open(whatsappUrl, '_blank');
-                    this.showShareModal = false;
-                },
-
-                // --- Funzioni Storico/Archivio ---
-                calculateDriverStats() {
-                    const filteredOrders = this.archive.filter(o => o.date === this.archiveDateFilter);
-                    
-                    this.driverStats.totalOrders = 0;
-                    this.driverStats.totalRevenue = 0;
-
-                    // Se è selezionato un driver specifico, filtra. Altrimenti, conta tutti
-                    const ordersToCount = this.selectedDriver 
-                        ? filteredOrders.filter(o => o.driver === this.selectedDriver) 
-                        : filteredOrders;
-
-                    ordersToCount.forEach(o => {
-                        this.driverStats.totalOrders++;
-                        this.driverStats.totalRevenue += o.total;
-                    });
-                },
-                updateArchiveDriver(orderId, driverName) {
-                    const order = this.archive.find(o => o.id === orderId);
-                    if (order) {
-                        order.driver = driverName;
-                        this.saveData();
-                        this.calculateDriverStats(); 
-                        alert(`Fattorino per Ordine Archiviato #${orderId} assegnato a ${driverName || 'Nessuno'}.`);
-                    }
-                },
-
-                // --- Funzioni Impostazioni/Gestione Dati ---
-                addItemToCategory() {
-                    if (this.newItemName && this.activeSettingsCat) {
-                        const newItem = {
-                            nome: this.newItemName,
-                            prezzo: parseFloat(this.newItemPrice || 0),
-                            isFinished: false
-                        };
-                        
-                        // Logica speciale per le composizioni
-                        if (this.activeSettingsCat === 'Composizioni') {
-                            if (newItem.nome.includes('Mezzo Metro (1 Gusto)')) {
-                                newItem.isMeter = true;
-                                newItem.maxGusti = 1;
-                                newItem.sections = this.getDefaultMeterSections('Mezzo Metro (1 Gusto)');
-                            } else if (newItem.nome.includes('Mezzo Metro (2 Gusti)')) {
-                                newItem.isMeter = true;
-                                newItem.maxGusti = 2;
-                                newItem.sections = this.getDefaultMeterSections('Mezzo Metro (2 Gusti)');
-                            } else if (newItem.nome.includes('Mezzo Metro (3 Gusti)')) {
-                                newItem.isMeter = true;
-                                newItem.maxGusti = 3;
-                                newItem.sections = this.getDefaultMeterSections('Mezzo Metro (3 Gusti)');
-                            } else if (newItem.nome.includes('Schiacciata Grande (1 Gusto)')) {
-                                newItem.isMeter = true;
-                                newItem.maxGusti = 1;
-                                newItem.sections = this.getDefaultMeterSections('Schiacciata Grande (1 Gusto)');
-                            } else if (newItem.nome.includes('Schiacciata Grande (2 Gusti)')) {
-                                newItem.isMeter = true;
-                                newItem.maxGusti = 2;
-                                newItem.sections = this.getDefaultMeterSections('Schiacciata Grande (2 Gusti)');
-                            } else if (newItem.nome.includes('Schiacciata Grande (3 Gusti)')) {
-                                newItem.isMeter = true;
-                                newItem.maxGusti = 3;
-                                newItem.sections = this.getDefaultMeterSections('Schiacciata Grande (3 Gusti)');
-                            } else if (newItem.nome.includes('Pizza Metà')) {
-                                newItem.isHalfPizza = true;
-                                newItem.gusto1 = null;
-                                newItem.gusto2 = null;
-                                newItem.modifiers1 = [];
-                                newItem.modifiers2 = [];
-                            }
-                            // Prezzo composizioni è sempre 0, calcolato in seguito
-                            newItem.prezzo = 0.00; 
-                        }
-                        
-                        this.menu[this.activeSettingsCat].push(newItem);
-                        this.newItemName = '';
-                        this.newItemPrice = 0;
-                        this.saveData();
-                        alert(`Articolo "${newItem.nome}" aggiunto a ${this.activeSettingsCat}.`);
-                    }
-                },
-                deleteItem(category, index) {
-                    if (confirm(`Sei sicuro di voler eliminare "${this.menu[category][index].nome}" da ${category}?`)) {
-                        this.menu[category].splice(index, 1);
-                        this.saveData();
-                        alert('Articolo eliminato.');
-                    }
-                },
-                toggleItemFinished(category, index) {
-                    const item = this.menu[category][index];
-                    item.isFinished = !item.isFinished;
-                    this.saveData();
-                    alert(`${item.nome} è ora ${item.isFinished ? 'ESAURITO' : 'DISPONIBILE'}.`);
-                },
-                addCategory() {
-                    if (this.newCategoryName && !this.menu[this.newCategoryName]) {
-                        this.menu[this.newCategoryName] = [];
-                        this.activeSettingsCat = this.newCategoryName;
-                        this.newCategoryName = '';
-                        this.saveData();
-                        alert(`Categoria "${this.activeSettingsCat}" aggiunta.`);
-                    } else if (this.newCategoryName) {
-                        alert('Categoria già esistente.');
-                    }
-                },
-                deleteCategory(category) {
-                    if (Object.keys(this.menu).length <= 1) {
-                        alert('Non puoi eliminare l\'unica categoria rimasta.');
-                        return;
-                    }
-                    if (confirm(`Sei sicuro di voler eliminare la categoria "${category}" e tutti i suoi articoli?`)) {
-                        delete this.menu[category];
-                        this.activeSettingsCat = Object.keys(this.menu)[0]; 
-                        this.saveData();
-                        alert('Categoria eliminata.');
-                    }
-                },
-                
-                // Modificatori
-                addModifierToCategory() {
-                    if (this.newModifierName && this.activeSettingsModCat) {
-                        const newMod = {
-                            nome: this.newModifierName,
-                            prezzo: parseFloat(this.newModifierPrice || 0),
-                            isFinished: false
-                        };
-                        this.modifiers[this.activeSettingsModCat].push(newMod);
-                        this.newModifierName = '';
-                        this.newModifierPrice = 0;
-                        this.saveData();
-                        alert(`Modificatore "${newMod.nome}" aggiunto a ${this.activeSettingsModCat}.`);
-                    }
-                },
-                deleteModifier(category, index) {
-                    if (confirm(`Sei sicuro di voler eliminare il modificatore "${this.modifiers[category][index].nome}"?`)) {
-                        this.modifiers[category].splice(index, 1);
-                        this.saveData();
-                        alert('Modificatore eliminato.');
-                    }
-                },
-                toggleModifierFinished(category, index) {
-                    const mod = this.modifiers[category][index];
-                    mod.isFinished = !mod.isFinished;
-                    this.saveData();
-                    alert(`Modificatore ${mod.nome} è ora ${mod.isFinished ? 'ESAURITO' : 'DISPONIBILE'}.`);
-                },
-                addModifierCategory() {
-                    if (this.newModifierCategoryName && !this.modifiers[this.newModifierCategoryName]) {
-                        this.modifiers[this.newModifierCategoryName] = [];
-                        this.activeSettingsModCat = this.newModifierCategoryName;
-                        this.newModifierCategoryName = '';
-                        this.saveData();
-                        alert(`Categoria modificatori "${this.activeSettingsModCat}" aggiunta.`);
-                    } else if (this.newModifierCategoryName) {
-                        alert('Categoria modificatori già esistente.');
-                    }
-                },
-                deleteModifierCategory(category) {
-                    if (this.isDefaultModifierCategory(category)) {
-                        alert('Non è possibile eliminare le categorie modificatori predefinite (Più, Senza, Poco, Abbondante).');
-                        return;
-                    }
-                    if (Object.keys(this.modifiers).length <= 4) {
-                        alert('Non puoi eliminare la categoria. Devi mantenere almeno le categorie predefinite.');
-                        return;
-                    }
-                    if (confirm(`Sei sicuro di voler eliminare la categoria modificatori "${category}" e tutti i suoi elementi?`)) {
-                        delete this.modifiers[category];
-                        // Seleziona una categoria non predefinita, altrimenti 'Più'
-                        const remainingCats = Object.keys(this.modifiers).filter(c => !this.isDefaultModifierCategory(c));
-                        this.activeSettingsModCat = remainingCats.length > 0 ? remainingCats[0] : 'Più';
-                        this.saveData();
-                        alert('Categoria modificatori eliminata.');
-                    }
-                },
-                isDefaultModifierCategory(category) {
-                    return ['Più', 'Senza', 'Poco', 'Abbondante'].includes(category);
-                },
-
-                // Zone di Consegna
-                addZone() {
-                    if (this.newZoneName) {
-                        const existing = this.deliveryZones.find(z => z.name.toLowerCase() === this.newZoneName.toLowerCase());
-                        if (existing) {
-                            alert('Zona già esistente.');
-                            return;
-                        }
-                        this.deliveryZones.push({
-                            name: this.newZoneName,
-                            price: parseFloat(this.newZonePrice || 0)
-                        });
-                        this.newZoneName = '';
-                        this.newZonePrice = 0;
-                        this.saveData();
-                        alert('Zona di consegna aggiunta.');
-                    }
-                },
-                deleteZone(index) {
-                    if (confirm(`Sei sicuro di voler eliminare la zona di consegna "${this.deliveryZones[index].name}"?`)) {
-                        this.deliveryZones.splice(index, 1);
-                        this.saveData();
-                        alert('Zona di consegna eliminata.');
-                    }
-                },
-
-                // Fattorini
-                addDriver() {
-                    if (this.newDriverName && !this.drivers.includes(this.newDriverName)) {
-                        this.drivers.push(this.newDriverName);
-                        this.newDriverName = '';
-                        this.saveData();
-                        alert('Fattorino aggiunto.');
-                    } else if (this.newDriverName) {
-                        alert('Fattorino già presente.');
-                    }
-                },
-                deleteDriver(index) {
-                    if (confirm(`Sei sicuro di voler eliminare il fattorino "${this.drivers[index]}"?`)) {
-                        this.drivers.splice(index, 1);
-                        this.saveData();
-                        alert('Fattorino eliminato.');
-                    }
-                },
-
-                // Import/Export
-                exportData() {
-                    const data = localStorage.getItem('pizzeriaSmartData');
-                    if (!data) {
-                        alert('Nessun dato da esportare.');
-                        return;
-                    }
-                    const blob = new Blob([data], { type: 'application/json' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `pizzeria_smart_data_${new Date().toISOString().slice(0, 10)}.json`;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-                    alert('Dati esportati con successo!');
-                },
-                importData() {
-                    if (!confirm('ATTENZIONE: L\'importazione sovrascriverà tutti i dati correnti (Menu, Ordini, Storico, PIN). Continuare?')) {
-                        return;
-                    }
-
-                    const input = document.createElement('input');
-                    input.type = 'file';
-                    input.accept = 'application/json';
-                    input.onchange = (e) => {
-                        const file = e.target.files[0];
-                        if (!file) return;
-
-                        const reader = new FileReader();
-                        reader.onload = (event) => {
-                            try {
-                                const importedData = JSON.parse(event.target.result);
-                                
-                                // Reset completo dello stato
-                                // NON resettare con $options.data.call(this) perché perderebbe i metodi e le computed 
-                                // ma solo le proprietà che vogliamo sovrascrivere.
-                                
-                                // Carica i dati importati
-                                Object.assign(this.$data, { ...this.$data, ...importedData });
-                                
-                                // Logica di post-caricamento
-                                const maxId = Math.max(
-                                    0,
-                                    ...(this.activeOrders || []).map(o => o.id),
-                                    ...(this.archive || []).map(o => o.id)
-                                );
-                                this.lastOrderId = maxId;
-
-                                this.archiveDateFilter = new Date().toISOString().slice(0, 10);
-                                this.ensureItemStatus(); 
-                                this.isAccessGranted = false; 
-                                this.userRole = '';
-
-                                localStorage.setItem('pizzeriaSmartData', event.target.result);
-                                alert('Dati importati e sovrascritti con successo! Effettua nuovamente l\'accesso.');
-                            } catch (error) {
-                                console.error('Errore durante l\'importazione del file:', error);
-                                alert('Errore: Il file non è un JSON valido o non è compatibile.');
-                            }
-                        };
-                        reader.readAsText(file);
-                    };
-                    input.click();
-                },
-                clearCache() {
-                    if (confirm('Sei sicuro di voler eliminare tutti gli Ordini Attivi e lo Storico? Menu, Clienti e PIN saranno conservati.')) {
-                        this.activeOrders = [];
-                        this.archive = [];
-                        this.lastOrderId = Math.max(
-                            0, 
-                            ...(this.activeOrders || []).map(o => o.id), 
-                            ...(this.archive || []).map(o => o.id)
-                        );
-                        this.saveData();
-                        alert('Cache ordini e storico pulita.');
-                    }
-                },
-
-                // --- Utilità ---
-                formatDate(dateString) {
-                    const date = new Date(dateString);
-                    return date.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' });
-                },
-                formatDateTime(isoString) {
-                    const date = new Date(isoString);
-                    return date.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }) + ' ' + date.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' });
-                }
-            },
-
-            mounted() {
-                this.loadData();
-                this.updateCapacityWarning(); 
-                
-                // Aggiorna la capacità ogni 5 minuti (per gli ordini in tempo reale)
-                setInterval(() => {
-                    if (this.view === 'ordini' || this.showModal) {
-                        this.updateCapacityWarning(); 
-                    }
-                }, 5 * 60 * 1000); // 5 minuti
-            }
-        });
-
-        app.mount('#app');
-    </script>
-</body>
-</html>
+                            accontoHtml += `<tr class="total-row"><td>RESTO DA DARE</td><td style="text-align: right;">€${Math.abs(daSaldare).toFixed(2)}
