@@ -150,7 +150,9 @@
         lastId:0, 
         categories: DEFAULT_CATEGORIES.slice(), 
         pin: '1234',
-        currencySymbol: '€'
+        currencySymbol: '€',
+        // NUOVO: Obiettivo di risparmio mensile (per budgeting)
+        monthlySavingsTarget: 0 
     };
     let currentPage = 'activity';
 
@@ -192,11 +194,12 @@
           appData.reminders ||= []; appData.contacts ||= [];
           appData.birthdays ||= [];
           
-          // Ensure categories/lastId/pin/currency exist
+          // Ensure categories/lastId/pin/currency/target exist
           appData.categories ||= DEFAULT_CATEGORIES.slice();
           appData.lastId ||= 0;
           appData.pin ||= '1234';
           appData.currencySymbol ||= '€';
+          appData.monthlySavingsTarget ||= 0; // Default target
         }
       } catch(e){ console.error(e); showToast('Errore nel caricamento dati','red'); }
     }
@@ -372,6 +375,65 @@
         });
     }
 
+    // NUOVO: Calcola Saldo Netto Giornaliero per gli ultimi 7 giorni
+    function calculateDailyNetBalance(type) {
+        const days = 7;
+        const today = new Date();
+        const dates = [];
+        for (let i = 0; i < days; i++) {
+            const d = new Date(today);
+            d.setDate(today.getDate() - (days - 1 - i));
+            dates.push(d.toISOString().slice(0, 10));
+        }
+
+        const dailyData = dates.map(dateStr => {
+            const summary = calculateFinancialSummary(type, 'day', dateStr);
+            return summary.netBalance;
+        });
+
+        return { labels: dates.map(d => d.slice(5)), data: dailyData };
+    }
+
+    // NUOVO: Renderizza Grafico Saldo Settimanale
+    function renderWeeklyBalanceChart(type) {
+        const chartId = `weeklyBalanceChart-${type}`;
+        const ctx = document.getElementById(chartId)?.getContext('2d');
+        if (!ctx) return;
+        
+        const { labels, data } = calculateDailyNetBalance(type);
+        
+        if (ctx.chart) ctx.chart.destroy();
+
+        ctx.chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Saldo Netto',
+                    data: data,
+                    borderColor: data[data.length - 1] >= 0 ? '#10b981' : '#ef4444',
+                    backgroundColor: data[data.length - 1] >= 0 ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)',
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    title: { display: true, text: 'Saldo Netto Ultimi 7 Giorni', color: document.body.classList.contains('dark') ? '#f1f5f9' : '#1e293b' }
+                },
+                scales: {
+                    x: { ticks: { color: document.body.classList.contains('dark') ? '#9ca3af' : '#6b7280' } },
+                    y: { 
+                        beginAtZero: false,
+                        ticks: { color: document.body.classList.contains('dark') ? '#9ca3af' : '#6b7280' }
+                    }
+                }
+            }
+        });
+    }
 
     // --- Core calculations ---
     function calculateFinancialSummary(type, filterType, filterDateStr) {
@@ -736,6 +798,7 @@
                   ...bd,
                   recurringDate: (bd.date || bd.recurringDate).slice(5) 
               }));
+              appData.monthlySavingsTarget ||= 0;
               saveData(); showToast('Dati importati!'); renderPage(currentPage);
             });
           } else { showToast('Backup JSON non valido.','red'); }
@@ -930,6 +993,10 @@
         <div class="space-y-6">
           <h2 class="text-2xl font-semibold border-b pb-2 text-gray-700 dark:text-gray-300">${title}</h2>
           ${renderSummaryCard(summary,year)}
+          
+          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card" style="height: 200px;">
+            <canvas id="weeklyBalanceChart-${type}"></canvas>
+          </div>
           <div id="transaction-form-anchor" class="pt-4"></div>
 
           <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card">
@@ -1170,6 +1237,13 @@
 
       // KPIs
       const KPIs = computeKPIs();
+      
+      // Calcolo Obiettivo Risparmio
+      const averageMonthlyNet = (KPIs.avgIncome || 0) - (KPIs.avgExpense || 0);
+      const targetDelta = averageMonthlyNet - (appData.monthlySavingsTarget || 0);
+      const targetColor = targetDelta >= 0 ? 'text-emerald-600' : 'text-red-600';
+      const targetLabel = targetDelta >= 0 ? 'Obiettivo Raggiunto (Surplus)' : 'Obiettivo Mancato (Deficit)';
+
 
       // period label
       let periodLabel='Periodo Selezionato';
@@ -1225,6 +1299,14 @@
                     ${allTags.map(t => `<option value="${t}" ${tagFilter === t ? 'selected' : ''}>${t}</option>`).join('')}
                 </select>
             </div>
+          </div>
+          
+          <div class="bg-white dark:bg-gray-800 p-4 rounded-xl card text-center border-l-4 border-dashed border-purple-500">
+              <p class="text-sm text-gray-500">Obiettivo Risparmio Mensile: ${appData.monthlySavingsTarget.toFixed(2)} ${symbol}</p>
+              <p class="text-xl font-bold ${targetColor}">
+                  Proiezione Mensile: ${targetDelta.toFixed(2)} ${symbol} 
+                  <span class="text-xs text-gray-500">(${targetLabel})</span>
+              </p>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1401,7 +1483,8 @@
         return {
             ...bd,
             recurrenceDate: recurrence,
-            displayDate: new Date(`${currentYear}-${bd.recurringDate}`).toLocaleDateString('it-IT', { day: 'numeric', month: 'long' }),
+            displayDate: new Date(`${bd.date}`).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' }),
+            annualDate: new Date(`${bd.date}`).toLocaleDateString('it-IT', { day: 'numeric', month: 'long' }),
             age: age >= 0 ? age : 'N/A',
             status: status
         };
@@ -1431,7 +1514,7 @@
                 
                 ${type === 'payment' ? 
                     `<p class="text-sm text-gray-600 dark:text-gray-400">Scadenza: ${new Date(r.date).toLocaleDateString('it-IT')} | Importo: ${r.amount.toFixed(2)} ${symbol}</p>` :
-                    `<p class="text-sm text-gray-600 dark:text-gray-400">Data: ${r.displayDate} | Età: ${r.age} | ${r.status}</p>`}
+                    `<p class="text-sm text-gray-600 dark:text-gray-400">Ricorre il: ${r.annualDate} | Età Proiettata: ${r.age} | ${r.status}</p>`}
               </div>
               <div class="flex space-x-2">
                 ${type === 'payment' ? 
@@ -1510,6 +1593,17 @@
           <h2 class="text-2xl font-semibold border-b pb-2 text-gray-700 dark:text-gray-300">Gestione e Manutenzione Dati</h2>
           
           <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card space-y-4">
+            <h3 class="text-xl font-medium text-purple-600">Pianificazione (Budgeting)</h3>
+            <div>
+              <label for="monthly-target" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Obiettivo Risparmio Mensile (${symbol})</label>
+              <input type="number" id="monthly-target" step="0.01" min="0" value="${appData.monthlySavingsTarget.toFixed(2)}"
+                     class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700" 
+                     inputmode="decimal"/>
+            </div>
+            <button onclick="saveMonthlyTarget()" class="cta-button w-full bg-purple-500 text-white p-3 rounded-lg font-bold hover:bg-purple-600">Salva Obiettivo</button>
+          </div>
+          
+          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card space-y-4">
               <h3 class="text-xl font-medium text-blue-600">Configurazione Valuta</h3>
               <p class="text-sm text-gray-700 dark:text-gray-300">Simbolo Valuta Attuale: <span class="font-bold text-lg">${symbol}</span></p>
               <div>
@@ -1586,6 +1680,19 @@
       `;
     }
     
+    // NUOVA FUNZIONE: Salvataggio Obiettivo Risparmio
+    function saveMonthlyTarget() {
+        const input = document.getElementById('monthly-target');
+        const target = parseFloat(input?.value) || 0;
+
+        showModal('Conferma Obiettivo', `Impostare l'obiettivo di risparmio su: ${target.toFixed(2)} ${getCurrencySymbol()}?`, true, () => {
+            appData.monthlySavingsTarget = target;
+            saveData();
+            showToast('Obiettivo risparmio salvato!');
+            renderPage('settings');
+        });
+    }
+
     // NUOVA FUNZIONE: Cambio Simbolo Valuta
     function changeCurrencySymbol() {
         const symbolInput = document.getElementById('currency-symbol-input');
@@ -1691,6 +1798,8 @@
           else { document.getElementById('isIncome')?.addEventListener('change', ()=>setupContactAutocomplete(pageId)); setupContactAutocomplete(pageId); }
           setupCategoryAutocomplete();
           calculateGross(); // Initialize gross/vat amounts
+          // NUOVO: Renderizza grafico saldo settimanale
+          renderWeeklyBalanceChart(pageId);
           break;
         case 'report':
           area.innerHTML = renderReportPage();
