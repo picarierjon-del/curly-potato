@@ -646,7 +646,7 @@
         <div v-if="showMeterModal && tempMeterItem" class="modal-overlay" @click.self="cancelMeterComposition">
             <div class="modal-content">
                 <h3>Componi: {{ tempMeterItem.nome }}</h3>
-                <p style="font-size: 0.9rem; color: #666;">Seleziona i gusti e aggiungi i modificatori per ogni sezione.</p>
+                <p style="font-size: 0.9rem; color: #666;">Seleziona i gusti e aggiungi i modificatori per ogni sezione. (Prezzo Fisso: €{{ calculateTempMeterTotal.toFixed(2) }})</p>
                 
                 <div class="order-box" style="margin-bottom: 15px;">
                     <div v-for="(section, sIdx) in tempMeterItem.sections" :key="sIdx" style="padding: 5px 0; border-bottom: 1px dotted #ddd;">
@@ -701,7 +701,7 @@
                 <div class="modal-actions">
                     <button class="btn-cancel" @click="cancelMeterComposition">Annulla</button>
                     <button class="btn-confirm" @click="addMeterToOrder" :disabled="!isMeterValid">
-                        Aggiungi a Ordine (€{{ calculateTempMeterTotal.toFixed(2) }} - Prezzo Fisso)
+                        Aggiungi a Ordine (€{{ calculateTempMeterTotal.toFixed(2) }})
                     </button>
                 </div>
             </div>
@@ -710,7 +710,7 @@
         <div v-if="showHalfPizzaModal && tempHalfPizzaItem" class="modal-overlay" @click.self="cancelHalfPizzaComposition">
             <div class="modal-content">
                 <h3>Componi: {{ tempHalfPizzaItem.nome }}</h3>
-                <p style="font-size: 0.9rem; color: #666;">Seleziona i due gusti e aggiungi i modificatori specifici.</p>
+                <p style="font-size: 0.9rem; color: #666;">Seleziona i due gusti e aggiungi i modificatori specifici. (Prezzo calcolato: €{{ calculateTempHalfPizzaTotal.toFixed(2) }})</p>
                 
                 <div class="order-box" style="margin-bottom: 15px;">
                     <div style="padding: 5px 0; border-bottom: 1px dotted #ddd;">
@@ -770,7 +770,7 @@
                 <div class="modal-actions">
                     <button class="btn-cancel" @click="cancelHalfPizzaComposition">Annulla</button>
                     <button class="btn-confirm" @click="addHalfPizzaToOrder" :disabled="!isHalfPizzaValid">
-                        Aggiungi a Ordine (€{{ calculateTempHalfPizzaTotal.toFixed(2) }} - Media Arrotondata)
+                        Aggiungi a Ordine (€{{ calculateTempHalfPizzaTotal.toFixed(2) }})
                     </button>
                 </div>
             </div>
@@ -814,22 +814,22 @@
 
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script>
-        // *** NUOVE COSTANTI PREZZI FISSI (Logica Corretta) ***
-        const PREZZI_FISSI = {
-            "mezzo_metro": {
-                "1": 17.00, 
-                "2": 19.00, 
-                "3": 21.00  
-            },
-            "schiacciata_grande": {
-                "1": 12.00, 
-                "2": 15.00, 
-                "3": 17.00  
-            }
-        };
-
         const app = Vue.createApp({
             data() {
+                // *** NUOVE COSTANTI PREZZI FISSI (Logica Corretta e Interna a Vue) ***
+                const PREZZI_FISSI = {
+                    "mezzo_metro": {
+                        "1": 17.00, 
+                        "2": 19.00, 
+                        "3": 21.00  
+                    },
+                    "schiacciata_grande": {
+                        "1": 12.00, 
+                        "2": 15.00, 
+                        "3": 17.00  
+                    }
+                };
+                
                 return {
                     // Dati Base
                     view: 'inserimento', // 'inserimento', 'ordini', 'storico', 'impostazioni'
@@ -842,6 +842,9 @@
                     userRole: '', // 'Operatore' o 'Titolare'
                     newAdminPin: '',
                     newOwnerPin: '',
+                    
+                    // Riferimento alle costanti per l'uso interno
+                    PREZZI_FISSI: PREZZI_FISSI,
 
                     // Dati Menu
                     menu: {
@@ -936,7 +939,7 @@
                         'Senza': [
                             { nome: 'Aglio', prezzo: 0.00, isFinished: false },
                             { nome: 'Origano', prezzo: 0.00, isFinished: false },
-                            { nome: 'Mozzarella', prezzo: 0.00, isFinished: false }, // Aggiunto per coerenza con Più
+                            { nome: 'Mozzarella', prezzo: 0.00, isFinished: false }, 
                         ],
                         'Poco': [
                             { nome: 'Sale', prezzo: 0.00, isFinished: false },
@@ -1123,7 +1126,7 @@
                     const key = maxGusti.toString();
                     
                     // 1. Calcola il Prezzo Base Fisso
-                    let basePrice = PREZZI_FISSI[itemName][key] || 0;
+                    let basePrice = this.PREZZI_FISSI[itemName][key] || 0;
                     
                     // 2. Calcola il totale dei Modificatori
                     let modTotal = 0;
@@ -1474,7 +1477,7 @@
                         const maxGusti = item.sections.length; 
                         
                         const key = maxGusti.toString();
-                        basePrice = PREZZI_FISSI[itemName][key] || 0;
+                        basePrice = this.PREZZI_FISSI[itemName][key] || 0;
                         
                         (item.sections || []).forEach(section => {
                             modTotal += (section.modifiers || []).reduce((sum, mod) => sum + mod.prezzo, 0);
@@ -1724,7 +1727,6 @@
                     // *** LOGICA CORRETTA GESTIONE MODIFICATORI SEPARATI ***
                     if (this.tempModCat === 'Senza') {
                         // 1. Rimuovi tutti i modificatori dello stesso nome (Più, Poco, Abbondante)
-                        // Uso findIndex per assicurarmi di rimuovere solo una volta in caso di duplicati
                         const indexToRemove = modifiersArray.findIndex(m => m.nome === mod.nome);
                         if (indexToRemove !== -1) {
                              modifiersArray.splice(indexToRemove, 1);
