@@ -674,7 +674,7 @@
 <div class="modal-overlay" v-show="showPriceEditModal" @click.self="showPriceEditModal=false">
     <div class="modal-content">
         <h3>Modifica Prezzo Manuale</h3>
-        <p>Articolo: <strong>{{ order[tempPriceEditIndex]?.nome }}</strong></p>
+        <p>Articolo: <strong>{{ order[tempPriceEditIndex] ? order[tempPriceEditIndex].nome : '' }}</strong></p>
         <div class="form-row">
             <label for="newPrice">Nuovo Prezzo Totale per l'Articolo</label>
             <input type="number" step="0.01" id="newPrice" v-model.number="newPriceValue" required>
@@ -689,7 +689,7 @@
 
 <div class="modal-overlay" v-show="showMeterModal" @click.self="showMeterModal=false">
     <div class="modal-content">
-        <h3>Componi {{ tempMeterItem?.nome }}</h3>
+        <h3>Componi {{ tempMeterItem ? tempMeterItem.nome : '' }}</h3>
         <p style="font-size: 0.9rem; color: #666;">Prezzo Totale Fisso: **€{{ calculateTempMeterTotal.toFixed(2) }}** (Include costo base + aggiunte)</p>
         
         <div v-for="(section, secIdx) in tempMeterItem.sections" :key="secIdx" style="margin-bottom: 10px; border: 1px solid #ddd; padding: 10px; border-radius: 6px;">
@@ -748,7 +748,7 @@
 
 <div class="modal-overlay" v-show="showHalfPizzaModal" @click.self="showHalfPizzaModal=false">
     <div class="modal-content">
-        <h3>Componi {{ tempHalfPizzaItem?.nome }}</h3>
+        <h3>Componi {{ tempHalfPizzaItem ? tempHalfPizzaItem.nome : '' }}</h3>
         <p style="font-size: 0.9rem; color: #666;">Prezzo Totale Calcolato: **€{{ calculateTempHalfPizzaTotal.toFixed(2) }}** (Media arrotondata + aggiunte)</p>
 
         <div style="margin-bottom: 15px; border: 1px solid #e31b23; padding: 10px; border-radius: 6px;">
@@ -838,14 +838,14 @@
 
 <div class="modal-overlay" v-show="showShareModal" @click.self="showShareModal=false">
     <div class="modal-content">
-        <h3>Azioni Ordine #{{selectedOrderForShare?.id}}</h3>
-        <p>Cliente: <strong>{{ selectedOrderForShare?.customer }}</strong></p>
-        <p>Ora: <strong>{{ selectedOrderForShare?.hour }}</strong></p>
+        <h3>Azioni Ordine #{{selectedOrderForShare ? selectedOrderForShare.id : 'N/D'}}</h3>
+        <p>Cliente: <strong>{{ selectedOrderForShare ? selectedOrderForShare.customer : 'N/D' }}</strong></p>
+        <p>Ora: <strong>{{ selectedOrderForShare ? selectedOrderForShare.hour : 'N/D' }}</strong></p>
         
         <button class="final-btn" @click="shareViaWhatsapp(selectedOrderForShare)" style="background: #25d366;"><i class="fa-brands fa-whatsapp"></i> Invia Dettagli (WhatsApp)</button>
         
-        <button class="final-btn" @click="printOrder(selectedOrderForShare?.id, 'comanda')" style="background: #e31b23;"><i class="fa-solid fa-pizza-slice"></i> Stampa Comanda Cucina</button>
-        <button class="final-btn" @click="printOrder(selectedOrderForShare?.id, 'scontrino')" style="background: #6b7280;"><i class="fa-solid fa-receipt"></i> Stampa Scontrino Banco</button>
+        <button class="final-btn" @click="printOrder(selectedOrderForShare ? selectedOrderForShare.id : null, 'comanda')" style="background: #e31b23;"><i class="fa-solid fa-pizza-slice"></i> Stampa Comanda Cucina</button>
+        <button class="final-btn" @click="printOrder(selectedOrderForShare ? selectedOrderForShare.id : null, 'scontrino')" style="background: #6b7280;"><i class="fa-solid fa-receipt"></i> Stampa Scontrino Banco</button>
         
         <button type="button" class="btn-cancel" @click="showShareModal=false" style="width: 100%; margin-top: 10px;">Chiudi</button>
     </div>
@@ -901,8 +901,8 @@
         now.setMinutes(now.getMinutes() + 30);
         const hours = String(now.getHours()).padStart(2, '0');
         const minutes = String(now.getMinutes()).padStart(2, '0');
-        // Arrotonda ai 5 minuti più vicini (opzionale, ma mantiene l'originale pulito)
-        const roundedMinutes = Math.ceil(minutes / 5) * 5;
+        // Arrotonda ai 5 minuti più vicini 
+        const roundedMinutes = Math.ceil(now.getMinutes() / 5) * 5;
         now.setMinutes(roundedMinutes);
         return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
     }
@@ -1110,6 +1110,7 @@
             localStorage.setItem('pz_drivers',JSON.stringify(this.drivers)); 
             localStorage.setItem('pz_customerData',JSON.stringify(this.customerData)); 
             localStorage.setItem('pz_capacity_settings', JSON.stringify(this.capacitySettings));
+            localStorage.setItem('pz_admin_pin', this.adminPin); // Salvataggio PIN aggiunto per stabilità
         },
 
         calculateItemTotal(item) {
@@ -1715,7 +1716,7 @@
                     if (i.nome.includes('Mezzo Metro')) count += 4;
                     else if (i.nome.includes('Schiacciata Grande')) count += 2;
                     else count += 1; // Fallback per altri tipi di metro
-                } else if (this.menu['Pizze'] && this.menu['Pizze'].some(p => p.nome === i.nome)) {
+                } else if ((this.menu['Pizze'] && this.menu['Pizze'].some(p => p.nome === i.nome)) || (this.menu['Pizze Speciali'] && this.menu['Pizze Speciali'].some(p => p.nome === i.nome))) {
                     count += 1;
                 }
             });
@@ -1761,7 +1762,7 @@
             }
             this.calculateDriverStats();
         }
-    }).mount()
+    }).mount('#app')
 </script>
 </body>
 </html>
