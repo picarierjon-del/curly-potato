@@ -814,7 +814,7 @@
 
         <div v-if="showShareModal && selectedOrderForShare" class="modal-overlay" @click.self="showShareModal = false">
             <div class="modal-content">
-                <h3>Condividi Ordine #{{ selectedOrderForShare.id }}</h3>
+                <h3>Condividi Ordine #{{ selectedOrderForShare?.id }}</h3> 
                 <p>Scegli come condividere il riepilogo dell'ordine.</p>
                 
                 <div class="modal-actions">
@@ -1280,8 +1280,7 @@
                         if (data) {
                             const parsedData = JSON.parse(data);
                             
-                            // Correzione: Usa Object.assign solo per le proprietà che possono esistere
-                            // ed evita di sovrascrivere l'intera data() che include variabili di input temporanee
+                            // Copia sicura delle proprietà esistenti
                             for (const key in parsedData) {
                                 if (this.$data.hasOwnProperty(key)) {
                                     this[key] = parsedData[key];
@@ -1383,7 +1382,6 @@
                     let modTotal = 0;
                     
                     if (item.isHalfPizza) {
-                        // Reso sicuro: allPizzaGusti è una computed, non può essere undefined
                         const price1 = this.allPizzaGusti.find(g => g.nome === item.gusto1)?.prezzo || 0;
                         const price2 = this.allPizzaGusti.find(g => g.nome === item.gusto2)?.prezzo || 0;
                         
@@ -2205,12 +2203,15 @@
                     printWindow.print();
                 },
                 showShareMenu(orderId) {
+                    // Correzione: Assicura che l'ordine sia assegnato PRIMA di aprire la modale
                     this.selectedOrderForShare = this.activeOrders.find(o => o.id === orderId);
                     if (this.selectedOrderForShare) {
                         this.showShareModal = true;
                     }
                 },
                 shareViaWhatsapp(order) {
+                    if (!order) return; // Protezione aggiuntiva
+
                     let message = `*Riepilogo Ordine Pizzeria Smart*\n\n`;
                     message += `*#${order.id}* - ${order.mode.toUpperCase()}\n`;
                     message += `*Cliente:* ${order.customer}\n`;
