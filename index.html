@@ -300,7 +300,7 @@
                         <h4>
                             Ordine #{{ o.id }} 
                             <span style="font-size: 0.8rem; font-weight: 500;">
-                                {{ o.hour }} ({{ formatDate(o.date) }})
+                                {{ o.hour }} ({{ formatDate(o.date) }} <span v-if="o.date !== new Date().toISOString().slice(0, 10)">{{ formatYear(o.date) }}</span>)
                             </span>
                         </h4>
                         <p style="margin: 0 0 6px; font-weight: 700; color: #333;">{{ o.customer }} <span v-if="o.tableNumber">| Tavolo/Ritiro: {{ o.tableNumber }}</span></p>
@@ -318,7 +318,7 @@
                             <div>
                                 <select :value="o.driver" @change="updateActiveOrderDriver(o.id, $event.target.value)" v-if="o.mode === 'consegna'">
                                     <option value="">ASSEGNA FATTORE</option>
-                                    <option v-for="driver in availableDrivers" :value="driver">{{ driver }}</option>
+                                    <option v-for="driver in availableDrivers" :value="driver" :key="driver">{{ driver }}</option>
                                 </select>
                             </div>
                         </div>
@@ -355,7 +355,7 @@
                     <div class="form-row">
                         <select v-model="selectedDriver" @change="calculateDriverStats">
                             <option value="">Tutti (Solo Consegne Assegnate)</option>
-                            <option v-for="driver in availableDrivers" :value="driver">{{ driver }}</option>
+                            <option v-for="driver in availableDrivers" :value="driver" :key="driver">{{ driver }}</option>
                         </select>
                     </div>
                     <div class="order-box">
@@ -373,7 +373,7 @@
                         
                         <select :value="o.driver" @change="updateArchiveDriver(o.id, $event.target.value)" style="margin-bottom: 10px;">
                             <option value="">ASSEGNA FATTORE</option>
-                            <option v-for="driver in availableDrivers" :value="driver">{{ driver }}</option>
+                            <option v-for="driver in availableDrivers" :value="driver" :key="driver">{{ driver }}</option>
                         </select>
                         
                         <div class="order-actions">
@@ -874,7 +874,6 @@
                         'Composizioni': [
                             { nome: 'Mezzo Metro', prezzo: 16.00, isMeter: true, isFinished: false, sections: [{name: 'Sezione 1', gusto: null, modifiers: []}, {name: 'Sezione 2', gusto: null, modifiers: []}, {name: 'Sezione 3', gusto: null, modifiers: []}, {name: 'Sezione 4', gusto: null, modifiers: []}] },
                             { nome: 'Schiacciata Grande', prezzo: 12.00, isMeter: true, isFinished: false, sections: [{name: 'Metà 1', gusto: null, modifiers: []}, {name: 'Metà 2', gusto: null, modifiers: []}]},
-                            // Logica Pizza a Metà Reintegrata
                             { nome: 'Pizza a Metà', prezzo: 0.00, isHalfPizza: true, isFinished: false, gusto1: null, gusto2: null, modifiers1: [], modifiers2: []}
                         ]
                     },
@@ -998,7 +997,7 @@
                     newZoneName: '',
                     newZonePrice: 0.00,
                     newDriverName: ''
-                };
+                }
             },
             
             computed: {
@@ -1081,7 +1080,6 @@
                 },
                 isMeterValid() {
                     if (!this.tempMeterItem) return false;
-                    // Verifica che ogni sezione abbia almeno un gusto selezionato
                     return (this.tempMeterItem.sections || []).every(section => section.gusto !== null);
                 },
                 
@@ -1124,7 +1122,6 @@
                         } else if (this.activeDateFilter === 'tomorrow') {
                             return orderDate.getTime() === tomorrow.getTime();
                         } else if (this.activeDateFilter === 'future') {
-                            // Ordini dal giorno dopo domani in poi
                             const dayAfterTomorrow = new Date();
                             dayAfterTomorrow.setDate(today.getDate() + 2);
                             dayAfterTomorrow.setHours(0, 0, 0, 0);
@@ -1142,7 +1139,6 @@
                         );
                     }
 
-                    // Ordina per data e ora
                     return orders.sort((a, b) => {
                         const timeA = new Date(`${a.date}T${a.hour}`);
                         const timeB = new Date(`${b.date}T${b.hour}`);
@@ -1159,7 +1155,7 @@
                     return orders.sort((a, b) => {
                         const timeA = new Date(`${a.date}T${a.hour}`);
                         const timeB = new Date(`${b.date}T${b.hour}`);
-                        return timeB - timeA; // Dal più recente al meno recente
+                        return timeB - timeA;
                     });
                 },
                 dailyTotal() {
@@ -1285,7 +1281,6 @@
                             
                             Object.assign(this, parsedData);
 
-                            // Assicura che lastOrderId sia il massimo ID esistente
                             const maxId = Math.max(
                                 0,
                                 ...(this.activeOrders || []).map(o => o.id),
@@ -1382,7 +1377,6 @@
                         const price1 = this.allPizzaGusti.find(g => g.nome === item.gusto1)?.prezzo || 0;
                         const price2 = this.allPizzaGusti.find(g => g.nome === item.gusto2)?.prezzo || 0;
                         
-                        // Il prezzo base è la media dei due gusti, se il prezzo di listino è 0
                         if (basePrice === 0) {
                             basePrice = (price1 + price2) / 2;
                         }
@@ -1419,7 +1413,6 @@
                     if (item.isFinished) return;
                     const newItem = Object.assign({}, item); 
                     
-                    // Pulisci le proprietà non pertinenti all'articolo base
                     delete newItem.isMeter;
                     delete newItem.sections;
                     delete newItem.isHalfPizza;
@@ -1572,7 +1565,7 @@
                     
                     const finalItem = JSON.parse(JSON.stringify(this.tempMeterItem));
                     
-                    finalItem.prezzo = this.calculateTempMeterTotal; 
+                    finalItem.prezzo = this.calculateItemTotal(finalItem); 
                     
                     finalItem.sections.forEach(s => delete s.activeSection);
                     delete finalItem.activeSection; 
@@ -1657,7 +1650,7 @@
                     
                     const finalItem = JSON.parse(JSON.stringify(this.tempHalfPizzaItem));
                     
-                    finalItem.prezzo = this.calculateTempHalfPizzaTotal; 
+                    finalItem.prezzo = this.calculateItemTotal(finalItem); 
                     
                     delete finalItem.activeHalf; 
                     
@@ -2516,11 +2509,15 @@
                 // --- Utilità ---
                 formatDate(dateString) {
                     const date = new Date(dateString);
-                    return date.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                    return date.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' });
+                },
+                formatYear(dateString) {
+                    const date = new Date(dateString);
+                    return date.toLocaleDateString('it-IT', { year: 'numeric' });
                 },
                 formatDateTime(isoString) {
                     const date = new Date(isoString);
-                    return date.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }) + ' ' + date.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' });
+                    return date.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }) + ' ' + this.formatDate(isoString);
                 }
             },
 
