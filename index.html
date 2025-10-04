@@ -455,7 +455,7 @@
                             </div>
                         </div>
                         
-                        <form @submit.prevent="addCategory" style="margin-top: 10px;">
+                        <form @submit.prevent="addCategory">
                             <input type="text" v-model="newCategoryName" placeholder="Nuova Categoria" required>
                             <button type="submit"><i class="fa-solid fa-plus"></i> Cat</button>
                         </form>
@@ -492,7 +492,7 @@
                             </div>
                         </div>
 
-                        <form @submit.prevent="addModifierCategory" style="margin-top: 10px;">
+                        <form @submit.prevent="addModifierCategory">
                             <input type="text" v-model="newModifierCategoryName" placeholder="Nuova Categoria Modificatori" required>
                             <button type="submit"><i class="fa-solid fa-plus"></i> Cat</button>
                         </form>
@@ -1280,8 +1280,15 @@
                         if (data) {
                             const parsedData = JSON.parse(data);
                             
-                            Object.assign(this, parsedData);
+                            // Correzione: Usa Object.assign solo per le proprietà che possono esistere
+                            // ed evita di sovrascrivere l'intera data() che include variabili di input temporanee
+                            for (const key in parsedData) {
+                                if (this.$data.hasOwnProperty(key)) {
+                                    this[key] = parsedData[key];
+                                }
+                            }
 
+                            // Ricalcola il maxId in modo sicuro
                             const maxId = Math.max(
                                 0,
                                 ...(this.activeOrders || []).map(o => o.id),
@@ -1289,6 +1296,7 @@
                             );
                             this.lastOrderId = maxId;
 
+                            // Gestione fallback per i dati di configurazione
                             this.adminPin = parsedData.adminPin || '1234';
                             this.ownerPin = parsedData.ownerPin || '0000';
                             this.capacitySettings = parsedData.capacitySettings || { maxPizzas: 20, intervalMinutes: 30 };
@@ -1375,7 +1383,7 @@
                     let modTotal = 0;
                     
                     if (item.isHalfPizza) {
-                        // Verifica se l'oggetto gusto esiste prima di accedere a 'prezzo'
+                        // Reso sicuro: allPizzaGusti è una computed, non può essere undefined
                         const price1 = this.allPizzaGusti.find(g => g.nome === item.gusto1)?.prezzo || 0;
                         const price2 = this.allPizzaGusti.find(g => g.nome === item.gusto2)?.prezzo || 0;
                         
