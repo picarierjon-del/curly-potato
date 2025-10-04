@@ -208,7 +208,7 @@
                                         <span>{{ getModifierIcon(getModifierCategory(mod.nome)) }} {{ mod.nome }} <span v-if="mod.prezzo > 0">(+€{{ mod.prezzo.toFixed(2) }})</span></span>
                                         <button @click.stop="item.modifiers.splice(modIndex, 1); selectedItemIndex = index;" class="mod-remove-btn"><i class="fa-solid fa-minus"></i></button>
                                     </li>
-                                </ul >
+                                </ul>
                             </div>
                             <div style="text-align: right; display: flex; align-items: center; gap: 8px;">
                                 <span style="font-weight: 700;">€{{ calculateItemTotal(item).toFixed(2) }}</span>
@@ -483,7 +483,7 @@
                                 <span>{{ mod.nome }} <span v-if="mod.prezzo > 0"> - €{{ mod.prezzo.toFixed(2) }}</span></span>
                                 <div class="actions">
                                     <div class="item-status">
-                                        <button :class="{available: !mod.isFinished, finished: mod.isFinished}" @click="toggleModifierFinished(activeSettingsModCat, index)">
+                                        <button :class="{available: !mod.isFinished, finished: mod.isFinished}" @click="toggleItemFinished(activeSettingsModCat, index)">
                                             {{ mod.isFinished ? 'Esaurito' : 'Disponibile' }}
                                         </button>
                                     </div>
@@ -894,7 +894,7 @@
                         'Abbondante': [
                             { nome: 'Olio', prezzo: 0.00, isFinished: false },
                         ],
-                    },
+                    ],
 
                     // Dati Ordine Corrente
                     order: [],
@@ -963,12 +963,13 @@
                     // Composizioni (Mezzo Metro/Schiacciata - isMeter)
                     showMeterModal: false,
                     tempMeterItem: null,
-                    // gustoSearchTerm e tempModCat già presenti sopra
+                    gustoSearchTerm: '',
+                    tempModCat: 'Più',
 
                     // Composizioni (Pizza a Metà - isHalfPizza)
                     showHalfPizzaModal: false,
                     tempHalfPizzaItem: null, 
-                    activeHalf: 0, // 0=chiusa, 1=metà 1, 2=metà 2
+                    activeHalf: 0, 
 
                     // Modifica Prezzo
                     showPriceEditModal: false,
@@ -1047,7 +1048,6 @@
 
                 // --- Composizioni Computed ---
                 allPizzaGusti() {
-                    // Correzione: Assicura che le categorie esistano prima di concatenare
                     const classiche = this.menu['Pizza Classica'] || [];
                     const speciali = this.menu['Pizze Speciali'] || [];
                     return classiche.concat(speciali);
@@ -1202,12 +1202,12 @@
                     }
                     if (newView === 'ordini' || newView === 'storico') {
                         if (!this.isAdmin && this.accessPin === '') {
-                             // Non fa nulla, viene mostrato il form di accesso
+                             
                         } else if (newView === 'storico' && this.isAdmin) {
                             this.calculateDriverStats();
                         }
                     } else if (newView === 'impostazioni' && !this.isOwner && this.accessPin === '') {
-                        // Non fa nulla, viene mostrato il form di accesso
+                        
                     }
                     this.saveData(); 
                 },
@@ -1375,6 +1375,7 @@
                     let modTotal = 0;
                     
                     if (item.isHalfPizza) {
+                        // Verifica se l'oggetto gusto esiste prima di accedere a 'prezzo'
                         const price1 = this.allPizzaGusti.find(g => g.nome === item.gusto1)?.prezzo || 0;
                         const price2 = this.allPizzaGusti.find(g => g.nome === item.gusto2)?.prezzo || 0;
                         
@@ -2142,15 +2143,15 @@
                         `<tr><td colspan="2">Consegna: ${order.address} ${order.streetNumber}</td></tr>` : 
                         `<tr><td colspan="2">Modalità: ${order.mode.toUpperCase()} ${order.tableNumber ? `(${order.tableNumber})` : ''}</td></tr>`;
                     
-                    let acontoHtml = '';
+                    let acontotml = '';
                     const daSaldare = order.total - order.accontoRicevuto;
                     if (order.accontoRicevuto > 0) {
-                        acontoHtml = `
+                        acontotml = `
                             <tr class="total-row"><td>ACCONTO RICEVUTO</td><td style="text-align: right;">-€${order.accontoRicevuto.toFixed(2)}</td></tr>
                             <tr class="total-row"><td>DA SALDARE</td><td style="text-align: right;">€${daSaldare.toFixed(2)}</td></tr>
                         `;
                         if (daSaldare < 0) {
-                            acontoHtml += `<tr class="total-row"><td>RESTO DA DARE</td><td style="text-align: right;">€${Math.abs(daSaldare).toFixed(2)}</td></tr>`;
+                            acontotml += `<tr class="total-row"><td>RESTO DA DARE</td><td style="text-align: right;">€${Math.abs(daSaldare).toFixed(2)}</td></tr>`;
                         }
                     }
 
@@ -2173,7 +2174,7 @@
                                 <td>TOTALE ORDINE</td>
                                 <td style="text-align: right;">€${order.total.toFixed(2)}</td>
                             </tr>
-                            ${acontoHtml}
+                            ${acontotml}
                         </table>
                         <p style="text-align: center; margin-top: 10px; font-size: 8pt;">Grazie e Arrivederci!</p>
                     `;
@@ -2509,24 +2510,18 @@
 
                 // --- Utilità ---
                 formatDate(dateString) {
-                    // Solo giorno/mese
                     const date = new Date(dateString);
                     return date.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' });
                 },
                 formatFullDate(dateString) {
-                    // Giorno/mese/anno
                     const date = new Date(dateString);
-                    // Aggiusta per Safari/iOS che a volte non formatta l'anno se non richiesto:
-                    const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
-                    
-                    // Se la data è di quest'anno, omette l'anno per brevità
                     const currentYear = new Date().getFullYear();
                     const targetYear = date.getFullYear();
                     if (currentYear === targetYear) {
                         return date.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' });
                     }
                     
-                    return date.toLocaleDateString('it-IT', options);
+                    return date.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' });
                 },
                 formatDateTime(isoString) {
                     const date = new Date(isoString);
