@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Dashboard Contabilità - Dark + CSV + PDF</title>
+  <title>Dashboard Contabilità – Completa & Proattiva</title>
 
   <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -15,61 +15,66 @@
 
   <style>
     :root { --bg:#0E1320; --card:#1E253B; --muted:#94a3b8; }
-    body { background-color: var(--bg); color:#fff; }
+    body { background-color: var(--bg); color:#fff; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
     .card { background-color: var(--card); border-radius: 12px; padding: 16px; }
     .btn { background:#6366f1; padding:10px 14px; border-radius:8px; font-size:14px; }
     .btn:hover { background:#818cf8; }
     .btn-ghost { background:transparent; border:1px solid #475569; padding:10px 14px; border-radius:8px; }
+    .input, select { background:#1E253B; border:none; color:#fff; padding:8px 10px; border-radius:8px; width:100%; }
+    .input:focus, select:focus { outline:1px solid #6366f1; }
     .ringCanvas { width:86px; height:86px; }
-    /* KPI in orizzontale scrollabile su mobile */
     .kpi-scroll { display:flex; gap:12px; overflow-x:auto; padding-bottom:4px; }
     .kpi-scroll::-webkit-scrollbar { height:6px; }
     .kpi-scroll::-webkit-scrollbar-thumb { background:#334155; border-radius:6px; }
-    /* Miglioramenti stampa per PDF */
     @media print { .no-print { display:none !important; } }
+    dialog::backdrop { background: rgba(0,0,0,.5); }
   </style>
 </head>
 <body class="p-4 md:p-6">
 
-  <!-- Alert “spese > entrate” -->
+  <!-- Alerts proattivi -->
   <div id="alertBox" class="hidden mb-4 p-3 rounded-lg border border-rose-500/30 bg-rose-500/10 text-rose-200">
-    🔔 Attenzione: in questo periodo le <b>spese superano le entrate</b>. Valuta di ridurre i costi o rivedere il budget.
+    🔔 <b>Attenzione:</b> indicatori di rischio attivi. Apri <button class="underline" onclick="openSettings()">Impostazioni</button> per gestire soglie.
   </div>
 
-  <!-- Barra superiore -->
+  <!-- Header -->
   <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
     <div>
       <h1 class="text-xl md:text-2xl font-bold text-indigo-300">📊 Dashboard Contabilità</h1>
-      <p class="text-sm text-slate-400">Tema scuro • CSV locale • PDF export • Alert automatici</p>
+      <p class="text-sm text-slate-400">Tema scuro • CSV • PDF • Modifica/Elimina • Proattiva</p>
     </div>
     <div class="flex flex-wrap items-center gap-2 no-print">
       <input type="file" id="fileInput" accept=".csv" class="hidden" />
-      <button class="btn" onclick="document.getElementById('fileInput').click()">📂 Carica CSV</button>
-      <button class="btn-ghost" onclick="clearSaved()">🧹 Svuota salvataggio</button>
-      <button class="btn" onclick="exportPDF()">📄 Esporta PDF</button>
+      <button class="btn" onclick="document.getElementById('fileInput').click()">📂 Importa CSV</button>
+      <button class="btn-ghost" onclick="exportCSV()">📤 Esporta CSV</button>
+      <button class="btn-ghost" onclick="exportPDF()">📄 Esporta PDF</button>
+      <button class="btn-ghost" onclick="openSettings()">⚙️ Impostazioni</button>
+      <button class="btn bg-red-500 hover:bg-red-600" onclick="clearSaved()">🧹 Svuota dati</button>
     </div>
   </div>
 
   <!-- Filtri -->
-  <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
-    <select id="yearSel" class="bg-[#1E253B] text-white px-3 py-2 rounded">
+  <div class="grid grid-cols-2 md:grid-cols-6 gap-3 mb-5">
+    <select id="yearSel">
       <option>2024</option><option selected>2025</option><option>2026</option>
     </select>
-    <select id="monthSel" class="bg-[#1E253B] text-white px-3 py-2 rounded">
+    <select id="monthSel">
       <option value="0">Gennaio</option><option value="1">Febbraio</option><option value="2">Marzo</option>
       <option value="3">Aprile</option><option value="4">Maggio</option><option value="5">Giugno</option>
       <option value="6">Luglio</option><option value="7" selected>Agosto</option><option value="8">Settembre</option>
       <option value="9">Ottobre</option><option value="10">Novembre</option><option value="11">Dicembre</option>
     </select>
-    <select id="attivitaSel" class="bg-[#1E253B] text-white px-3 py-2 rounded">
+    <select id="attivitaSel">
       <option>Tutte</option><option>Negozio 1</option><option>Negozio 2</option><option>Negozio 3</option><option>Negozio 4</option>
     </select>
-    <select id="contoSel" class="bg-[#1E253B] text-white px-3 py-2 rounded">
+    <select id="contoSel">
       <option>Tutti</option><option>Contanti</option><option>POS</option><option>Unicredit</option><option>Online</option>
     </select>
+    <input type="date" id="fromDate" class="input" placeholder="Da">
+    <input type="date" id="toDate" class="input" placeholder="A">
   </div>
 
-  <!-- Contenitore da “fotografare” per il PDF -->
+  <!-- Contenitore da esportare in PDF -->
   <div id="report" class="space-y-4">
 
     <!-- KPI -->
@@ -112,10 +117,29 @@
       </div>
     </div>
 
+    <!-- Form aggiunta -->
+    <div class="card">
+      <h3 class="text-indigo-300 font-semibold mb-2">➕ Aggiungi nuova voce</h3>
+      <div class="grid md:grid-cols-7 gap-2">
+        <input type="date" id="newDate" class="input" />
+        <select id="newTipo" class="input"><option>entrata</option><option>spesa</option></select>
+        <input type="number" id="newImporto" class="input" placeholder="Importo" />
+        <input type="number" id="newIVA" class="input" placeholder="IVA %" />
+        <input type="text" id="newCat" class="input" placeholder="Categoria" />
+        <input type="text" id="newConto" class="input" placeholder="Conto" />
+        <input type="text" id="newAtt" class="input" placeholder="Attività" />
+      </div>
+      <div class="flex gap-2 mt-3">
+        <button class="btn" onclick="addEntry()">Aggiungi</button>
+        <button class="btn-ghost" onclick="suggestCategory()">✨ Suggerisci categoria</button>
+      </div>
+      <p class="text-xs text-slate-400 mt-2">Suggerimento: in modalità <em>proattiva</em> ricevi avvisi su budget/spese/IVA (⚙️ Impostazioni).</p>
+    </div>
+
     <!-- Tabella -->
     <div class="card">
       <div class="flex items-center justify-between mb-3">
-        <h3 class="font-semibold text-indigo-300">Fatture programmate</h3>
+        <h3 class="font-semibold text-indigo-300">📋 Fatture / Movimenti</h3>
         <span id="rowsCount" class="text-xs text-slate-400"></span>
       </div>
       <div class="overflow-x-auto">
@@ -123,10 +147,13 @@
           <thead>
             <tr class="text-indigo-300 border-b border-indigo-500/40">
               <th class="text-left py-2 pr-3">Data</th>
+              <th class="text-left py-2 pr-3">Tipo</th>
+              <th class="text-left py-2 pr-3">Importo</th>
+              <th class="text-left py-2 pr-3">IVA</th>
               <th class="text-left py-2 pr-3">Categoria</th>
               <th class="text-left py-2 pr-3">Conto</th>
-              <th class="text-left py-2 pr-3">Attività</th>
-              <th class="text-left py-2 pr-0">Importo</th>
+              <th class="text-left py-2 pr-0">Attività</th>
+              <th class="text-left py-2 pr-0 no-print">Azioni</th>
             </tr>
           </thead>
           <tbody id="fattureTable"></tbody>
@@ -135,239 +162,368 @@
     </div>
   </div>
 
-  <!-- Footer azioni -->
+  <!-- MODALE: Modifica riga -->
+  <dialog id="editDialog" class="rounded-xl p-0 w-[95%] md:w-[720px] bg-[#111826] text-white">
+    <form method="dialog" class="p-5">
+      <h3 class="text-lg font-semibold mb-3">✏️ Modifica voce</h3>
+      <input type="hidden" id="editId" />
+      <div class="grid md:grid-cols-7 gap-2">
+        <input type="date" id="editDate" class="input" />
+        <select id="editTipo" class="input"><option>entrata</option><option>spesa</option></select>
+        <input type="number" id="editImporto" class="input" placeholder="Importo" />
+        <input type="number" id="editIVA" class="input" placeholder="IVA %" />
+        <input type="text" id="editCat" class="input" placeholder="Categoria" />
+        <input type="text" id="editConto" class="input" placeholder="Conto" />
+        <input type="text" id="editAtt" class="input" placeholder="Attività" />
+      </div>
+      <div class="flex justify-end gap-2 mt-4">
+        <button class="btn-ghost" value="cancel">Annulla</button>
+        <button class="btn" onclick="saveEdit(event)">Salva</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- MODALE: Impostazioni (proattivo) -->
+  <dialog id="settingsDialog" class="rounded-xl p-0 w-[95%] md:w-[560px] bg-[#111826] text-white">
+    <form method="dialog" class="p-5">
+      <h3 class="text-lg font-semibold mb-3">⚙️ Impostazioni proattive</h3>
+      <label class="flex items-center gap-2 mb-3">
+        <input type="checkbox" id="proactiveToggle" />
+        <span>Abilita modalità proattiva (avvisi automatici)</span>
+      </label>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <label class="text-sm text-slate-300">Budget spese mensili (€)</label>
+          <input type="number" id="budgetSpese" class="input" placeholder="es. 5000" />
+        </div>
+        <div>
+          <label class="text-sm text-slate-300">Soglia IVA da versare (€)</label>
+          <input type="number" id="ivaThreshold" class="input" placeholder="es. 2000" />
+        </div>
+      </div>
+      <p class="text-xs text-slate-400 mt-3">Gli avvisi si basano sui dati filtrati per mese/anno.</p>
+      <div class="flex justify-end gap-2 mt-4">
+        <button class="btn-ghost" value="cancel">Chiudi</button>
+        <button class="btn" onclick="saveSettings(event)">Salva</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- FOOTNOTE -->
   <div class="mt-5 flex flex-wrap gap-2 no-print">
     <span class="text-xs text-slate-400">Suggerimento: su mobile scorri i KPI in orizzontale →</span>
   </div>
 
   <!-- SCRIPT -->
   <script>
-    // ======== Stato / storage ========
-    const STORAGE_KEY = 'sb_csv_data_v1';
-    let data = [];               // dati grezzi (righe CSV)
-    let donutChart, barChart;    // istanze Chart.js
-    let ringCharts = {};         // { id: chartInstance }
+    // ===== Stato & Storage =====
+    const STORAGE_KEY = 'sb_rows_v3';   // dataset
+    const SETTINGS_KEY = 'sb_settings_v1'; // impostazioni proattive
+    let rows = [];       // {id, Data, Tipo, Importo, IVA, Categoria, Conto, Attivita}
+    let donutChart, barChart;
+    const fmtEUR = n => (isFinite(n)?n:0).toLocaleString('it-IT',{style:'currency',currency:'EUR'});
 
-    // ======== Utility ========
-    const formatEUR = n => (isFinite(n) ? n : 0).toLocaleString('it-IT', { style:'currency', currency:'EUR' });
-    const parseCSV = (text) => {
-      // Parser semplice: split su righe e virgole; richiede CSV pulito (no virgolette con virgole interne)
-      return text.trim().split('\n').slice(1).filter(Boolean).map(line => {
-        const [Data, Tipo, Importo, IVA, Categoria, Conto, Attivita] = line.split(',');
-        return { Data, Tipo, Importo: +Importo, IVA: +IVA, Categoria, Conto, Attivita };
-      });
+    // ===== Utility =====
+    const genId = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
+    const suggestCategory = () => {
+      const cto = document.getElementById('newConto').value.toLowerCase();
+      const att = document.getElementById('newAtt').value.toLowerCase();
+      const imp = +document.getElementById('newImporto').value || 0;
+      let cat = '';
+      if (cto.includes('pos')) cat = 'POS';
+      else if (cto.includes('unicredit')) cat = 'Bonifico';
+      else if (cto.includes('online')) cat = 'E-commerce';
+      else if (cto.includes('contanti')) cat = 'Cassa';
+      if (!cat && imp >= 1000 && document.getElementById('newTipo').value === 'spesa') cat = 'Affitto / Costi fissi';
+      if (!cat && att.includes('negozio')) cat = 'Vendite negozio';
+      document.getElementById('newCat').value = cat || document.getElementById('newCat').value;
     };
 
-    // ======== File handling / LocalStorage ========
-    document.getElementById('fileInput').addEventListener('change', e => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = ev => {
-        const text = ev.target.result;
-        localStorage.setItem(STORAGE_KEY, text);   // Salvataggio locale dell'intero CSV
-        data = parseCSV(text);
-        render();
+    // ===== Settings (proattivo) =====
+    function getSettings(){
+      const saved = localStorage.getItem(SETTINGS_KEY);
+      return saved ? JSON.parse(saved) : { proactive: true, budgetSpese: 5000, ivaThreshold: 2000 };
+    }
+    function openSettings(){
+      const s = getSettings();
+      document.getElementById('proactiveToggle').checked = !!s.proactive;
+      document.getElementById('budgetSpese').value = s.budgetSpese ?? '';
+      document.getElementById('ivaThreshold').value = s.ivaThreshold ?? '';
+      document.getElementById('settingsDialog').showModal();
+    }
+    function saveSettings(e){
+      e.preventDefault();
+      const obj = {
+        proactive: document.getElementById('proactiveToggle').checked,
+        budgetSpese: +document.getElementById('budgetSpese').value || 0,
+        ivaThreshold: +document.getElementById('ivaThreshold').value || 0
       };
-      reader.readAsText(file);
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(obj));
+      document.getElementById('settingsDialog').close();
+      render();
+    }
+
+    // ===== CRUD =====
+    function addEntry(){
+      const d = document.getElementById('newDate').value;
+      const tipo = document.getElementById('newTipo').value;
+      const imp = +document.getElementById('newImporto').value;
+      const iva = +document.getElementById('newIVA').value || 0;
+      const cat = document.getElementById('newCat').value;
+      const cto = document.getElementById('newConto').value;
+      const att = document.getElementById('newAtt').value;
+      if(!d || !imp) return alert('Inserisci almeno Data e Importo.');
+      rows.push({ id: genId(), Data:d, Tipo:tipo, Importo:imp, IVA:iva, Categoria:cat, Conto:cto, Attivita:att });
+      saveRows(); clearNewForm(); render();
+    }
+    function clearNewForm(){
+      ['newDate','newImporto','newIVA','newCat','newConto','newAtt'].forEach(id=>document.getElementById(id).value='');
+      document.getElementById('newTipo').value='entrata';
+    }
+    function openEdit(id){
+      const r = rows.find(x=>x.id===id); if(!r) return;
+      document.getElementById('editId').value = r.id;
+      document.getElementById('editDate').value = r.Data;
+      document.getElementById('editTipo').value = r.Tipo;
+      document.getElementById('editImporto').value = r.Importo;
+      document.getElementById('editIVA').value = r.IVA;
+      document.getElementById('editCat').value = r.Categoria;
+      document.getElementById('editConto').value = r.Conto;
+      document.getElementById('editAtt').value = r.Attivita;
+      document.getElementById('editDialog').showModal();
+    }
+    function saveEdit(e){
+      e.preventDefault();
+      const id = document.getElementById('editId').value;
+      const idx = rows.findIndex(x=>x.id===id); if(idx<0) return;
+      rows[idx] = {
+        id,
+        Data: document.getElementById('editDate').value,
+        Tipo: document.getElementById('editTipo').value,
+        Importo: +document.getElementById('editImporto').value,
+        IVA: +document.getElementById('editIVA').value || 0,
+        Categoria: document.getElementById('editCat').value,
+        Conto: document.getElementById('editConto').value,
+        Attivita: document.getElementById('editAtt').value
+      };
+      saveRows();
+      document.getElementById('editDialog').close();
+      render();
+    }
+    function removeRow(id){
+      if(!confirm('Eliminare questa voce?')) return;
+      rows = rows.filter(x=>x.id!==id);
+      saveRows(); render();
+    }
+
+    // ===== Storage =====
+    function saveRows(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(rows)); }
+    function loadRows(){
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if(saved){ rows = JSON.parse(saved); }
+      if(!rows || !rows.length){
+        rows = [
+          { id:genId(), Data:'2025-08-02', Tipo:'entrata', Importo:2300, IVA:22, Categoria:'PRODOTTO X', Conto:'POS', Attivita:'Negozio 4' },
+          { id:genId(), Data:'2025-08-03', Tipo:'entrata', Importo:1900, IVA:22, Categoria:'PRODOTTO Z', Conto:'Contanti', Attivita:'Negozio 1' },
+          { id:genId(), Data:'2025-08-04', Tipo:'entrata', Importo:9397.85, IVA:10, Categoria:'ONLINE', Conto:'Online', Attivita:'Negozio 4' },
+          { id:genId(), Data:'2025-08-05', Tipo:'entrata', Importo:7054.31, IVA:10, Categoria:'CONTANTI', Conto:'Contanti', Attivita:'Negozio 2' },
+          { id:genId(), Data:'2025-08-06', Tipo:'spesa', Importo:1280, IVA:22, Categoria:'Affitto', Conto:'Unicredit', Attivita:'Negozio 4' },
+          { id:genId(), Data:'2025-08-07', Tipo:'spesa', Importo:560, IVA:10, Categoria:'Utenze', Conto:'Unicredit', Attivita:'Negozio 4' },
+          { id:genId(), Data:'2025-08-08', Tipo:'spesa', Importo:2300, IVA:22, Categoria:'Marketing / Pubblicità', Conto:'Online', Attivita:'Negozio 4' },
+          { id:genId(), Data:'2025-08-09', Tipo:'spesa', Importo:190, IVA:22, Categoria:'Manutenzione', Conto:'POS', Attivita:'Negozio 1' },
+        ];
+        saveRows();
+      }
+    }
+
+    // ===== Import/Export =====
+    document.getElementById('fileInput').addEventListener('change', e=>{
+      const f = e.target.files[0]; if(!f) return;
+      const r = new FileReader();
+      r.onload = ev => {
+        const parsed = ev.target.result.trim().split('\n').slice(1).map(line=>{
+          const [Data,Tipo,Importo,IVA,Categoria,Conto,Attivita] = line.split(',');
+          return { id: genId(), Data, Tipo, Importo:+Importo, IVA:+IVA, Categoria, Conto, Attivita };
+        });
+        rows = parsed.concat(rows); // merge semplice (puoi cambiare policy)
+        saveRows(); render();
+      };
+      r.readAsText(f);
+      e.target.value = '';
     });
 
-    function clearSaved() {
-      localStorage.removeItem(STORAGE_KEY);
-      // ripristina dataset demo e ricarica
-      loadInitialData();
+    function exportCSV(){
+      const header = "Data,Tipo,Importo,IVA,Categoria,Conto,Attivita\n";
+      const body = rows.map(r=>[r.Data,r.Tipo,r.Importo,r.IVA,r.Categoria,r.Conto,r.Attivita].join(',')).join('\n');
+      const blob = new Blob([header+body], {type:'text/csv'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'dati_dashboard.csv';
+      a.click();
     }
 
-    // ======== Charts helpers ========
-    function makeRing(id, value, max, color) {
-      const el = document.getElementById(id).getContext('2d');
-      if (ringCharts[id]) ringCharts[id].destroy();
-      ringCharts[id] = new Chart(el, {
-        type: 'doughnut',
-        data: { datasets: [{ data: [Math.max(0,value), Math.max(0, max - value)], backgroundColor: [color, '#334155'] }] },
-        options: { cutout: '70%', plugins: { legend: { display: false }, tooltip: { enabled: false } } }
-      });
-    }
-
-    function drawDonut(vals) {
-      const ctx = document.getElementById('donutRip');
-      if (donutChart) donutChart.destroy();
-      donutChart = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-          labels: ['Entrate', 'Spese', 'Profitto'],
-          datasets: [{ data: vals, backgroundColor: ['#22c55e','#ef4444','#a855f7'] }]
-        },
-        options: {
-          cutout: '60%',
-          plugins: {
-            legend: { labels: { color:'#e2e8f0' } },
-            tooltip: { callbacks: { label: ctx => `${ctx.label}: ${formatEUR(ctx.parsed)}` } }
-          }
-        }
-      });
-    }
-
-    function drawBars(series) {
-      const ctx = document.getElementById('barEntrate');
-      if (barChart) barChart.destroy();
-      barChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: ['gen','feb','mar','apr','mag','giu','lug','ago','set','ott','nov','dic'],
-          datasets: [{ data: series, backgroundColor:'#22c55e' }]
-        },
-        options: {
-          plugins: { legend: { display:false } },
-          scales: {
-            x: { ticks: { color:'#e2e8f0' }, grid: { color:'#1f2937' } },
-            y: { ticks: { color:'#e2e8f0' }, grid: { color:'#1f2937' } }
-          }
-        }
-      });
-    }
-
-    // ======== Rendering principale ========
-    function render() {
-      const year = +document.getElementById('yearSel').value;
-      const month = +document.getElementById('monthSel').value;
-      const att = document.getElementById('attivitaSel').value;
-      const conto = document.getElementById('contoSel').value;
-
-      const filtered = data.filter(d => {
-        const dt = new Date(d.Data);
-        return dt.getFullYear() === year &&
-               dt.getMonth() === month &&
-               (att === 'Tutte' || d.Attivita === att) &&
-               (conto === 'Tutti' || d.Conto === conto);
-      });
-
-      const entrate = filtered.filter(x => x.Tipo === 'entrata');
-      const spese   = filtered.filter(x => x.Tipo === 'spesa');
-
-      const totEntrate = entrate.reduce((s,x)=>s+x.Importo,0);
-      const totSpese   = spese.reduce((s,x)=>s+x.Importo,0);
-      const profitto   = totEntrate - totSpese;
-
-      const ivaVendite  = entrate.reduce((s,d)=> s + (d.Importo - d.Importo/(1+d.IVA/100)), 0);
-      const ivaAcquisti = spese.reduce((s,d)=> s + (d.Importo - d.Importo/(1+d.IVA/100)), 0);
-      const ivaDaVersare= ivaVendite - ivaAcquisti;
-      const liquidita   = profitto * 0.1;
-
-      // KPI numbers
-      document.getElementById('entrateVal').textContent  = formatEUR(totEntrate);
-      document.getElementById('speseVal').textContent    = formatEUR(totSpese);
-      document.getElementById('ivaVal').textContent      = formatEUR(ivaDaVersare);
-      document.getElementById('profittoVal').textContent = formatEUR(profitto);
-      document.getElementById('liquiditaVal').textContent= formatEUR(liquidita);
-
-      // KPI rings (target fittizi per progress)
-      makeRing('kpiEntrate',  totEntrate, 20000, '#22c55e');
-      makeRing('kpiSpese',    totSpese,  15000, '#ef4444');
-      makeRing('kpiIva',      Math.max(ivaDaVersare,0), 3000,  '#facc15');
-      makeRing('kpiProfitto', Math.max(profitto,0),      6000,  '#a855f7');
-
-      // Donut ripartizione + trend (trend: esempio 12 mesi sintetico basato sul mese corrente)
-      drawDonut([totEntrate, totSpese, Math.max(profitto,0)]);
-      const trend = Array.from({length:12}, (_,i)=> (totEntrate - totSpese) * Math.max(0.2, (i+4)/16));
-      drawBars(trend);
-
-      // Tabella fatture (qui mostriamo le spese come “uscite pianificate”)
-      const tbody = document.getElementById('fattureTable');
-      tbody.innerHTML = spese.map(d => `
-        <tr class="border-t border-slate-600/40">
-          <td class="py-2 pr-3">${new Date(d.Data).toLocaleDateString('it-IT')}</td>
-          <td class="py-2 pr-3">${d.Categoria}</td>
-          <td class="py-2 pr-3">${d.Conto}</td>
-          <td class="py-2 pr-3">${d.Attivita}</td>
-          <td class="py-2 pr-0 text-right">${formatEUR(d.Importo)}</td>
-        </tr>
-      `).join('') || `<tr><td class="py-2 text-slate-400" colspan="5">Nessuna voce</td></tr>`;
-      document.getElementById('rowsCount').textContent = spese.length ? `${spese.length} righe` : '';
-
-      // Alert automatico se spese > entrate
-      const showAlert = totSpese > totEntrate;
-      document.getElementById('alertBox').classList.toggle('hidden', !showAlert);
-    }
-
-    // ======== Export PDF ========
-    async function exportPDF() {
-      // Screenshot dell'area report (KPI + grafici + tabella) e impaginazione su A4
-      const reportEl = document.getElementById('report');
-      const canvas = await html2canvas(reportEl, { backgroundColor: null, scale: 2 });
-      const imgData = canvas.toDataURL('image/png');
-
+    async function exportPDF(){
+      const el = document.getElementById('report');
+      const canvas = await html2canvas(el,{backgroundColor:null,scale:2});
+      const img = canvas.toDataURL('image/png');
       const { jsPDF } = window.jspdf;
-      const pdf = new jsPDF({ orientation:'p', unit:'pt', format:'a4' });
-      const pageWidth  = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-
-      // Calcola altezza immagine ridimensionata per stare in larghezza
-      const ratio = canvas.height / canvas.width;
-      let imgWidth = pageWidth - 40;          // margini
-      let imgHeight = imgWidth * ratio;
-
+      const pdf = new jsPDF({orientation:'p',unit:'pt',format:'a4'});
+      const w = pdf.internal.pageSize.getWidth();
+      const h = canvas.height * w / canvas.width;
       let y = 20;
-      if (imgHeight <= pageHeight - 40) {
-        pdf.addImage(imgData, 'PNG', 20, y, imgWidth, imgHeight, undefined, 'FAST');
+      if (h <= pdf.internal.pageSize.getHeight()-40) {
+        pdf.addImage(img,'PNG',20,y,w-40,h,'','FAST');
       } else {
-        // Se l'immagine è più lunga di una pagina, “srotola” su più pagine
-        let leftHeight = imgHeight;
-        let position = 20;
-        let pageCanvas = document.createElement('canvas');
-        let pageCtx = pageCanvas.getContext('2d');
-        const a4ratio = (pageHeight - 40) / (pageWidth - 40);
-        const pageImgHeight = (pageWidth - 40) * a4ratio;
-
-        let sX = 0, sY = 0, sWidth = canvas.width, sHeight = canvas.width * a4ratio;
-
-        while (leftHeight > 0) {
+        // paginate
+        const pageH = pdf.internal.pageSize.getHeight()-40;
+        let sY = 0;
+        const srcW = canvas.width;
+        const srcH = (pageH*(canvas.width-0))/(w-40);
+        while (sY < canvas.height) {
+          const pageCanvas = document.createElement('canvas');
           pageCanvas.width = canvas.width;
-          pageCanvas.height = sHeight;
-          pageCtx.fillStyle = '#0E1320';
-          pageCtx.fillRect(0,0,pageCanvas.width,pageCanvas.height);
-          pageCtx.drawImage(canvas, sX, sY, sWidth, sHeight, 0, 0, pageCanvas.width, pageCanvas.height);
+          pageCanvas.height = Math.min(srcH, canvas.height - sY);
+          const ctx = pageCanvas.getContext('2d');
+          ctx.fillStyle = '#0E1320'; ctx.fillRect(0,0,pageCanvas.width,pageCanvas.height);
+          ctx.drawImage(canvas, 0, sY, canvas.width, pageCanvas.height, 0, 0, pageCanvas.width, pageCanvas.height);
           const pageData = pageCanvas.toDataURL('image/png');
-
-          pdf.addImage(pageData, 'PNG', 20, 20, imgWidth, pageImgHeight, undefined, 'FAST');
-          leftHeight -= sHeight;
-          sY += sHeight;
-
-          if (leftHeight > 0) pdf.addPage();
+          pdf.addImage(pageData,'PNG',20,20,w-40,(w-40)*(pageCanvas.height/pageCanvas.width),'','FAST');
+          sY += pageCanvas.height;
+          if (sY < canvas.height) pdf.addPage();
         }
       }
       pdf.save('report-dashboard.pdf');
     }
 
-    // ======== Inizializzazione / demo ========
-    function loadInitialData() {
-      const savedCSV = localStorage.getItem(STORAGE_KEY);
-      if (savedCSV) {
-        data = parseCSV(savedCSV);
-        render();
-      } else {
-        // Dataset di esempio (così funziona subito)
-        const demo = `Data,Tipo,Importo,IVA,Categoria,Conto,Attivita
-2025-08-02,entrata,2300,22,PRODOTTO X,POS,Negozio 4
-2025-08-03,entrata,1900,22,PRODOTTO Z,Contanti,Negozio 1
-2025-08-04,entrata,9397.85,10,ONLINE,Online,Negozio 4
-2025-08-05,entrata,7054.31,10,CONTANTI,Contanti,Negozio 2
-2025-08-06,spesa,1280,22,Affitto,Unicredit,Negozio 4
-2025-08-07,spesa,560,10,Utenze,Unicredit,Negozio 4
-2025-08-08,spesa,2300,22,Marketing / Pubblicità,Online,Negozio 4
-2025-08-09,spesa,190,22,Manutenzione,POS,Negozio 1`;
-        data = parseCSV(demo);
-        render();
-      }
+    // ===== Filtri, calcoli e rendering =====
+    function getFiltered(){
+      const year = +yearSel.value;
+      const month = +monthSel.value;
+      const att = attivitaSel.value;
+      const cto = contoSel.value;
+      const da = fromDate.value ? new Date(fromDate.value) : null;
+      const a = toDate.value ? new Date(toDate.value) : null;
+
+      return rows.filter(r=>{
+        const d = new Date(r.Data);
+        const byYM = (d.getFullYear()===year && d.getMonth()===month);
+        const byAtt = (att==='Tutte' || r.Attivita===att);
+        const byCto = (cto==='Tutti' || r.Conto===cto);
+        const byFrom = !da || d >= da;
+        const byTo = !a || d <= a;
+        return byYM && byAtt && byCto && byFrom && byTo;
+      });
     }
 
-    // Eventi filtri
-    document.querySelectorAll('#yearSel,#monthSel,#attivitaSel,#contoSel').forEach(sel => {
-      sel.addEventListener('change', render);
-    });
+    function calcKPIs(list){
+      const entr = list.filter(r=>r.Tipo==='entrata');
+      const sp = list.filter(r=>r.Tipo==='spesa');
+      const totE = entr.reduce((s,r)=>s+r.Importo,0);
+      const totS = sp.reduce((s,r)=>s+r.Importo,0);
+      const profit = totE - totS;
+      const ivaE = entr.reduce((s,r)=> s + (r.Importo - r.Importo/(1+r.IVA/100)), 0);
+      const ivaS = sp.reduce((s,r)=> s + (r.Importo - r.Importo/(1+r.IVA/100)), 0);
+      const iva = ivaE - ivaS;
+      const liq = profit * 0.1;
+      return { totE, totS, profit, iva, liq };
+    }
 
-    // Avvio
-    loadInitialData();
+    function drawRings({totE, totS, profit, iva}){
+      const ring = (id, value, max, color) => {
+        const ctx = document.getElementById(id).getContext('2d');
+        if (ctx._chart) ctx._chart.destroy();
+        ctx._chart = new Chart(ctx, {
+          type: 'doughnut',
+          data: { datasets: [{ data: [Math.max(0,value), Math.max(0,max-value)], backgroundColor:[color,'#334155'] }] },
+          options: { cutout:'70%', plugins:{ legend:{display:false}, tooltip:{enabled:false} } }
+        });
+      };
+      ring('kpiEntrate', totE, 20000, '#22c55e');
+      ring('kpiSpese',   totS, 15000, '#ef4444');
+      ring('kpiIva',     Math.max(iva,0), 3000, '#facc15');
+      ring('kpiProfitto',Math.max(profit,0), 6000, '#a855f7');
+    }
+
+    function drawDonut(list, k){
+      if (donutChart) donutChart.destroy();
+      donutChart = new Chart(document.getElementById('donutRip'), {
+        type: 'doughnut',
+        data: {
+          labels: ['Entrate','Spese','Profitto'],
+          datasets: [{ data: [k.totE, k.totS, Math.max(k.profit,0)], backgroundColor:['#22c55e','#ef4444','#a855f7'] }]
+        },
+        options: { cutout:'60%', plugins:{ legend:{ labels:{ color:'#e2e8f0' } } } }
+      });
+    }
+
+    function drawBars(k){
+      if (barChart) barChart.destroy();
+      // trend fittizio basato sul profitto corrente
+      const series = Array.from({length:12},(_,i)=>k.profit * Math.max(0.2, (i+4)/16));
+      barChart = new Chart(document.getElementById('barEntrate'), {
+        type:'bar',
+        data:{ labels:['gen','feb','mar','apr','mag','giu','lug','ago','set','ott','nov','dic'], datasets:[{ data:series, backgroundColor:'#22c55e' }]},
+        options:{ plugins:{legend:{display:false}}, scales:{ x:{ticks:{color:'#e2e8f0'}}, y:{ticks:{color:'#e2e8f0'}} } }
+      });
+    }
+
+    function render(){
+      const list = getFiltered();
+      const k = calcKPIs(list);
+
+      // KPI numeri
+      document.getElementById('entrateVal').textContent  = fmtEUR(k.totE);
+      document.getElementById('speseVal').textContent    = fmtEUR(k.totS);
+      document.getElementById('ivaVal').textContent      = fmtEUR(k.iva);
+      document.getElementById('profittoVal').textContent = fmtEUR(k.profit);
+      document.getElementById('liquiditaVal').textContent= fmtEUR(k.liq);
+
+      // Rings & grafici
+      drawRings(k);
+      drawDonut(list, k);
+      drawBars(k);
+
+      // Tabella
+      const tbody = document.getElementById('fattureTable');
+      tbody.innerHTML = list.map(r=>`
+        <tr class="border-t border-slate-600/40">
+          <td class="py-2 pr-3">${r.Data}</td>
+          <td class="py-2 pr-3 ${r.Tipo==='spesa'?'text-rose-300':'text-emerald-300'}">${r.Tipo}</td>
+          <td class="py-2 pr-3">${fmtEUR(r.Importo)}</td>
+          <td class="py-2 pr-3">${r.IVA}%</td>
+          <td class="py-2 pr-3">${r.Categoria||''}</td>
+          <td class="py-2 pr-3">${r.Conto||''}</td>
+          <td class="py-2 pr-0">${r.Attivita||''}</td>
+          <td class="py-2 pr-0 no-print">
+            <button class="text-indigo-300 underline mr-2" onclick="openEdit('${r.id}')">✏️ Modifica</button>
+            <button class="text-rose-300 underline" onclick="removeRow('${r.id}')">🗑️ Elimina</button>
+          </td>
+        </tr>
+      `).join('') || `<tr><td class="py-2 text-slate-400" colspan="8">Nessuna voce con i filtri correnti</td></tr>`;
+      document.getElementById('rowsCount').textContent = list.length ? `${list.length} righe` : '';
+
+      // Avvisi proattivi
+      const s = getSettings();
+      let risky = false;
+      if (s.proactive) {
+        if (k.totS > k.totE) risky = true;
+        if (s.budgetSpese && k.totS > s.budgetSpese) risky = true;
+        if (s.ivaThreshold && k.iva > s.ivaThreshold) risky = true;
+      }
+      document.getElementById('alertBox').classList.toggle('hidden', !risky);
+    }
+
+    // ===== Eventi =====
+    document.querySelectorAll('#yearSel,#monthSel,#attivitaSel,#contoSel,#fromDate,#toDate').forEach(el=>el.addEventListener('change', render));
+
+    // ===== Boot =====
+    function clearSaved(){
+      if(!confirm('Sicuro di eliminare tutti i dati salvati?')) return;
+      localStorage.removeItem(STORAGE_KEY);
+      location.reload();
+    }
+    loadRows();
+    render();
   </script>
 </body>
 </html>
