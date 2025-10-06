@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<title>Contabilità PRO++ 🇮🇹</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Contabilità PRO++++ 🇮🇹</title>
 
-<!-- Tailwind & Vue -->
+<!-- Librerie UI (no logica ancora) -->
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -14,279 +14,857 @@
 
 <style>
 :root{
-  --bg:#0f1117; --panel:#171a22; --panel-2:#1b1f2b; --border:#23283a;
-  --text:#e7eaf0; --muted:#9aa4b2; --accent:#6c7bff; --accent2:#35d9a3; --danger:#ff6b6b;
+  --bg:#0b0f17; --panel:#141927; --panel-2:#0f1422; --border:#23283a;
+  --text:#e9edf7; --muted:#a0a8b6; --accent:#6c7bff; --ok:#22c55e; --warn:#f59e0b; --danger:#ef4444;
 }
-html,body{height:100%;}
-body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;}
-.wrap{max-width:520px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;}
-.panel{background:var(--panel);border:1px solid var(--border);border-radius:16px;}
-.panel-2{background:var(--panel-2);border:1px solid var(--border);border-radius:16px;}
-.btn{background:var(--accent);color:white;padding:10px 14px;border-radius:12px;font-weight:700;}
-.btn-ghost{background:transparent;border:1px solid var(--border);color:#cfd5df;padding:10px 14px;border-radius:12px;}
-.chip{padding:6px 10px;border-radius:999px;border:1px solid var(--border);background:#121625;font-size:12px;}
-.input,select,textarea{background:#0f1320;border:1px solid var(--border);color:var(--text);border-radius:12px;padding:10px 12px;width:100%;}
-.input:focus{outline:1px solid var(--accent);}
-.title-sm{color:var(--muted);font-size:12px;}
-.value-lg{font-size:26px;font-weight:800;}
-.nav{position:sticky;bottom:0;left:0;right:0;background:rgba(15,17,23,.9);backdrop-filter:blur(8px);border-top:1px solid var(--border);}
-.navbtn{flex:1;text-align:center;padding:8px 0;font-size:13px;color:#a3aab7;}
-.navbtn.active{color:#aab3ff;font-weight:700;}
-.fabbar{position:fixed;bottom:72px;left:50%;transform:translateX(-50%);display:flex;gap:10px;z-index:40;}
-.fab{padding:12px 14px;border-radius:999px;color:white;font-weight:800;box-shadow:0 8px 24px rgba(0,0,0,.35);}
-.fab.in{background:#10b981;} .fab.out{background:#ef4444;}
-dialog::backdrop{background:rgba(0,0,0,.55);}
-.modal{width:min(560px,92vw);background:#0d1018;border:1px solid var(--border);border-radius:16px;color:var(--text);}
-.modal-h{padding:14px 16px;border-bottom:1px solid var(--border);font-weight:800;}
-.modal-b{padding:16px;}
-.modal-f{padding:16px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;}
-.table th{color:#c4cad6;padding:10px 8px;font-weight:600;text-align:left;border-bottom:1px solid var(--border);}
-.table td{padding:10px 8px;border-bottom:1px solid #22273a;}
-.pill{padding:3px 8px;border-radius:999px;border:1px solid var(--border);font-size:11px;background:#121625;}
-.warn{border-color:#f59e0b;color:#fde68a;background:rgba(245,158,11,.15);}
-.danger{border-color:#ef4444;color:#fecaca;background:rgba(239,68,68,.15);}
-.ok{border-color:#22c55e;color:#bbf7d0;background:rgba(34,197,94,.15);}
-.led{width:10px;height:10px;border-radius:999px;margin-left:6px;}
-.led.green{background:#22c55e;box-shadow:0 0 8px #22c55e;}
-.led.red{background:#ef4444;box-shadow:0 0 8px #ef4444;}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:linear-gradient(180deg,#0b0f17 0%,#0d1322 60%,#0b0f17 100%); color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,Segoe UI,Roboto,Arial,sans-serif;}
+.app{max-width:520px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
+.header{position:sticky;top:0;z-index:30;padding:14px 16px 10px;background:rgba(11,15,23,.65);backdrop-filter:blur(10px);border-bottom:1px solid #101629}
+.h-title{font-weight:900;letter-spacing:.2px}
+.led{width:10px;height:10px;border-radius:999px;box-shadow:0 0 8px currentColor}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:16px}
+.panel-2{background:var(--panel-2);border:1px solid var(--border);border-radius:16px}
+.chip{padding:6px 10px;border-radius:999px;border:1px solid var(--border);background:#0c1220;color:#cfd7eb;font-size:12px}
+.btn{background:var(--accent);color:#fff;padding:10px 14px;border-radius:12px;font-weight:800}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:#cfd7eb;padding:10px 14px;border-radius:12px;font-weight:700}
+.input,select,textarea{background:#0b1222;border:1px solid var(--border);color:var(--text);border-radius:12px;padding:10px 12px;width:100%}
+.input:focus,select:focus,textarea:focus{outline:1px solid var(--accent)}
+.title-sm{color:var(--muted);font-size:12px}
+.value-lg{font-size:26px;font-weight:900}
+.table th{color:#cbd4e6;font-weight:700;border-bottom:1px solid var(--border);padding:10px 8px;text-align:left}
+.table td{border-bottom:1px solid #1b2341;padding:10px 8px}
+.pill{padding:3px 8px;border-radius:999px;border:1px solid var(--border);font-size:11px;background:#0b1222}
+.ok{border-color:var(--ok);color:#bbf7d0;background:rgba(34,197,94,.15)}
+.warn{border-color:var(--warn);color:#fde68a;background:rgba(245,158,11,.15)}
+.danger{border-color:var(--danger);color:#fecaca;background:rgba(239,68,68,.15)}
+.nav{position:sticky;bottom:0;left:0;right:0;z-index:40;background:rgba(9,12,20,.85);backdrop-filter:blur(10px);border-top:1px solid #101629}
+.navbtn{flex:1;text-align:center;padding:8px 0;font-size:12px;color:#a3acc2}
+.navbtn span{display:block;font-size:12px}
+.navbtn.active{color:#bfc7ff;font-weight:800}
+.fabbar{position:fixed;left:50%;transform:translateX(-50%);bottom:74px;display:flex;gap:10px;z-index:45}
+.fab{padding:12px 14px;border-radius:999px;color:white;font-weight:900;box-shadow:0 10px 26px rgba(0,0,0,.35)}
+.fab.in{background:#10b981}.fab.out{background:#ef4444}
+dialog::backdrop{background:rgba(0,0,0,.6)}
+.modal{width:min(560px,92vw);background:#0d1321;border:1px solid var(--border);border-radius:18px;color:var(--text)}
+.modal-h{padding:14px 16px;border-bottom:1px solid var(--border);font-weight:900}
+.modal-b{padding:16px}
+.modal-f{padding:16px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px}
+@supports(padding:max(0px)){ .nav{padding-bottom:calc(env(safe-area-inset-bottom) + 6px)} }
 </style>
 </head>
 <body>
-<div id="app" class="wrap">
+<div id="app" class="app">
 
-<!-- HEADER -->
-<header class="px-4 pt-4 pb-2 flex items-center justify-between">
-  <div>
-    <h1 class="text-xl font-extrabold tracking-tight">Contabilità Pro++</h1>
-    <div class="text-xs text-[#9aa4b2]">{{ months[filters.month] }} {{ filters.year }}</div>
-  </div>
-  <div class="flex items-center gap-2">
-    <span class="text-xs">Sicurezza</span>
-    <div :class="['led',settings.pinEnabled?'green':'red']"></div>
-  </div>
-</header>
-
-<!-- Search bar -->
-<div class="px-4">
-  <input class="input" v-model="q" placeholder="Cerca movimenti, clienti, fornitori, note…">
-</div>
-
-<main class="flex-1 overflow-y-auto px-4 pb-28 space-y-4">
-
-<!-- Home -->
-<section v-if="view==='home'">
-  <div class="grid grid-cols-2 gap-3 mt-3">
-    <div class="panel p-4 text-center">
-      <div class="title-sm">Entrate</div>
-      <div class="value-lg text-emerald-400">{{ fmtEUR(kpi.totEntrate) }}</div>
-    </div>
-    <div class="panel p-4 text-center">
-      <div class="title-sm">Uscite</div>
-      <div class="value-lg text-rose-400">{{ fmtEUR(kpi.totSpese) }}</div>
-    </div>
-  </div>
-  <div class="panel p-4 text-center">
-    <div class="title-sm">Risparmi</div>
-    <div class="value-lg text-amber-300">{{ fmtEUR(kpi.risparmi) }}</div>
-  </div>
-
-  <div class="panel p-3">
-    <div class="title-sm mb-1">Entrate vs Uscite</div>
-    <canvas id="chartHome" height="160"></canvas>
-  </div>
-
-  <div class="panel p-3">
-    <div class="title-sm mb-1">Ripartizione per categoria</div>
-    <canvas id="chartPie" height="180"></canvas>
-  </div>
-
-  <div class="panel p-3">
-    <div class="flex items-center justify-between mb-2">
-      <div class="title-sm">Ultimi movimenti</div>
-      <button class="btn-ghost text-xs" @click="switchView('summary')">Vedi tutto →</button>
-    </div>
-    <div v-for="r in lastRows" :key="r.id" class="flex items-center justify-between py-2 border-b border-[#23283a] last:border-0">
-      <div>
-        <div class="font-semibold text-sm">{{ r.Categoria || '—' }}</div>
-        <div class="text-xs text-[#9aa4b2]">{{ r.Data }} • {{ r.Tipo }} • {{ r.Cliente || r.Fornitore }}</div>
-      </div>
-      <div class="text-right">
-        <div :class="r.Tipo==='entrata'?'text-emerald-400':'text-rose-400'">{{ fmtEUR(r.ImportoNetto) }}</div>
-        <div class="text-[11px] text-[#9aa4b2]">IVA {{ fmtEUR(r.ImportoIVA) }}</div>
+  <!-- 🔔 Banner promemoria -->
+  <div v-if="banner.items.length" class="panel mx-4 mt-3 p-3 flex items-start gap-3">
+    <div class="text-xl">🔔</div>
+    <div class="flex-1">
+      <div class="font-semibold">Promemoria</div>
+      <div class="text-sm text-[#cdd6eb]">
+        <span v-if="banner.today.length">Oggi: {{ banner.today.map(e=>e.title).join(', ') }}.</span>
+        <span v-if="banner.soon.length"> In arrivo (7gg): {{ banner.soon.map(e=>`${e.title} (${e.dday}g)`).join(', ') }}.</span>
+        <span v-if="banner.overdue.length" class="text-rose-300"> Scaduti: {{ banner.overdue.map(e=>e.title).join(', ') }}!</span>
       </div>
     </div>
+    <button class="btn-ghost" @click="dismissBannerToday">OK</button>
   </div>
-</section>
 
-<!-- Riepilogo, Scadenze, Rubrica, Impostazioni -->
-<!-- (identici alla versione precedente, già inclusi con le modifiche nella Parte 2 per logica) -->
+  <!-- 🧭 Header -->
+  <header class="header flex items-center justify-between">
+    <div class="min-w-0">
+      <div class="text-xs text-[#9aa4b2] truncate">{{ months[filters.month] }} {{ filters.year }}</div>
+      <h1 class="h-title text-xl truncate">Contabilità PRO++++</h1>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="text-xs text-[#9aa4b2]">Sicurezza</span>
+      <span class="led" :style="{ color: securityColor }" :title="securityTitle"></span>
+    </div>
+  </header>
 
-</main>
+  <!-- 🔎 Ricerca -->
+  <div class="p-3">
+    <input class="input w-full" v-model="q" placeholder="Cerca movimenti, clienti, fornitori, note…">
+  </div>
 
-<!-- Floating Buttons -->
-<div class="fabbar">
-  <button class="fab in" @click="openTx('entrata')">+ Entrata</button>
-  <button class="fab out" @click="openTx('spesa')">- Uscita</button>
-</div>
+  <!-- 📄 Pagine -->
+  <main class="flex-1 overflow-y-auto px-4 pb-28 space-y-4">
 
-<!-- Navbar -->
-<nav class="nav px-2 pt-2 pb-[calc(env(safe-area-inset-bottom)+6px)] flex gap-1">
-  <div class="navbtn" :class="{active:view==='home'}" @click="switchView('home')">🏠<br><span>Home</span></div>
-  <div class="navbtn" :class="{active:view==='summary'}" @click="switchView('summary')">📊<br><span>Riepilogo</span></div>
-  <div class="navbtn" :class="{active:view==='events'}" @click="switchView('events')">⏰<br><span>Scadenze</span></div>
-  <div class="navbtn" :class="{active:view==='contacts'}" @click="switchView('contacts')">📇<br><span>Rubrica</span></div>
-  <div class="navbtn" :class="{active:view==='settings'}" @click="switchView('settings')">⚙️<br><span>Impostazioni</span></div>
-</nav>
+    <!-- 🏠 Home -->
+    <section v-if="view==='home'">
+      <div class="title-sm mb-1">Categorie</div>
+      <div class="flex flex-wrap gap-2">
+        <button class="chip" :class="{'border-blue-400 text-blue-300': !filters.category}" @click="filters.category=null">Tutte</button>
+        <button v-for="c in categories" :key="c" class="chip" :class="{'border-blue-400 text-blue-300': filters.category===c}" @click="filters.category=(filters.category===c?null:c)">{{ c }}</button>
+      </div>
 
-<!-- Modali: Movimento, Scadenza, Contatto (verranno completati nella Parte 2 con i nuovi calcoli Netto→IVA→Lordo) -->
-</div><!-- CryptoJS -->
+      <div class="grid grid-cols-2 gap-3 mt-3">
+        <div class="panel p-4 text-center">
+          <div class="title-sm">Entrate (Netto)</div>
+          <div class="value-lg text-emerald-400">{{ fmtEUR(kpi.totEntrate) }}</div>
+        </div>
+        <div class="panel p-4 text-center">
+          <div class="title-sm">Uscite (Netto)</div>
+          <div class="value-lg text-rose-400">{{ fmtEUR(kpi.totSpese) }}</div>
+        </div>
+      </div>
+      <div class="panel p-4 text-center">
+        <div class="title-sm">Risparmi</div>
+        <div class="value-lg text-amber-300">{{ fmtEUR(kpi.risparmi) }}</div>
+      </div>
+
+      <div class="panel p-3">
+        <div class="title-sm mb-1">Entrate vs Uscite (Netto)</div>
+        <canvas id="chartHome" height="160"></canvas>
+      </div>
+      <div class="panel p-3">
+        <div class="title-sm mb-1">Ripartizione per categoria (Netto)</div>
+        <canvas id="chartPie" height="180"></canvas>
+      </div>
+
+      <div class="panel p-3">
+        <div class="flex items-center justify-between mb-2">
+          <div class="title-sm">Ultimi movimenti</div>
+          <button class="btn-ghost text-xs" @click="switchView('summary')">Vedi tutto →</button>
+        </div>
+        <div v-for="r in lastRows" :key="r.id" class="flex items-center justify-between py-2 border-b border-[#1a2240] last:border-0">
+          <div class="min-w-0">
+            <div class="font-semibold text-sm truncate">{{ r.Categoria || '—' }}</div>
+            <div class="text-xs text-[#9aa4b2] truncate">
+              {{ r.Data }} • {{ r.Tipo }}
+              <span v-if="r.Tipo==='entrata' && r.Cliente"> • Cliente: {{ r.Cliente }}</span>
+              <span v-if="r.Tipo==='spesa' && r.Fornitore"> • Forn.: {{ r.Fornitore }}</span>
+            </div>
+          </div>
+          <div class="text-right">
+            <div :class="r.Tipo==='entrata'?'text-emerald-400':'text-rose-400'">{{ fmtEUR(r.ImportoNetto) }}</div>
+            <div class="text-[11px] text-[#9aa4b2]">IVA {{ fmtEUR(r.ImportoIVA) }} • Tot {{ fmtEUR(r.ImportoLordo) }}</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 📊 Riepilogo -->
+    <section v-if="view==='summary'">
+      <div class="panel p-3">
+        <div class="grid grid-cols-2 gap-2 mb-2">
+          <select v-model="filters.year"><option v-for="y in years" :key="y" :value="y">{{ y }}</option></select>
+          <select v-model="filters.month"><option v-for="(m,i) in months" :key="m" :value="i">{{ m }}</option></select>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <select v-model="filters.partnerType">
+            <option value="">Tutti i soggetti</option>
+            <option value="cliente">Solo Clienti</option>
+            <option value="fornitore">Solo Fornitori</option>
+          </select>
+          <input class="input" v-model="filters.partnerName" placeholder="Filtra per nome (cliente/fornitore)">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3 mt-3">
+        <div class="panel p-3 text-center">
+          <div class="title-sm">IVA a Debito</div>
+          <div class="value-lg text-indigo-300">{{ fmtEUR(kpi.ivaDebito) }}</div>
+        </div>
+        <div class="panel p-3 text-center">
+          <div class="title-sm">IVA a Credito</div>
+          <div class="value-lg text-cyan-300">{{ fmtEUR(kpi.ivaCredito) }}</div>
+        </div>
+      </div>
+      <div class="panel p-3 text-center">
+        <div class="title-sm">IVA da Versare</div>
+        <div class="value-lg text-amber-300">{{ fmtEUR(kpi.ivaDaVersare) }}</div>
+      </div>
+
+      <div class="panel p-4">
+        <div class="title-sm mb-1">Trend annuale (Netto)</div>
+        <canvas id="chartYear" height="200"></canvas>
+      </div>
+
+      <div class="panel p-3">
+        <div class="flex items-center justify-between mb-2">
+          <div class="title-sm">Movimenti mese</div>
+          <div class="title-sm">{{ filteredRows.length }} righe</div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="table w-full text-sm">
+            <thead>
+            <tr>
+              <th>Data</th><th>Tipo</th><th>Netto</th><th>IVA</th><th>Totale</th>
+              <th>Categoria</th><th>Conto</th><th>Cliente/Fornitore</th><th>Note</th><th></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr v-for="r in filteredRows" :key="r.id">
+              <td>{{ r.Data }}</td>
+              <td :class="r.Tipo==='entrata'?'text-emerald-300':'text-rose-300'">{{ r.Tipo }}</td>
+              <td>{{ fmtEUR(r.ImportoNetto) }}</td>
+              <td>{{ fmtEUR(r.ImportoIVA) }} ({{ r.IVA }}%)</td>
+              <td>{{ fmtEUR(r.ImportoLordo) }}</td>
+              <td>{{ r.Categoria }}</td>
+              <td>{{ r.Conto }}</td>
+              <td>{{ r.Tipo==='entrata' ? (r.Cliente||'—') : (r.Fornitore||'—') }}</td>
+              <td class="truncate max-w-[140px]" :title="r.Note">{{ r.Note }}</td>
+              <td class="text-right">
+                <button class="btn-ghost text-xs" @click="openEdit(r)">✏️</button>
+                <button class="btn-ghost text-xs" @click="removeRow(r.id)">🗑️</button>
+              </td>
+            </tr>
+            <tr v-if="!filteredRows.length">
+              <td colspan="10" class="text-center text-[#9aa4b2] py-4">Nessuna voce nel mese selezionato</td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ⏰ Scadenze -->
+    <section v-if="view==='events'">
+      <div class="flex items-center justify-between">
+        <div class="title-sm">Scadenze & Promemoria 🇮🇹</div>
+        <button class="btn text-sm" @click="openEvent()">+ Nuova</button>
+      </div>
+
+      <div class="panel p-3 mt-3">
+        <div class="font-semibold mb-2">IVA Trimestrale</div>
+        <div class="grid grid-cols-1 gap-2">
+          <div v-for="q in ivaQuarters" :key="q.label" class="panel-2 p-3 flex items-center justify-between">
+            <div>
+              <div>{{ q.label }} • Scadenza {{ q.due }}</div>
+              <div class="text-xs text-[#9aa4b2]">Mancano: {{ q.dday>=0 ? q.dday+' giorni' : 'scaduto '+Math.abs(q.dday)+'g fa' }}</div>
+            </div>
+            <span class="pill" :class="q.dday<0 ? 'danger' : q.dday<=7 ? 'warn' : 'ok'">{{ q.dday<0?'Scaduto': q.dday===0?'Oggi':'Tra '+q.dday+'g' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Lista scadenze -->
+      <div v-for="e in sortedEvents" :key="e.id" class="panel-2 p-3 mt-3 flex items-start justify-between">
+        <div>
+          <div class="font-semibold">{{ e.title }}</div>
+          <div class="text-xs text-[#9aa4b2]">{{ e.date }} • {{ e.kind }} <span v-if="e.repeat">• 🔁 {{ repeatLabel(e.repeat) }}</span></div>
+          <div class="mt-1">
+            <span class="pill" :class="deadlineClass(e)">{{ deadlineLabel(e) }}</span>
+            <span v-if="e.done" class="pill ok ml-2">Completato</span>
+          </div>
+          <div v-if="e.fileName" class="text-xs mt-1">📎 <a :href="e.fileData" :download="e.fileName" class="underline text-indigo-400">{{ e.fileName }}</a></div>
+        </div>
+        <div class="flex gap-2">
+          <button class="btn-ghost text-xs" @click="openEvent(e)">✏️</button>
+          <button class="btn-ghost text-xs" @click="deleteEvent(e.id)">🗑️</button>
+        </div>
+      </div>
+      <div v-if="!sortedEvents.length" class="text-center text-[#9aa4b2] text-sm mt-6">Nessuna scadenza</div>
+    </section>
+
+    <!-- 📇 Rubrica -->
+    <section v-if="view==='contacts'">
+      <div class="panel p-3">
+        <div class="flex items-center justify-between mb-2">
+          <div class="title-sm">Rubrica</div>
+          <button class="btn text-sm" @click="openContact()">+ Nuovo</button>
+        </div>
+        <input class="input mb-3" v-model="contactQuery" placeholder="Cerca per nome, P.IVA, note…">
+        <div v-for="c in filteredContacts" :key="c.id" class="panel-2 p-3 mb-2 flex items-start justify-between">
+          <div>
+            <div class="font-semibold">{{ c.nome }}</div>
+            <div class="text-xs text-[#9aa4b2]">
+              <span v-if="c.tipo">Tipo: {{ c.tipo }} • </span>
+              <span v-if="c.piva">P.IVA: {{ c.piva }} • </span>
+              <span v-if="c.email">{{ c.email }} • </span>
+              <span v-if="c.telefono">{{ c.telefono }}</span>
+            </div>
+            <div class="text-xs text-[#9aa4b2]" v-if="c.note">Note: {{ c.note }}</div>
+          </div>
+          <div class="flex gap-2">
+            <button class="btn-ghost text-xs" @click="openContact(c)">✏️</button>
+            <button class="btn-ghost text-xs" @click="deleteContact(c.id)">🗑️</button>
+          </div>
+        </div>
+        <div v-if="!filteredContacts.length" class="text-center text-[#9aa4b2] text-sm mt-4">Nessun contatto</div>
+      </div>
+    </section>
+
+    <!-- ⚙️ Impostazioni -->
+    <section v-if="view==='settings'">
+      <div class="panel p-4 space-y-3">
+        <label class="flex items-center gap-2"><input type="checkbox" v-model="settings.proactive"> <span>Modalità proattiva</span></label>
+        <div><div class="title-sm mb-1">Budget spese (€)</div><input type="number" class="input" v-model.number="settings.budgetSpese"></div>
+        <div><div class="title-sm mb-1">Soglia IVA (€)</div><input type="number" class="input" v-model.number="settings.ivaThreshold"></div>
+
+        <div class="panel-2 p-3 rounded-md">
+          <div class="flex items-center justify-between">
+            <div class="title-sm">Protezione & PIN</div>
+            <span class="led" :style="{ color: securityColor }" :title="securityTitle"></span>
+          </div>
+          <div class="flex flex-wrap gap-2 mt-3">
+            <button class="btn" @click="openPinModal">🔒 Imposta / Cambia PIN</button>
+            <button class="btn-ghost" @click="disablePIN">🔓 Disattiva PIN</button>
+          </div>
+          <div class="text-xs text-[#9aa4b2] mt-2">Con PIN attivo i dati sono cifrati localmente (AES).</div>
+        </div>
+
+        <div class="flex flex-wrap gap-2 pt-2">
+          <input type="file" accept=".csv" class="hidden" ref="csvInput" @change="importCSV">
+          <button class="btn-ghost" @click="$refs.csvInput.click()">📂 Importa CSV</button>
+          <button class="btn-ghost" @click="exportCSV">📤 Esporta CSV</button>
+          <button class="btn-ghost" @click="exportPDF">📄 Esporta PDF</button>
+          <button class="btn bg-rose-600 hover:bg-rose-500" @click="clearAll">🧹 Svuota tutto</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ➕/➖ FAB -->
+  <div class="fabbar">
+    <button class="fab in"  @click="openTx('entrata')">+ Entrata</button>
+    <button class="fab out" @click="openTx('spesa')">− Uscita</button>
+  </div>
+
+  <!-- 🧭 Nav -->
+  <nav class="nav px-3 pt-2 pb-[calc(env(safe-area-inset-bottom)+6px)] flex gap-1">
+    <div class="navbtn" :class="{active:view==='home'}" @click="switchView('home')">🏠<span>Home</span></div>
+    <div class="navbtn" :class="{active:view==='summary'}" @click="switchView('summary')">📊<span>Riepilogo</span></div>
+    <div class="navbtn" :class="{active:view==='events'}" @click="switchView('events')">⏰<span>Scadenze</span></div>
+    <div class="navbtn" :class="{active:view==='contacts'}" @click="switchView('contacts')">📇<span>Rubrica</span></div>
+    <div class="navbtn" :class="{active:view==='settings'}" @click="switchView('settings')">⚙️<span>Impostazioni</span></div>
+  </nav>
+</div><!-- === PARTE 2: LOGICA PRO++++ === -->
 <script src="https://cdn.jsdelivr.net/npm/crypto-js@4.2.0/crypto-js.min.js"></script>
-
 <script>
-const { createApp } = Vue;
+const { createApp, reactive, watch } = Vue;
+
 createApp({
-  data() {
-    const now = new Date();
+  data(){
+    const now=new Date();
     return {
       view:'home',
       months:['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'],
-      filters:{month:now.getMonth(),year:now.getFullYear()},
+      years:[now.getFullYear()-1, now.getFullYear(), now.getFullYear()+1],
+      filters:{month:now.getMonth(),year:now.getFullYear(),category:null,partnerType:'',partnerName:''},
       q:'',
       rows:[], events:[], clients:[], suppliers:[],
-      settings:{pinEnabled:false},
-      pinHash:'', _sessionKey:'',
+      settings:{proactive:true,budgetSpese:0,ivaThreshold:0,pinEnabled:false},
+      _key:'', charts:{}, banner:{items:[],today:[],soon:[],overdue:[]},
+      contactQuery:'',
+      // Draft modali
       txDraft:{}, presetIVA:null,
-      charts:{}
+      eventDraft:{}, contactDraft:{},
+      // Cataloghi default
+      categoriesIn:['Fatture clienti','Corrispettivi','Servizi','Vendite online','Altro'],
+      categoriesOut:['Acquisti fornitori','Servizi','Affitto','Utenze','Marketing','Varie'],
+      // Mappa “intelligente” (auto-categoria/IVA) per partner
+      smartMap:{ /* nomeLower: { categoria, iva } */ }
     }
   },
 
   computed:{
-    kpi(){
-      let e=0,u=0;
-      this.rows.forEach(r=>{
-        const iva=this.calcIVA(r);
-        const lordo=r.ImportoNetto+iva;
-        if(r.Tipo==='entrata')e+=r.ImportoNetto;else u+=r.ImportoNetto;
-      });
-      return {totEntrate:e, totSpese:u, risparmi:e-u};
+    categories(){
+      const freq={}; this.rows.forEach(r=>{ if(r.Categoria) freq[r.Categoria]=(freq[r.Categoria]||0)+1; });
+      return Object.keys(freq).sort((a,b)=>freq[b]-freq[a]);
     },
-    lastRows(){return this.rows.slice(-5).reverse();}
+    filteredRows(){
+      const m=this.filters.month, y=this.filters.year, cat=this.filters.category;
+      const pt=this.filters.partnerType, pn=(this.filters.partnerName||'').toLowerCase();
+      const q=(this.q||'').toLowerCase();
+      return this.rows.filter(r=>{
+        const d=new Date(r.Data+'T00:00:00');
+        if(d.getMonth()!==m||d.getFullYear()!==y) return false;
+        if(cat && r.Categoria!==cat) return false;
+        if(pt==='cliente' && r.Tipo!=='entrata') return false;
+        if(pt==='fornitore' && r.Tipo!=='spesa') return false;
+        if(pn){
+          const s=(r.Cliente||r.Fornitore||'').toLowerCase(); if(!s.includes(pn)) return false;
+        }
+        if(q){
+          const hay=[r.Categoria||'',r.Note||'',r.Conto||'',r.Cliente||'',r.Fornitore||''].join(' ').toLowerCase();
+          if(!hay.includes(q)) return false;
+        }
+        return true;
+      });
+    },
+    lastRows(){ return this.rows.slice(-5).reverse(); },
+    kpi(){
+      let e=0,u=0,deb=0,cred=0;
+      this.filteredRows.forEach(r=>{
+        if(r.Tipo==='entrata'){ e+=r.ImportoNetto; deb+=r.ImportoIVA; }
+        else { u+=r.ImportoNetto; cred+=r.ImportoIVA; }
+      });
+      return { totEntrate:e, totSpese:u, risparmi:e-u, ivaDebito:deb, ivaCredito:cred, ivaDaVersare:deb-cred };
+    },
+    ivaQuarters(){
+      const y=this.filters.year;
+      const arr=[
+        {label:`1° Trimestre ${y}`, due:`${y}-05-16`},
+        {label:`2° Trimestre ${y}`, due:`${y}-08-20`},
+        {label:`3° Trimestre ${y}`, due:`${y}-11-16`},
+        {label:`4° Trimestre ${y+1}`, due:`${y+1}-03-16`}
+      ];
+      return arr.map(q=>({ ...q, dday:this.daysDiff(q.due) }));
+    },
+    sortedEvents(){ return this.events.slice().sort((a,b)=> new Date(a.date)-new Date(b.date)); },
+    filteredContacts(){
+      const q=(this.contactQuery||'').toLowerCase();
+      const src=[...this.clients,...this.suppliers];
+      if(!q) return src;
+      return src.filter(c=>[c.nome,c.email,c.telefono,c.piva,c.tipo,c.note].filter(Boolean).join(' ').toLowerCase().includes(q));
+    },
+    securityColor(){ return this.settings.pinEnabled ? '#22c55e' : '#ef4444'; },
+    securityTitle(){ return this.settings.pinEnabled ? 'Dati cifrati (AES, PIN attivo)' : 'Dati in chiaro (PIN disattivo)'; },
+  },
+
+  watch:{
+    rows:{deep:true,handler(){ this.persist(); this.refreshCharts(); this.learnSmart(); }},
+    events:{deep:true,handler(){ this.persist(); this.computeBanner(); }},
+    clients:{deep:true,handler(){ this.persist(); }},
+    suppliers:{deep:true,handler(){ this.persist(); }},
+    settings:{deep:true,handler(){ localStorage.setItem('pro++++_settings',JSON.stringify(this.settings)); this.persist(); }},
+    filters:{deep:true,handler(){ this.refreshCharts(); }},
+    q(){ this.refreshCharts(); }
   },
 
   mounted(){
-    this.loadSettings();
+    try{ Object.assign(this.settings, JSON.parse(localStorage.getItem('pro++++_settings')||'{}')); }catch{}
     this.secureLoad();
+    if(!this.rows.length) this.seedDemo();
     this.initFisco();
+    this.computeBanner();
     this.refreshCharts();
+    this.rebuildSmartFromData();
   },
 
   methods:{
-    fmtEUR(v){return (Number(v)||0).toLocaleString('it-IT',{style:'currency',currency:'EUR'});},
-    uid(){return Math.random().toString(36).slice(2)+Date.now().toString(36);},
-    switchView(v){this.view=v;setTimeout(this.refreshCharts,150);},
+    fmtEUR(v){ return (Number(v)||0).toLocaleString('it-IT',{style:'currency',currency:'EUR'}); },
+    uid(){ return Math.random().toString(36).slice(2)+Date.now().toString(36); },
+    switchView(v){ this.view=v; setTimeout(this.refreshCharts,150); },
+    daysDiff(iso){ const a=new Date(iso+'T00:00:00'), b=new Date(new Date().toISOString().slice(0,10)+'T00:00:00'); return Math.ceil((a-b)/86400000); },
 
-    /* === Calcoli IVA === */
-    calcIVA(r){return +(Number(r.ImportoNetto||0)*(Number(r.IVA||0)/100)).toFixed(2);},
-    calcLordo(r){return +(Number(r.ImportoNetto||0)+this.calcIVA(r)).toFixed(2);},
+    /* === Sicurezza (PIN + AES) === */
+    secureLoad(){
+      const enc=localStorage.getItem('pro++++_enc');
+      const raw=localStorage.getItem('pro++++_raw');
+      if(enc && this.settings.pinEnabled){
+        let ok=false;
+        while(!ok){
+          const pin=prompt('🔒 PIN per sbloccare i dati'); if(pin===null) break;
+          const key=CryptoJS.SHA256(pin).toString();
+          try{
+            const txt=CryptoJS.AES.decrypt(enc,key).toString(CryptoJS.enc.Utf8);
+            if(!txt) throw 1; const obj=JSON.parse(txt);
+            this.rows=obj.rows||[]; this.events=obj.events||[]; this.clients=obj.clients||[]; this.suppliers=obj.suppliers||[]; this.smartMap=obj.smartMap||{};
+            this._key=key; ok=true;
+          }catch{ alert('PIN errato. Riprova.'); }
+        }
+      } else if(raw){
+        try{
+          const obj=JSON.parse(raw);
+          this.rows=obj.rows||[]; this.events=obj.events||[]; this.clients=obj.clients||[]; this.suppliers=obj.suppliers||[]; this.smartMap=obj.smartMap||{};
+        }catch{}
+      }
+    },
+    persist(){
+      const payload=JSON.stringify({rows:this.rows,events:this.events,clients:this.clients,suppliers:this.suppliers,smartMap:this.smartMap});
+      if(this.settings.pinEnabled && this._key){
+        const enc=CryptoJS.AES.encrypt(payload,this._key).toString();
+        localStorage.setItem('pro++++_enc',enc);
+        localStorage.removeItem('pro++++_raw');
+      }else{
+        localStorage.setItem('pro++++_raw',payload);
+        localStorage.removeItem('pro++++_enc');
+      }
+    },
+    openPinModal(){
+      const p1=prompt('Nuovo PIN (min 4 cifre)'); if(!p1||p1.length<4) return alert('PIN troppo corto');
+      const p2=prompt('Ripeti PIN'); if(p1!==p2) return alert('I PIN non coincidono');
+      this._key=CryptoJS.SHA256(p1).toString(); this.settings.pinEnabled=true; this.persist(); alert('PIN impostato. Dati cifrati.');
+    },
+    disablePIN(){ if(confirm('Disattivare PIN e salvare in chiaro?')){ this.settings.pinEnabled=false; this._key=''; this.persist(); } },
 
-    /* === Inserimento movimento === */
+    /* === IVA & Totali (Netto→IVA→Lordo) === */
+    calcIVAfromNet(r){ return +(Number(r.ImportoNetto||0)*(Number(r.IVA||0)/100)).toFixed(2); },
+    calcLordo(r){ return +(Number(r.ImportoNetto||0)+this.calcIVAfromNet(r)).toFixed(2); },
+
+    /* === Auto-categoria e Auto-IVA === */
+    smartSuggest({tipo, partnerName}){
+      const k=(partnerName||'').trim().toLowerCase();
+      const v=this.smartMap[k];
+      if(v) return v; // suggerimento “appreso”
+      // fallback per pattern comuni
+      if(tipo==='spesa'){
+        if(/enel|e-on|hera|illumia|acea|ener|luce|gas/.test(k)) return {categoria:'Utenze',iva:10};
+        if(/affit|locaz|canone|rent/.test(k)) return {categoria:'Affitto',iva:22};
+        if(/google|meta|facebook|ads|adv|marketing/.test(k)) return {categoria:'Marketing',iva:22};
+        if(/amazon|fornit|gross|wholesal|magazzino|acquisto/.test(k)) return {categoria:'Acquisti fornitori',iva:22};
+        if(/assicur|rca|polizza/.test(k)) return {categoria:'Varie',iva:22};
+      }else{
+        if(/scontrin|cassa|store|negozio/.test(k)) return {categoria:'Corrispettivi',iva:22};
+        if(/cliente|company|sr[l|l.]|spa|sas|snc|consult|servizi/.test(k)) return {categoria:'Fatture clienti',iva:22};
+        if(/shopify|ecommerce|marketplace|etsy|ebay/.test(k)) return {categoria:'Vendite online',iva:22};
+      }
+      // default
+      return {categoria: tipo==='entrata'?'Fatture clienti':'Acquisti fornitori', iva:22};
+    },
+    learnSmart(){
+      // Impara dall’uso: media IVA per partner, categoria più frequente
+      const acc={};
+      for(const r of this.rows){
+        const k=(r.Cliente||r.Fornitore||'').toLowerCase().trim(); if(!k) continue;
+        acc[k]=acc[k]||{cnt:0,sommaIVA:0,cats:{}};
+        acc[k].cnt++; acc[k].sommaIVA+=Number(r.IVA||0);
+        const c=r.Categoria||''; acc[k].cats[c]=(acc[k].cats[c]||0)+1;
+      }
+      for(const k of Object.keys(acc)){
+        const avg=Math.round((acc[k].sommaIVA/acc[k].cnt)*10)/10;
+        const cat=Object.entries(acc[k].cats).sort((a,b)=>b[1]-a[1])[0]?.[0]||'';
+        if(cat) this.smartMap[k]={categoria:cat,iva:avg||22};
+      }
+      this.persist();
+    },
+    rebuildSmartFromData(){ this.learnSmart(); },
+
+    /* === Movimenti (Editor Modale Completo) === */
     openTx(tipo){
-      this.txDraft={Tipo:tipo,Data:new Date().toISOString().slice(0,10),
-        ImportoNetto:0,IVA:22,Categoria:'Altro',Cliente:'',Fornitore:'',Note:''};
-      this.$refs?.dlgTx?.showModal();
+      this.txDraft={ id:null, Tipo:tipo, Data:new Date().toISOString().slice(0,10),
+        ImportoNetto:0, IVA:22, Categoria: (tipo==='entrata'? this.categoriesIn[0] : this.categoriesOut[0]),
+        Conto:'', Attivita:'', Cliente:'', Fornitore:'', Note:'' };
+      this.presetIVA=null;
+      // se presente partner, applica suggerimento
+      // (qui no, lo applicheremo onInput partner)
+      this.$nextTick(()=>document.getElementById('dlgTx').showModal());
+    },
+    openEdit(r){ this.txDraft=JSON.parse(JSON.stringify(r)); this.presetIVA=null; document.getElementById('dlgTx').showModal(); },
+    onPartnerInput(){
+      const t=this.txDraft.Tipo;
+      const name = t==='entrata' ? this.txDraft.Cliente : this.txDraft.Fornitore;
+      if(!name) return;
+      const sug = this.smartSuggest({tipo:t, partnerName:name});
+      if(!this.txDraft.Categoria) this.txDraft.Categoria=sug.categoria;
+      if(this.txDraft.IVA==null || this.txDraft.IVA===undefined) this.txDraft.IVA=sug.iva;
     },
     saveTx(){
       const r=JSON.parse(JSON.stringify(this.txDraft));
-      if(!r.Data)return alert('Data obbligatoria');
-      r.ImportoIVA=this.calcIVA(r);
+      if(!r.Data || !r.Tipo) return alert('Compila data e tipo.');
+      // Se partner inserito, applica o aggiorna smartMap
+      const partner=(r.Tipo==='entrata'?r.Cliente:r.Fornitore)||'';
+      if(partner){
+        const k=partner.toLowerCase().trim();
+        const existing=this.smartMap[k]||{};
+        // tieni categoria scelta e media IVA approssimata
+        this.smartMap[k]={ categoria:r.Categoria||existing.categoria|| (r.Tipo==='entrata'?'Fatture clienti':'Acquisti fornitori'),
+                           iva: Number(r.IVA||existing.iva||22) };
+      }
+      r.ImportoIVA=this.calcIVAfromNet(r);
       r.ImportoLordo=this.calcLordo(r);
-      r.id=r.id||this.uid();
+      if(r.Tipo==='entrata') r.Fornitore=''; else r.Cliente='';
+      if(!r.id) r.id=this.uid();
       const i=this.rows.findIndex(x=>x.id===r.id);
-      if(i>=0)this.rows[i]=r;else this.rows.push(r);
-      this.persist();
-      this.$refs.dlgTx.close();
+      if(i>=0) this.rows.splice(i,1,r); else this.rows.push(r);
+      document.getElementById('dlgTx').close();
+    },
+    removeRow(id){ if(confirm('Eliminare movimento?')) this.rows=this.rows.filter(r=>r.id!==id); },
+
+    /* === Scadenze === */
+    openEvent(e=null){
+      this.eventDraft = e ? JSON.parse(JSON.stringify(e)) :
+        { id:null,title:'',date:new Date().toISOString().slice(0,10),kind:'Altro',repeat:'',done:false,fileName:'',fileData:'' };
+      document.getElementById('dlgEvent').showModal();
+    },
+    saveEvent(){
+      const e=JSON.parse(JSON.stringify(this.eventDraft));
+      if(!e.title || !e.date) return alert('Titolo e data obbligatori');
+      if(!e.id) e.id=this.uid();
+      const i=this.events.findIndex(x=>x.id===e.id);
+      if(i>=0) this.events.splice(i,1,e); else this.events.push(e);
+      if(e.done && e.repeat){
+        const d=new Date(e.date+'T00:00:00');
+        if(e.repeat==='month') d.setMonth(d.getMonth()+1);
+        if(e.repeat==='quarter') d.setMonth(d.getMonth()+3);
+        if(e.repeat==='year') d.setFullYear(d.getFullYear()+1);
+        this.events.push({...e,id:this.uid(),date:d.toISOString().slice(0,10),done:false});
+      }
+      document.getElementById('dlgEvent').close();
+    },
+    deleteEvent(id){ if(confirm('Eliminare scadenza?')) this.events=this.events.filter(x=>x.id!==id); },
+    attachFile(ev){
+      const f=ev.target.files?.[0]; if(!f) return;
+      const rd=new FileReader(); rd.onload=()=>{ this.eventDraft.fileData=rd.result; this.eventDraft.fileName=f.name; };
+      rd.readAsDataURL(f);
+    },
+    repeatLabel(v){ return v==='month'?'Mensile':v==='quarter'?'Trimestrale':v==='year'?'Annuale':'—'; },
+    deadlineClass(e){ const dd=this.daysDiff(e.date); return dd<0?'danger': dd<=7?'warn':'ok'; },
+    deadlineLabel(e){ const dd=this.daysDiff(e.date); return dd<0?`Scaduto ${Math.abs(dd)}g fa`: dd===0?'Oggi':`Tra ${dd}g`; },
+
+    computeBanner(){
+      const today=[], soon=[], overdue=[];
+      for(const e of this.events){
+        if(e.done) continue;
+        const dd=this.daysDiff(e.date);
+        if(dd===0) today.push({...e,dday:0});
+        else if(dd>0 && dd<=7) soon.push({...e,dday:dd});
+        else if(dd<0) overdue.push({...e,dday:dd});
+      }
+      const items=[...today,...soon,...overdue];
+      const seen=localStorage.getItem('pro++++_banner_seen'); const todayS=new Date().toISOString().slice(0,10);
+      this.banner = (items.length && seen!==todayS) ? {items,today,soon,overdue} : {items:[],today:[],soon:[],overdue:[]};
+    },
+    dismissBannerToday(){ localStorage.setItem('pro++++_banner_seen', new Date().toISOString().slice(0,10)); this.banner={items:[],today:[],soon:[],overdue:[]}; },
+
+    /* === Rubrica === */
+    openContact(c=null){
+      this.contactDraft = c ? JSON.parse(JSON.stringify(c)) : { id:null, tipo:'cliente', nome:'', email:'', telefono:'', piva:'', note:'' };
+      document.getElementById('dlgContact').showModal();
+    },
+    saveContact(){
+      const c=JSON.parse(JSON.stringify(this.contactDraft));
+      if(!c.nome) return alert('Inserisci il nome');
+      if(!c.id) c.id=this.uid();
+      const pushTo = c.tipo==='cliente' ? 'clients' : 'suppliers';
+      const idx=this[pushTo].findIndex(x=>x.id===c.id);
+      if(idx>=0) this[pushTo].splice(idx,1,c); else this[pushTo].push(c);
+      document.getElementById('dlgContact').close();
+    },
+    deleteContact(id){
+      if(!confirm('Eliminare contatto?')) return;
+      this.clients=this.clients.filter(c=>c.id!==id);
+      this.suppliers=this.suppliers.filter(c=>c.id!==id);
     },
 
-    /* === Grafici === */
+    /* === Grafici (Chart.js) === */
     refreshCharts(){
-      setTimeout(()=>{
-        const ctx=document.getElementById('chartHome');
-        if(!ctx)return;
-        const e=this.rows.filter(r=>r.Tipo==='entrata').reduce((s,r)=>s+r.ImportoNetto,0);
-        const u=this.rows.filter(r=>r.Tipo==='spesa').reduce((s,r)=>s+r.ImportoNetto,0);
-        if(this.charts.home)this.charts.home.destroy();
-        this.charts.home=new Chart(ctx,{type:'bar',
-          data:{labels:['Entrate','Uscite'],datasets:[{data:[e,u],backgroundColor:['#10b981','#ef4444']}]},
-          options:{plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#9ca3af'}},y:{ticks:{color:'#9ca3af'}}}}
-        });
-      },100);
+      this.$nextTick(()=>{
+        // Bar Entrate/Uscite (mese selezionato)
+        const ctx1=document.getElementById('chartHome');
+        if(ctx1){
+          if(this.charts.home){ this.charts.home.destroy(); delete this.charts.home; }
+          const e=this.filteredRows.filter(r=>r.Tipo==='entrata').reduce((s,r)=>s+r.ImportoNetto,0);
+          const u=this.filteredRows.filter(r=>r.Tipo==='spesa').reduce((s,r)=>s+r.ImportoNetto,0);
+          this.charts.home=new Chart(ctx1,{type:'bar',data:{labels:['Entrate','Uscite'],datasets:[{data:[e,u],backgroundColor:['#10b981','#ef4444']}]},
+            options:{plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#aab3c7'}},y:{ticks:{color:'#aab3c7'}}}}});
+        }
+        // Pie categorie (saldo netto)
+        const ctx2=document.getElementById('chartPie');
+        if(ctx2){
+          if(this.charts.pie){ this.charts.pie.destroy(); delete this.charts.pie; }
+          const map={};
+          this.filteredRows.forEach(r=>{ const k=r.Categoria||'Altro'; map[k]=(map[k]||0) + r.ImportoNetto*(r.Tipo==='entrata'?1:-1); });
+          const labels=Object.keys(map), data=Object.values(map);
+          const palette=['#6c7bff','#35d9a3','#fbbf24','#ef4444','#22d3ee','#818cf8','#14b8a6','#f472b6','#f59e0b'];
+          this.charts.pie=new Chart(ctx2,{type:'doughnut',data:{labels,datasets:[{data,backgroundColor:palette}]},
+            options:{plugins:{legend:{labels:{color:'#e5e7eb'}}}}});
+        }
+        // Line annuale
+        const ctx3=document.getElementById('chartYear');
+        if(ctx3){
+          if(this.charts.year){ this.charts.year.destroy(); delete this.charts.year; }
+          const arr=Array(12).fill(0);
+          this.rows.forEach(r=>{ const d=new Date(r.Data+'T00:00:00'); if(d.getFullYear()===this.filters.year) arr[d.getMonth()]+=r.ImportoNetto*(r.Tipo==='entrata'?1:-1); });
+          this.charts.year=new Chart(ctx3,{type:'line',data:{labels:this.months,datasets:[{data:arr,fill:true,borderColor:'#6c7bff',backgroundColor:'rgba(108,123,255,.22)',tension:.35}]},
+            options:{plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#cbd5e1'}},y:{ticks:{color:'#cbd5e1'}}}}});
+        }
+      });
     },
 
-    /* === Sicurezza === */
-    loadSettings(){
-      try{
-        const st=JSON.parse(localStorage.getItem('pro_settings')||'{}');
-        Object.assign(this.settings,st||{});
-        this.pinHash=localStorage.getItem('pro_pin_hash')||'';
-      }catch{}
+    /* === Import / Export === */
+    exportCSV(){
+      const header=['id','Data','Tipo','ImportoNetto','IVA','ImportoIVA','ImportoLordo','Categoria','Conto','Attivita','Cliente','Fornitore','Note'];
+      const lines=this.rows.map(r=>header.map(k=> r[k] ?? '').join(';'));
+      const csv=header.join(';')+'\n'+lines.join('\n');
+      const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+      const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='contabilita_pro++++.csv'; a.click(); URL.revokeObjectURL(url);
     },
-    persist(){
-      if(!this.settings.pinEnabled||!this._sessionKey){
-        localStorage.setItem('pro_rows',JSON.stringify(this.rows));
-      }else{
-        const enc=CryptoJS.AES.encrypt(JSON.stringify(this.rows),this._sessionKey).toString();
-        localStorage.setItem('pro_rows_enc',enc);
-        localStorage.removeItem('pro_rows');
-      }
+    importCSV(ev){
+      const file=ev.target.files?.[0]; if(!file) return;
+      const rdr=new FileReader();
+      rdr.onload=()=>{
+        const txt=String(rdr.result).trim(); const lines=txt.split('\n'); const head=lines.shift().split(';');
+        const parse=(l)=>{ const v=l.split(';'); const o={}; head.forEach((k,i)=>o[k]=v[i]); return o; };
+        const arr=lines.filter(Boolean).map(parse).map(o=>({
+          id:o.id||this.uid(), Data:o.Data, Tipo:o.Tipo,
+          ImportoNetto:+o.ImportoNetto||0, IVA:+o.IVA||0,
+          ImportoIVA:+o.ImportoIVA||0, ImportoLordo:+o.ImportoLordo||0,
+          Categoria:o.Categoria||'', Conto:o.Conto||'', Attivita:o.Attivita||'',
+          Cliente:o.Cliente||'', Fornitore:o.Fornitore||'', Note:o.Note||''
+        }));
+        this.rows=arr;
+      };
+      rdr.readAsText(file);
     },
-    secureLoad(){
-      if(!this.settings.pinEnabled||!this.pinHash){
-        this.rows=JSON.parse(localStorage.getItem('pro_rows')||'[]');return;
-      }
-      const pin=prompt('🔒 Inserisci PIN');
-      const key=CryptoJS.SHA256(pin).toString();
-      const enc=localStorage.getItem('pro_rows_enc');
-      try{
-        const txt=CryptoJS.AES.decrypt(enc,key).toString(CryptoJS.enc.Utf8);
-        if(!txt)throw 1;
-        this.rows=JSON.parse(txt);this._sessionKey=key;
-      }catch{alert('PIN errato');this.rows=[];}
+    exportPDF(){
+      const el=document.querySelector('main');
+      html2canvas(el,{backgroundColor:null,scale:2}).then(canvas=>{
+        const pdf=new jspdf.jsPDF('p','mm','a4'); const w=210; const h=canvas.height*w/canvas.width;
+        pdf.addImage(canvas.toDataURL('image/png'),'PNG',0,0,w,h); pdf.save('report-pro++++.pdf');
+      });
     },
-    setPIN(){
-      const p1=prompt('Nuovo PIN (min 4 cifre)');if(!p1||p1.length<4)return;
-      const p2=prompt('Ripeti PIN');if(p1!==p2)return alert('Non coincide');
-      const h=CryptoJS.SHA256(p1).toString();
-      this.pinHash=h;this._sessionKey=CryptoJS.SHA256(p1).toString();
-      this.settings.pinEnabled=true;
-      localStorage.setItem('pro_pin_hash',h);
-      localStorage.setItem('pro_settings',JSON.stringify(this.settings));
-      this.persist();alert('PIN impostato.');
-    },
-    disablePIN(){
-      if(!confirm('Disattivare PIN?'))return;
-      this.settings.pinEnabled=false;this._sessionKey='';this.persist();
-      localStorage.setItem('pro_settings',JSON.stringify(this.settings));
-    },
+    clearAll(){ if(confirm('Svuotare tutti i dati?')){ localStorage.clear(); location.reload(); } },
 
-    /* === Scadenze fiscali 🇮🇹 === */
+    /* === Fisco 🇮🇹 === */
     initFisco(){
-      if(localStorage.getItem('fisco_init'))return;
-      const y=new Date().getFullYear();
-      const add=(t,d,k)=>this.events.push({id:this.uid(),title:t,date:d,kind:k,done:false});
-      add('CU',''+y+'-03-16','Fiscale');
-      add('IVA 1° trim',''+y+'-05-16','Fiscale');
-      add('IVA 2° trim',''+y+'-08-20','Fiscale');
-      add('IVA 3° trim',''+y+'-11-16','Fiscale');
-      add('IVA 4° trim',''+(y+1)+'-03-16','Fiscale');
-      add('IMU acconto',''+y+'-06-16','Fiscale');
-      add('IMU saldo',''+y+'-12-16','Fiscale');
-      add('IRPEF/IRES saldo',''+y+'-06-30','Fiscale');
-      add('IRPEF/IRES acconto',''+y+'-11-30','Fiscale');
-      localStorage.setItem('fisco_init','1');
-      localStorage.setItem('pro_events',JSON.stringify(this.events));
+      if(localStorage.getItem('pro++++_fisco_init')) return;
+      const y=new Date().getFullYear(), add=(t,d,k)=> this.events.push({id:this.uid(),title:t,date:d,kind:k,repeat:'year',done:false});
+      add('CU',`${y}-03-16`,'Fiscale');
+      add('IVA 1° trim',`${y}-05-16`,'Fiscale');
+      add('IVA 2° trim',`${y}-08-20`,'Fiscale');
+      add('IVA 3° trim',`${y}-11-16`,'Fiscale');
+      add('IVA 4° trim',`${y+1}-03-16`,'Fiscale');
+      add('IMU acconto',`${y}-06-16`,'Fiscale');
+      add('Saldo IRPEF/IRES/IRAP',`${y}-06-30`,'Fiscale');
+      add('Acconto IRPEF/IRES/IRAP',`${y}-11-30`,'Fiscale');
+      add('IMU saldo',`${y}-12-16`,'Fiscale');
+      localStorage.setItem('pro++++_fisco_init','1');
+    },
+
+    /* === Demo seed === */
+    seedDemo(){
+      const y=this.filters.year, m=this.filters.month;
+      const d=(dd)=>`${y}-${String(m+1).padStart(2,'0')}-${String(dd).padStart(2,'0')}`;
+      this.rows=[
+        { id:this.uid(), Data:d(2),  Tipo:'entrata', ImportoNetto:1800, IVA:22, ImportoIVA:396, ImportoLordo:2196, Categoria:'Fatture clienti', Conto:'POS', Attivita:'Negozio', Cliente:'Cliente A', Fornitore:'', Note:'Vendita' },
+        { id:this.uid(), Data:d(4),  Tipo:'entrata', ImportoNetto:1710, IVA:10, ImportoIVA:171, ImportoLordo:1881, Categoria:'Corrispettivi', Conto:'Contanti', Attivita:'Negozio', Cliente:'Cliente B', Fornitore:'', Note:'Cassa' },
+        { id:this.uid(), Data:d(6),  Tipo:'spesa',   ImportoNetto:998,  IVA:22, ImportoIVA:220, ImportoLordo:1218, Categoria:'Affitto', Conto:'Banca', Attivita:'Sede', Cliente:'', Fornitore:'Proprietario', Note:'Canone' },
+        { id:this.uid(), Data:d(7),  Tipo:'spesa',   ImportoNetto:504,  IVA:10, ImportoIVA:50,  ImportoLordo:554,  Categoria:'Utenze', Conto:'Banca', Attivita:'Sede', Cliente:'', Fornitore:'Enel', Note:'Energia' },
+        { id:this.uid(), Data:d(8),  Tipo:'spesa',   ImportoNetto:1794, IVA:22, ImportoIVA:395, ImportoLordo:2189, Categoria:'Marketing', Conto:'Online', Attivita:'Promo', Cliente:'', Fornitore:'Meta Ads', Note:'Campagna' }
+      ];
+      this.clients=[
+        { id:this.uid(), tipo:'cliente', nome:'Cliente A', piva:'IT12345678901', email:'a@clienti.it', telefono:'', pagamento:'Bonifico', note:'' },
+        { id:this.uid(), tipo:'cliente', nome:'Cliente B', piva:'', email:'b@clienti.it', telefono:'', pagamento:'Carta', note:'' }
+      ];
+      this.suppliers=[
+        { id:this.uid(), tipo:'fornitore', nome:'Proprietario', piva:'', email:'', telefono:'', pagamento:'Bonifico', note:'Affitto' },
+        { id:this.uid(), tipo:'fornitore', nome:'Enel', piva:'', email:'', telefono:'', pagamento:'RID', note:'Utenze' },
+        { id:this.uid(), tipo:'fornitore', nome:'Meta Ads', piva:'', email:'', telefono:'', pagamento:'Carta', note:'Marketing' }
+      ];
     }
   }
 }).mount('#app');
 </script>
-</body>
+
+<!-- Modali HTML (separate, agganciate dalla logica sopra) -->
+<!-- MOVIMENTO -->
+<dialog id="dlgTx" class="modal">
+  <div class="modal-h">{{ txDraft.id ? 'Modifica movimento' : (txDraft.Tipo==='entrata' ? 'Nuova Entrata' : 'Nuova Uscita') }}</div>
+  <div class="modal-b space-y-3">
+    <div class="grid grid-cols-2 gap-2">
+      <input type="date" class="input" v-model="txDraft.Data">
+      <select class="input" v-model="txDraft.Tipo">
+        <option value="entrata">Entrata</option>
+        <option value="spesa">Uscita</option>
+      </select>
+    </div>
+
+    <div class="grid grid-cols-2 gap-2">
+      <div>
+        <div class="title-sm mb-1">Importo NETTO (€)</div>
+        <input type="number" step="0.01" class="input" v-model.number="txDraft.ImportoNetto">
+      </div>
+      <div>
+        <div class="title-sm mb-1">IVA %</div>
+        <div class="flex gap-2">
+          <select class="input" v-model.number="presetIVA" @change="txDraft.IVA=presetIVA ?? txDraft.IVA">
+            <option :value="null">—</option>
+            <option :value="0">0%</option>
+            <option :value="4">4%</option>
+            <option :value="5">5%</option>
+            <option :value="10">10%</option>
+            <option :value="22">22%</option>
+          </select>
+          <input type="number" step="0.1" class="input" v-model.number="txDraft.IVA" placeholder="IVA %">
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-3 gap-2">
+      <div class="panel-2 p-2 text-center">
+        <div class="text-[11px] text-[#9aa4b2]">IVA (€)</div>
+        <div class="font-bold">{{ fmtEUR(calcIVAfromNet(txDraft)) }}</div>
+      </div>
+      <div class="panel-2 p-2 text-center">
+        <div class="text-[11px] text-[#9aa4b2]">Totale LORDO</div>
+        <div class="font-bold">{{ fmtEUR(calcLordo(txDraft)) }}</div>
+      </div>
+      <div class="panel-2 p-2 text-center">
+        <div class="text-[11px] text-[#9aa4b2]">{{ txDraft.Tipo==='entrata' ? 'IVA Debito' : 'IVA Credito' }}</div>
+        <div class="font-bold">{{ fmtEUR(calcIVAfromNet(txDraft)) }}</div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-2">
+      <select class="input" v-model="txDraft.Categoria">
+        <option v-for="c in (txDraft.Tipo==='entrata'? categoriesIn : categoriesOut)" :key="c" :value="c">{{ c }}</option>
+      </select>
+
+      <!-- Partner con suggerimento intelligente -->
+      <div v-if="txDraft.Tipo==='entrata'">
+        <input class="input" v-model="txDraft.Cliente" @input="onPartnerInput" list="dlClients" placeholder="Cliente (autocompletamento)">
+        <datalist id="dlClients"><option v-for="c in clients" :key="c.id" :value="c.nome"></option></datalist>
+      </div>
+      <div v-else>
+        <input class="input" v-model="txDraft.Fornitore" @input="onPartnerInput" list="dlSuppliers" placeholder="Fornitore (autocompletamento)">
+        <datalist id="dlSuppliers"><option v-for="s in suppliers" :key="s.id" :value="s.nome"></option></datalist>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-2">
+      <input class="input" v-model="txDraft.Conto" placeholder="Conto (POS, Contanti, Banca...)">
+      <input class="input" v-model="txDraft.Attivita" placeholder="Attività (Negozio, Online...)">
+    </div>
+    <textarea class="input" rows="2" v-model="txDraft.Note" placeholder="Note / Descrizione"></textarea>
+  </div>
+  <div class="modal-f">
+    <button class="btn-ghost" @click="document.getElementById('dlgTx').close()">Annulla</button>
+    <button class="btn" @click="saveTx">Salva</button>
+  </div>
+</dialog>
+
+<!-- SCADENZA -->
+<dialog id="dlgEvent" class="modal">
+  <div class="modal-h">{{ eventDraft.id ? 'Modifica scadenza' : 'Nuova scadenza' }}</div>
+  <div class="modal-b space-y-3">
+    <input class="input" v-model="eventDraft.title" placeholder="Titolo (es. IVA 3° trim / Assicurazione auto)">
+    <input type="date" class="input" v-model="eventDraft.date">
+    <select class="input" v-model="eventDraft.kind">
+      <option>Fiscale</option><option>Assicurazione</option><option>Bolletta</option><option>Compleanno</option><option>Altro</option>
+    </select>
+    <select class="input" v-model="eventDraft.repeat">
+      <option value="">Nessuna ricorrenza</option>
+      <option value="month">Mensile</option>
+      <option value="quarter">Trimestrale</option>
+      <option value="year">Annuale</option>
+    </select>
+    <label class="flex items-center gap-2 text-sm"><input type="checkbox" v-model="eventDraft.done"> Completato</label>
+    <input type="file" @change="attachFile($event)">
+    <div v-if="eventDraft.fileName" class="text-xs">📎 <a :href="eventDraft.fileData" :download="eventDraft.fileName" class="underline text-indigo-400">{{ eventDraft.fileName }}</a></div>
+  </div>
+  <div class="modal-f">
+    <button class="btn-ghost" @click="document.getElementById('dlgEvent').close()">Annulla</button>
+    <button class="btn" @click="saveEvent">Salva</button>
+  </div>
+</dialog>
+
+<!-- CONTATTO -->
+<dialog id="dlgContact" class="modal">
+  <div class="modal-h">{{ contactDraft.id ? 'Modifica contatto' : 'Nuovo contatto' }}</div>
+  <div class="modal-b space-y-3">
+    <div class="grid grid-cols-2 gap-2">
+      <select class="input" v-model="contactDraft.tipo"><option value="cliente">Cliente</option><option value="fornitore">Fornitore</option></select>
+      <input class="input" v-model="contactDraft.nome" placeholder="Nome / Ragione sociale">
+    </div>
+    <div class="grid grid-cols-2 gap-2">
+      <input class="input" v-model="contactDraft.piva" placeholder="P.IVA / CF (opz.)">
+      <input class="input" v-model="contactDraft.email" placeholder="Email (opz.)">
+    </div>
+    <div class="grid grid-cols-2 gap-2">
+      <input class="input" v-model="contactDraft.telefono" placeholder="Telefono (opz.)">
+      <input class="input" v-model="contactDraft.pagamento" placeholder="Pagamento preferito (opz.)">
+    </div>
+    <textarea class="input" rows="2" v-model="contactDraft.note" placeholder="Note (opz.)"></textarea>
+  </div>
+  <div class="modal-f">
+    <button class="btn-ghost" @click="document.getElementById('dlgContact').close()">Annulla</button>
+    <button class="btn" @click="saveContact">Salva</button>
+  </div>
+</dialog>
 </html>
