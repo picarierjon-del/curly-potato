@@ -2,8 +2,8 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Dashboard Contabilità Mobile – Vue 3</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Contabilità Mobile – Modern Pro IVA</title>
 
   <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -11,161 +11,347 @@
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <!-- jsPDF + html2canvas per PDF export -->
+  <!-- Export PDF -->
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 
   <style>
-    :root {
-      --bg:#0f1117;
-      --panel:#181b25;
-      --accent:#3b82f6;
-      --accent-soft:#60a5fa;
-      --muted:#9ca3af;
+    :root{
+      --bg:#0f1117; --panel:#171a22; --panel-2:#1b1f2b; --border:#23283a;
+      --text:#e7eaf0; --muted:#9aa4b2; --accent:#6c7bff; --accent2:#35d9a3; --danger:#ff6b6b;
     }
-    body { background:var(--bg); color:#e5e7eb; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
-    .panel { background:var(--panel); border-radius:16px; border:1px solid #1f2330; }
-    .btn { background:var(--accent); color:#fff; padding:10px 14px; border-radius:10px; font-weight:600; }
-    .btn:hover { background:var(--accent-soft); }
-    .pill { padding:4px 10px; border-radius:999px; background:#1e2233; border:1px solid #2a3042; font-size:12px; }
-    .input { background:#111420; border:1px solid #2a3042; color:white; border-radius:10px; padding:8px 12px; width:100%; }
-    .navbtn { flex:1; text-align:center; padding:8px 0; font-size:13px; color:#9ca3af; }
-    .navbtn.active { color:var(--accent-soft); font-weight:600; }
-    .card { background:#1b1f2d; border-radius:14px; padding:12px; }
+    html,body{height:100%;}
+    body{background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;}
+    .wrap{max-width:480px; margin:0 auto; min-height:100vh; display:flex; flex-direction:column;}
+    .panel{background:var(--panel); border:1px solid var(--border); border-radius:16px;}
+    .panel-2{background:var(--panel-2); border:1px solid var(--border); border-radius:16px;}
+    .btn{background:var(--accent); color:white; padding:10px 14px; border-radius:12px; font-weight:700;}
+    .btn-ghost{background:transparent; border:1px solid var(--border); color:#cfd5df; padding:10px 14px; border-radius:12px;}
+    .chip{padding:6px 10px; border-radius:999px; border:1px solid var(--border); background:#121625; font-size:12px;}
+    .input, select, textarea{background:#0f1320; border:1px solid var(--border); color:var(--text); border-radius:12px; padding:10px 12px; width:100%;}
+    .input:focus, select:focus, textarea:focus{outline:1px solid var(--accent);}
+    .kpi .title{color:var(--muted); font-size:12px;}
+    .kpi .value{font-size:26px; font-weight:800; letter-spacing:-0.2px;}
+    .nav{position:sticky; bottom:0; left:0; right:0; background:rgba(15,17,23,.9); backdrop-filter:blur(8px); border-top:1px solid var(--border);}
+    .navbtn{flex:1; text-align:center; padding:8px 0; font-size:13px; color:#a3aab7;}
+    .navbtn.active{color:#aab3ff; font-weight:700;}
+    .fabbar{position:fixed; bottom:72px; left:50%; transform:translateX(-50%); display:flex; gap:10px; z-index:40;}
+    .fab{padding:12px 14px; border-radius:999px; color:white; font-weight:800; box-shadow:0 8px 24px rgba(0,0,0,.35);}
+    .fab.in{background:#10b981;} .fab.out{background:#ef4444;}
+    dialog::backdrop{background:rgba(0,0,0,.55);}
+    .modal{width:min(520px,92vw); background:#0d1018; border:1px solid var(--border); border-radius:16px; color:var(--text);}
+    .modal-h{padding:14px 16px; border-bottom:1px solid var(--border); font-weight:800;}
+    .modal-b{padding:16px;}
+    .modal-f{padding:16px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:10px;}
+    .table th{color:#c4cad6; padding:10px 8px; font-weight:600; text-align:left; border-bottom:1px solid var(--border);}
+    .table td{padding:10px 8px; border-bottom:1px solid #22273a;}
   </style>
 </head>
 <body>
-<div id="app" class="max-w-md mx-auto h-[100vh] flex flex-col overflow-hidden">
+<div id="app" class="wrap">
 
-  <!-- Header dinamico -->
-  <header class="p-4 flex items-center justify-between border-b border-[#222739] bg-[#0f1117]">
-    <h1 class="text-lg font-semibold">{{ currentViewTitle }}</h1>
-    <button v-if="view==='home'" class="btn text-sm" @click="addQuick('entrata')">+ Entrata</button>
+  <!-- BANNER GIORNALIERO SCADENZE -->
+  <div v-if="banner.items.length" class="panel mx-4 mt-3 p-3 flex items-start gap-3">
+    <div class="text-xl">🔔</div>
+    <div class="flex-1">
+      <div class="font-semibold">Promemoria di oggi</div>
+      <div class="text-sm text-[#cbd5e1]">
+        <span v-if="banner.today.length">Oggi: {{ banner.today.map(e=>e.title).join(', ') }}.</span>
+        <span v-if="banner.soon.length"> In arrivo (7gg): {{ banner.soon.map(e=>`${e.title} (${e.dday}g)`).join(', ') }}.</span>
+        <span v-if="banner.overdue.length" class="text-rose-300"> Scaduti: {{ banner.overdue.map(e=>e.title).join(', ') }}!</span>
+      </div>
+    </div>
+    <button class="btn-ghost" @click="dismissBannerToday">OK</button>
+  </div>
+
+  <!-- HEADER -->
+  <header class="px-4 pt-4 pb-2 flex items-center justify-between">
+    <div>
+      <div class="text-xs text-[#9aa4b2]">{{ headerSubtitle }}</div>
+      <h1 class="text-xl font-extrabold tracking-tight">{{ headerTitle }}</h1>
+    </div>
+    <div class="flex gap-2">
+      <button class="btn-ghost text-sm" @click="exportCSV">CSV</button>
+      <button class="btn-ghost text-sm" @click="exportPDF">PDF</button>
+    </div>
   </header>
 
-  <!-- CONTENUTO PRINCIPALE -->
-  <main class="flex-1 overflow-y-auto p-4 space-y-4">
+  <!-- CONTENUTO -->
+  <main class="flex-1 overflow-y-auto px-4 pb-28 space-y-4">
 
     <!-- HOME -->
-    <section v-if="view==='home'" key="home">
-      <div class="text-sm text-[#9ca3af] mb-2">Categorie</div>
-      <div class="flex flex-wrap gap-2 mb-3">
-        <button
-          v-for="cat in categories"
-          :key="cat"
-          @click="filterCategory(cat)"
-          class="pill"
-          :class="{'border-blue-400 text-blue-300': cat===filters.category}">
-          {{ cat }}
+    <section v-if="view==='home'">
+      <!-- Pill categorie dinamiche -->
+      <div class="text-xs text-[#9aa4b2] mb-1">Categorie</div>
+      <div class="flex flex-wrap gap-2">
+        <button class="chip"
+          :class="{'border-blue-400 text-blue-300': !filters.category}"
+          @click="filters.category=null">Tutte</button>
+        <button v-for="c in categories" :key="c" class="chip"
+          :class="{'border-blue-400 text-blue-300': filters.category===c}"
+          @click="filters.category = (filters.category===c?null:c)">
+          {{ c }}
         </button>
       </div>
 
-      <!-- KPI principali -->
-      <div class="grid grid-cols-2 gap-3">
-        <div class="panel p-4 text-center">
-          <div class="text-xs text-[#9ca3af]">Entrate mese</div>
-          <div class="text-2xl font-bold text-emerald-400">{{ fmtEUR(kpi.totEntrate) }}</div>
-        </div>
-        <div class="panel p-4 text-center">
-          <div class="text-xs text-[#9ca3af]">Uscite mese</div>
-          <div class="text-2xl font-bold text-rose-400">{{ fmtEUR(kpi.totSpese) }}</div>
-        </div>
-      </div>
-
-      <!-- Grafico Entrate vs Uscite -->
-      <div class="panel p-3 mt-3">
-        <div class="text-sm text-[#9ca3af] mb-1">Entrate vs Uscite</div>
-        <canvas id="barHome" height="160"></canvas>
-      </div>
-
-      <!-- Azioni rapide -->
+      <!-- KPI -->
       <div class="grid grid-cols-2 gap-3 mt-3">
-        <button class="btn bg-emerald-600 hover:bg-emerald-500" @click="addQuick('entrata')">+ Aggiungi Entrata</button>
-        <button class="btn bg-rose-600 hover:bg-rose-500" @click="addQuick('spesa')">- Aggiungi Uscita</button>
+        <div class="panel p-4 kpi text-center">
+          <div class="title">Reddito (Entrate)</div>
+          <div class="value text-emerald-400">{{ fmtEUR(kpi.totEntrate) }}</div>
+        </div>
+        <div class="panel p-4 kpi text-center">
+          <div class="title">Spese (Uscite)</div>
+          <div class="value text-rose-400">{{ fmtEUR(kpi.totSpese) }}</div>
+        </div>
+      </div>
+      <div class="panel p-4 kpi text-center">
+        <div class="title">Risparmi</div>
+        <div class="value text-amber-300">{{ fmtEUR(kpi.risparmi) }}</div>
+      </div>
+
+      <!-- Grafico bar E vs U -->
+      <div class="panel p-3">
+        <div class="text-xs text-[#9aa4b2] mb-1">Entrate vs Uscite</div>
+        <canvas id="chartHome" height="160"></canvas>
+      </div>
+
+      <!-- Grafico torta ripartizione categorie -->
+      <div class="panel p-3">
+        <div class="text-xs text-[#9aa4b2] mb-1">Ripartizione per categoria</div>
+        <canvas id="chartPie" height="180"></canvas>
+      </div>
+
+      <!-- Ultimi movimenti -->
+      <div class="panel p-3">
+        <div class="flex items-center justify-between mb-2">
+          <div class="text-xs text-[#9aa4b2]">Ultimi movimenti</div>
+          <button class="btn-ghost text-xs" @click="switchView('summary')">Vedi tutto →</button>
+        </div>
+        <div v-for="r in lastRows" :key="r.id" class="flex items-center justify-between py-2 border-b border-[#23283a] last:border-0">
+          <div>
+            <div class="font-semibold text-sm">{{ r.Categoria || '—' }}</div>
+            <div class="text-xs text-[#9aa4b2]">{{ r.Data }} • {{ r.Tipo }}</div>
+          </div>
+          <div class="text-right">
+            <div :class="r.Tipo==='entrata'?'text-emerald-400':'text-rose-400'">{{ fmtEUR(r.ImportoNetto || r.Importo) }}</div>
+            <div class="text-[11px] text-[#9aa4b2]">IVA: {{ fmtEUR(r.ImportoIVA || 0) }}</div>
+          </div>
+        </div>
       </div>
     </section>
 
     <!-- RIEPILOGO -->
-    <section v-if="view==='summary'" key="summary">
-      <div class="text-sm text-[#9ca3af] mb-2">Riepilogo dettagliato</div>
-      <div class="grid grid-cols-2 gap-3 mb-4">
-        <div class="panel p-3 text-center">
-          <div class="text-xs text-[#9ca3af]">Profitto</div>
-          <div class="text-lg text-indigo-300 font-bold">{{ fmtEUR(kpi.profitto) }}</div>
-        </div>
-        <div class="panel p-3 text-center">
-          <div class="text-xs text-[#9ca3af]">IVA</div>
-          <div class="text-lg text-amber-300 font-bold">{{ fmtEUR(kpi.ivaDaVersare) }}</div>
+    <section v-if="view==='summary'">
+      <!-- Selettori mese/anno -->
+      <div class="panel p-3">
+        <div class="grid grid-cols-2 gap-2">
+          <select v-model="filters.year">
+            <option v-for="y in years" :key="y" :value="y">{{ y }}</option>
+          </select>
+          <select v-model="filters.month">
+            <option v-for="(m,i) in months" :key="m" :value="i">{{ m }}</option>
+          </select>
         </div>
       </div>
 
-      <div class="panel p-4 mb-4">
-        <div class="text-sm text-[#9ca3af] mb-2">Grafico annuale</div>
-        <canvas id="chartYear"></canvas>
+      <!-- KPI dettagliati -->
+      <div class="grid grid-cols-2 gap-3">
+        <div class="panel p-3 text-center">
+          <div class="title">IVA a Debito</div>
+          <div class="value text-indigo-300">{{ fmtEUR(kpi.ivaDebito) }}</div>
+        </div>
+        <div class="panel p-3 text-center">
+          <div class="title">IVA a Credito</div>
+          <div class="value text-cyan-300">{{ fmtEUR(kpi.ivaCredito) }}</div>
+        </div>
+      </div>
+      <div class="panel p-3 text-center">
+        <div class="title">IVA da Versare</div>
+        <div class="value text-amber-300">{{ fmtEUR(kpi.ivaDaVersare) }}</div>
+      </div>
+
+      <!-- Grafico annuale -->
+      <div class="panel p-4">
+        <div class="text-xs text-[#9aa4b2] mb-1">Trend annuale</div>
+        <canvas id="chartYear" height="200"></canvas>
+      </div>
+
+      <!-- Tabella completa -->
+      <div class="panel p-3">
+        <div class="flex items-center justify-between mb-2">
+          <div class="text-xs text-[#9aa4b2]">Movimenti mese</div>
+          <div class="text-xs text-[#9aa4b2]">{{ filteredRows.length }} righe</div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="table w-full text-sm">
+            <thead>
+              <tr>
+                <th>Data</th><th>Tipo</th><th>Lordo</th><th>IVA</th><th>Netto</th><th>Categoria</th><th>Conto</th><th>Note</th><th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="r in filteredRows" :key="r.id">
+                <td>{{ r.Data }}</td>
+                <td :class="r.Tipo==='entrata'?'text-emerald-300':'text-rose-300'">{{ r.Tipo }}</td>
+                <td>{{ fmtEUR(r.Importo) }}</td>
+                <td>{{ fmtEUR(r.ImportoIVA || 0) }} ({{ r.IVA }}%)</td>
+                <td>{{ fmtEUR(r.ImportoNetto || r.Importo) }}</td>
+                <td>{{ r.Categoria }}</td>
+                <td>{{ r.Conto }}</td>
+                <td class="truncate max-w-[120px]" :title="r.Note">{{ r.Note }}</td>
+                <td class="text-right">
+                  <button class="btn-ghost text-xs" @click="openEdit(r)">✏️</button>
+                  <button class="btn-ghost text-xs" @click="removeRow(r.id)">🗑️</button>
+                </td>
+              </tr>
+              <tr v-if="!filteredRows.length">
+                <td colspan="9" class="text-center text-[#9aa4b2] py-4">Nessuna voce nel mese selezionato</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </section>
 
     <!-- SCADENZE -->
-    <section v-if="view==='events'" key="events">
-      <div class="flex items-center justify-between mb-2">
-        <h2 class="text-sm text-[#9ca3af]">Scadenze & Promemoria</h2>
+    <section v-if="view==='events'">
+      <div class="flex items-center justify-between">
+        <div class="text-xs text-[#9aa4b2]">Scadenze & Promemoria</div>
         <button class="btn text-sm" @click="openEvent()">+ Nuova</button>
       </div>
-      <div v-for="ev in sortedEvents" :key="ev.id" class="panel p-3 mb-2 flex justify-between items-start">
+      <div v-for="e in sortedEvents" :key="e.id" class="panel-2 p-3 mt-3 flex items-start justify-between">
         <div>
-          <div class="font-semibold">{{ ev.title }}</div>
-          <div class="text-xs text-[#9ca3af]">{{ ev.date }} • {{ ev.kind }}<span v-if="ev.repeat"> • 🔁 {{ repeatLabel(ev.repeat) }}</span></div>
-          <div class="text-xs mt-1">
-            <span class="pill" :class="deadlineClass(ev)">{{ deadlineLabel(ev) }}</span>
+          <div class="font-semibold">{{ e.title }}</div>
+          <div class="text-xs text-[#9aa4b2]">{{ e.date }} • {{ e.kind }} <span v-if="e.repeat">• 🔁 {{ repeatLabel(e.repeat) }}</span></div>
+          <div class="mt-1">
+            <span class="chip" :class="deadlineClass(e)">{{ deadlineLabel(e) }}</span>
+            <span v-if="e.done" class="chip border-green-400 text-green-300 ml-2">Completato</span>
+          </div>
+          <div v-if="e.fileName" class="text-xs mt-1">
+            📎 <a :href="e.fileData" :download="e.fileName" class="underline text-indigo-400">{{ e.fileName }}</a>
           </div>
         </div>
         <div class="flex gap-2">
-          <button @click="openEvent(ev)" class="text-blue-400">✏️</button>
-          <button @click="deleteEvent(ev.id)" class="text-rose-400">🗑️</button>
+          <button class="btn-ghost text-xs" @click="openEvent(e)">✏️</button>
+          <button class="btn-ghost text-xs" @click="deleteEvent(e.id)">🗑️</button>
         </div>
       </div>
-      <div v-if="!sortedEvents.length" class="text-[#6b7280] text-sm text-center mt-6">Nessuna scadenza</div>
+      <div v-if="!sortedEvents.length" class="text-center text-[#9aa4b2] text-sm mt-6">Nessuna scadenza</div>
     </section>
 
     <!-- IMPOSTAZIONI -->
-    <section v-if="view==='settings'" key="settings">
-      <div class="text-sm text-[#9ca3af] mb-2">Impostazioni</div>
+    <section v-if="view==='settings'">
       <div class="panel p-4 space-y-3">
         <label class="flex items-center gap-2">
           <input type="checkbox" v-model="settings.proactive"> <span>Modalità proattiva</span>
         </label>
         <div>
-          <div class="text-xs text-[#9ca3af] mb-1">Budget spese (€)</div>
+          <div class="text-xs text-[#9aa4b2] mb-1">Budget spese (€)</div>
           <input type="number" class="input" v-model.number="settings.budgetSpese">
         </div>
         <div>
-          <div class="text-xs text-[#9ca3af] mb-1">Soglia IVA (€)</div>
+          <div class="text-xs text-[#9aa4b2] mb-1">Soglia IVA (€)</div>
           <input type="number" class="input" v-model.number="settings.ivaThreshold">
+        </div>
+
+        <div class="flex gap-2 pt-2">
+          <input type="file" accept=".csv" class="hidden" ref="csvInput" @change="importCSV">
+          <button class="btn-ghost" @click="$refs.csvInput.click()">📂 Importa CSV</button>
+          <button class="btn-ghost" @click="exportCSV">📤 Esporta CSV</button>
+          <button class="btn-ghost" @click="exportPDF">📄 Esporta PDF</button>
+          <button class="btn bg-rose-600 hover:bg-rose-500" @click="clearAll">🧹 Svuota tutto</button>
         </div>
       </div>
     </section>
   </main>
 
-  <!-- NAV BOTTOM stile iPhone -->
-  <nav class="flex border-t border-[#222739] bg-[#0f1117]">
-    <div class="navbtn" :class="{active:view==='home'}" @click="switchView('home')">🏠 Home</div>
-    <div class="navbtn" :class="{active:view==='summary'}" @click="switchView('summary')">📊 Riepilogo</div>
-    <div class="navbtn" :class="{active:view==='events'}" @click="switchView('events')">⏰ Scadenze</div>
-    <div class="navbtn" :class="{active:view==='settings'}" @click="switchView('settings')">⚙️ Impostazioni</div>
+  <!-- FAB (Entrata/Uscita) -->
+  <div class="fabbar">
+    <button class="fab in"  @click="openTx('entrata')">+ Entrata</button>
+    <button class="fab out" @click="openTx('spesa')">- Uscita</button>
+  </div>
+
+  <!-- NAV BOTTOM -->
+  <nav class="nav px-2 pt-2 pb-[calc(env(safe-area-inset-bottom)+6px)] flex gap-1">
+    <div class="navbtn" :class="{active:view==='home'}" @click="switchView('home')">🏠<br><span>Home</span></div>
+    <div class="navbtn" :class="{active:view==='summary'}" @click="switchView('summary')">📊<br><span>Riepilogo</span></div>
+    <div class="navbtn" :class="{active:view==='events'}" @click="switchView('events')">⏰<br><span>Scadenze</span></div>
+    <div class="navbtn" :class="{active:view==='settings'}" @click="switchView('settings')">⚙️<br><span>Impostazioni</span></div>
   </nav>
 
-  <!-- Modale evento -->
-  <dialog ref="dlgEvent" class="p-0 rounded-xl border border-[#2a3042] bg-[#0f1117] text-white w-[90%] max-w-md">
-    <div class="p-4 border-b border-[#2a3042] font-semibold">Scadenza</div>
-    <div class="p-4 space-y-2">
-      <input class="input" v-model="eventDraft.title" placeholder="Titolo">
+  <!-- MODALE: Nuovo/Modifica movimento con IVA -->
+  <dialog ref="dlgTx" class="modal">
+    <div class="modal-h">{{ txDraft.id ? 'Modifica movimento' : (txDraft.Tipo==='entrata' ? 'Nuova Entrata' : 'Nuova Uscita') }}</div>
+    <div class="modal-b space-y-3">
+      <div class="grid grid-cols-2 gap-2">
+        <input type="date" class="input" v-model="txDraft.Data">
+        <select class="input" v-model="txDraft.Tipo">
+          <option value="entrata">Entrata</option>
+          <option value="spesa">Uscita</option>
+        </select>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <div class="text-xs text-[#9aa4b2] mb-1">Importo lordo (€)</div>
+          <input type="number" step="0.01" class="input" v-model.number="txDraft.Importo">
+        </div>
+        <div>
+          <div class="text-xs text-[#9aa4b2] mb-1">IVA % (rapida o personalizzata)</div>
+          <div class="flex gap-2">
+            <select class="input" v-model.number="presetIVA">
+              <option :value="null">—</option>
+              <option :value="0">0%</option>
+              <option :value="4">4%</option>
+              <option :value="5">5%</option>
+              <option :value="10">10%</option>
+              <option :value="22">22%</option>
+            </select>
+            <input type="number" step="0.1" class="input" v-model.number="txDraft.IVA" placeholder="IVA %">
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-2">
+        <div class="panel-2 p-2 rounded-md text-center">
+          <div class="text-[11px] text-[#9aa4b2]">Netto</div>
+          <div class="font-bold">{{ fmtEUR(calcNetto(txDraft)) }}</div>
+        </div>
+        <div class="panel-2 p-2 rounded-md text-center">
+          <div class="text-[11px] text-[#9aa4b2]">IVA</div>
+          <div class="font-bold">{{ fmtEUR(calcIVA(txDraft)) }}</div>
+        </div>
+        <div class="panel-2 p-2 rounded-md text-center">
+          <div class="text-[11px] text-[#9aa4b2]">{{ txDraft.Tipo==='entrata' ? 'IVA Debito' : 'IVA Credito' }}</div>
+          <div class="font-bold">{{ fmtEUR(calcIVA(txDraft)) }}</div>
+        </div>
+      </div>
+
+      <input class="input" v-model="txDraft.Categoria" list="cats" placeholder="Categoria">
+      <datalist id="cats"><option v-for="c in categories" :key="c" :value="c"></option></datalist>
+
+      <div class="grid grid-cols-2 gap-2">
+        <input class="input" v-model="txDraft.Conto" placeholder="Conto (POS, Contanti, Banca...)">
+        <input class="input" v-model="txDraft.Attivita" placeholder="Attività (Negozio, Online...)">
+      </div>
+
+      <textarea class="input" rows="2" v-model="txDraft.Note" placeholder="Note / Descrizione"></textarea>
+    </div>
+    <div class="modal-f">
+      <button class="btn-ghost" @click="$refs.dlgTx.close()">Annulla</button>
+      <button class="btn" @click="saveTx">Salva</button>
+    </div>
+  </dialog>
+
+  <!-- MODALE: Scadenza -->
+  <dialog ref="dlgEvent" class="modal">
+    <div class="modal-h">{{ eventDraft.id ? 'Modifica scadenza' : 'Nuova scadenza' }}</div>
+    <div class="modal-b space-y-3">
+      <input class="input" v-model="eventDraft.title" placeholder="Titolo (es. IVA 4° trim / Assicurazione auto)">
       <input type="date" class="input" v-model="eventDraft.date">
       <select class="input" v-model="eventDraft.kind">
-        <option>Fiscale</option>
-        <option>Assicurazione</option>
-        <option>Bolletta</option>
-        <option>Compleanno</option>
-        <option>Altro</option>
+        <option>Fiscale</option><option>Assicurazione</option><option>Bolletta</option><option>Compleanno</option><option>Altro</option>
       </select>
       <select class="input" v-model="eventDraft.repeat">
         <option value="">Nessuna ricorrenza</option>
@@ -177,362 +363,208 @@
         <input type="checkbox" v-model="eventDraft.done"> Completato
       </label>
       <input type="file" @change="attachFile($event)">
-      <div v-if="eventDraft.fileName" class="text-xs mt-1">
+      <div v-if="eventDraft.fileName" class="text-xs">
         📎 <a :href="eventDraft.fileData" :download="eventDraft.fileName" class="underline text-indigo-400">{{ eventDraft.fileName }}</a>
       </div>
     </div>
-    <div class="flex justify-end gap-2 p-4 border-t border-[#2a3042]">
-      <button class="btn bg-gray-600" @click="$refs.dlgEvent.close()">Chiudi</button>
+    <div class="modal-f">
+      <button class="btn-ghost" @click="$refs.dlgEvent.close()">Annulla</button>
       <button class="btn" @click="saveEvent">Salva</button>
     </div>
-  </dialog>  <!-- SCRIPT VUE 3 -->
-  <script>
-    const { createApp, ref, reactive, computed, watch, onMounted, nextTick } = Vue;
+  </dialog><script>
+const { createApp } = Vue
 
-    createApp({
-      setup() {
-        // ---------- KEYS ----------
-        const TX_KEY = 'sbd_tx_v1';
-        const EV_KEY = 'sbd_ev_v1';
-        const ST_KEY = 'sbd_st_v1';
-        const BN_KEY = 'sbd_banner_seen_on'; // YYYY-MM-DD
-
-        // ---------- STATE ----------
-        const view = ref('home'); // home | summary | events | settings
-        const settings = reactive({ proactive: true, budgetSpese: 5000, ivaThreshold: 2000 });
-
-        // Filters (Home usa anche filters.category)
-        const today = new Date();
-        const filters = reactive({
-          year: today.getFullYear(),
-          month: today.getMonth(),
-          category: null
-        });
-
-        // Movimenti (entrate/uscite)
-        const rows = ref([]);
-
-        // Scadenze / Eventi
-        const events = ref([]);
-        const eventDraft = reactive({ id:null, title:'', kind:'Fiscale', date:'', repeat:'', done:false, note:'', fileData:'', fileName:'' });
-        const dlgEvent = ref(null);
-
-        // ---------- DERIVATI ----------
-        const currentViewTitle = computed(() => {
-          return view.value === 'home' ? 'Home' :
-                 view.value === 'summary' ? 'Riepilogo' :
-                 view.value === 'events' ? 'Scadenze' : 'Impostazioni';
-        });
-
-        const categories = computed(() => {
-          const set = new Set(rows.value.map(r => r.Categoria).filter(Boolean));
-          // Ordina per frequenza (categorie più usate per prime)
-          const freq = {};
-          rows.value.forEach(r => { if (r.Categoria) freq[r.Categoria] = (freq[r.Categoria]||0) + 1; });
-          return [...set].sort((a,b) => (freq[b]||0) - (freq[a]||0));
-        });
-
-        const sortedEvents = computed(() => {
-          return events.value.slice().sort((a,b) => (a.date < b.date ? -1 : 1));
-        });
-
-        // ---------- KPI ----------
-        const kpi = reactive({ totEntrate:0, totSpese:0, profitto:0, ivaDaVersare:0, liquidita:0 });
-
-        function recomputeKPIs() {
-          const month = +filters.month, year = +filters.year;
-          const cat = filters.category;
-
-          const list = rows.value.filter(r => {
-            const d = new Date(r.Data + 'T00:00:00');
-            const sameYM = d.getFullYear() === year && d.getMonth() === month;
-            const matchCat = !cat || r.Categoria === cat;
-            return sameYM && matchCat;
-          });
-
-          const entr = list.filter(r => r.Tipo === 'entrata');
-          const sp = list.filter(r => r.Tipo === 'spesa');
-
-          const sum = (arr, f) => arr.reduce((s,x)=> s + f(x), 0);
-          const totE = sum(entr, x => +x.Importo || 0);
-          const totS = sum(sp,   x => +x.Importo || 0);
-
-          const ivaE = sum(entr, x => x.Importo - x.Importo/(1 + (+x.IVA||0)/100));
-          const ivaS = sum(sp,   x => x.Importo - x.Importo/(1 + (+x.IVA||0)/100));
-
-          kpi.totEntrate = totE;
-          kpi.totSpese = totS;
-          kpi.profitto = totE - totS;
-          kpi.ivaDaVersare = Math.max(ivaE - ivaS, 0);
-          kpi.liquidita = kpi.profitto * 0.1;
-
-          drawBarHome();
-          drawChartYear();
-          computeRisk();
-          computeBanner(); // aggiornamento banner scadenze
-        }
-
-        // ---------- RISK / PROACTIVE ----------
-        const riskFlags = ref([]);
-        function computeRisk(){
-          riskFlags.value = [];
-          if (!settings.proactive) return;
-          if (kpi.totSpese > kpi.totEntrate) riskFlags.value.push('Spese > Entrate');
-          if (settings.budgetSpese && kpi.totSpese > settings.budgetSpese) riskFlags.value.push('Budget spese superato');
-          if (settings.ivaThreshold && kpi.ivaDaVersare > settings.ivaThreshold) riskFlags.value.push('IVA oltre soglia');
-        }
-
-        // ---------- BANNER SCADENZE ----------
-        const banner = reactive({ items:[], today:[], soon:[], overdue:[] });
-
-        function dayStr(d) {
-          const y = d.getFullYear();
-          const m = String(d.getMonth()+1).padStart(2,'0');
-          const dd = String(d.getDate()).padStart(2,'0');
-          return `${y}-${m}-${dd}`;
-        }
-        function todayStr(){ return dayStr(new Date()); }
-        function parseD(s){ return s ? new Date(s + 'T00:00:00') : null; }
-
-        function deadlineInfo(ev){
-          const due = parseD(ev.date);
-          const now = parseD(todayStr());
-          if (!due || !now) return { status:'unknown', dday:null };
-          const diff = Math.floor((due - now)/(24*3600*1000));
-          if (ev.done) return { status:'done', dday:diff };
-          if (diff < 0) return { status:'overdue', dday:diff };
-          if (diff === 0) return { status:'today', dday:0 };
-          if (diff <= 7) return { status:'soon', dday:diff };
-          return { status:'ok', dday:diff };
-        }
-        function deadlineLabel(ev){
-          const { status, dday } = deadlineInfo(ev);
-          if (status === 'done') return 'Completato';
-          if (status === 'today') return 'Oggi';
-          if (status === 'overdue') return 'Scaduto';
-          if (status === 'soon') return `Tra ${dday}g`;
-          return 'Programmato';
-        }
-        function deadlineClass(ev){
-          const { status } = deadlineInfo(ev);
-          return status==='overdue' ? 'bg-red-500/15 text-red-200 border-red-400' :
-                 status==='today'   ? 'bg-amber-500/15 text-amber-200 border-amber-400' :
-                 status==='soon'    ? 'bg-amber-500/15 text-amber-200 border-amber-400' :
-                 ev.done            ? 'bg-emerald-500/15 text-emerald-200 border-emerald-400' :
-                                      'bg-slate-500/10 text-slate-200 border-slate-500/30';
-        }
-
-        function computeBanner(){
-          const seen = localStorage.getItem(BN_KEY);
-          const todayS = todayStr();
-          const t=[], todayArr=[], soonArr=[], overdueArr=[];
-          for (const ev of events.value) {
-            const info = deadlineInfo(ev);
-            if (info.status==='today') { t.push(ev); todayArr.push({...ev, dday:0});}
-            if (info.status==='soon')  { t.push(ev);  soonArr.push({...ev, dday:info.dday});}
-            if (info.status==='overdue'){t.push(ev);  overdueArr.push({...ev, dday:info.dday});}
-          }
-          const show = t.length && seen !== todayS;
-          banner.items = show ? t : [];
-          banner.today = todayArr; banner.soon = soonArr; banner.overdue = overdueArr;
-        }
-        function dismissBannerToday(){
-          localStorage.setItem(BN_KEY, todayStr());
-          banner.items = [];
-        }
-
-        // ---------- CHARTS ----------
-        let barHome, chartYear;
-        function drawBarHome(){
-          const ctx = document.getElementById('barHome');
-          if (!ctx) return;
-          barHome && barHome.destroy();
-          barHome = new Chart(ctx, {
-            type:'bar',
-            data:{
-              labels:['Entrate','Uscite','Profitto'],
-              datasets:[{ data:[kpi.totEntrate, kpi.totSpese, Math.max(kpi.profitto,0)], backgroundColor:['#34d399','#f87171','#8b8fff'] }]
-            },
-            options:{
-              plugins:{ legend:{display:false} },
-              scales:{ x:{ ticks:{ color:'#cbd5e1' } }, y:{ ticks:{ color:'#cbd5e1' } } }
-            }
-          });
-        }
-        function drawChartYear(){
-          const ctx = document.getElementById('chartYear');
-          if (!ctx) return;
-          chartYear && chartYear.destroy();
-
-          // Serie fittizia di 12 mesi basata sui KPI correnti (solo come placeholder visivo)
-          const base = Math.max(kpi.profitto, 0);
-          const series = Array.from({length:12}, (_,i)=> base * (0.3 + i/14));
-
-          chartYear = new Chart(ctx, {
-            type:'line',
-            data:{
-              labels:['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'],
-              datasets:[{ data:series, borderColor:'#60a5fa', tension:.35, fill:false }]
-            },
-            options:{
-              plugins:{ legend:{display:false} },
-              scales:{ x:{ ticks:{ color:'#cbd5e1' } }, y:{ ticks:{ color:'#cbd5e1' } } }
-            }
-          });
-        }
-
-        // ---------- CRUD MOVIMENTI ----------
-        function addQuick(tipo) {
-          // Prompt veloce stile app: importo + categoria
-          const imp = prompt(`${tipo === 'entrata' ? 'Importo entrata' : 'Importo uscita'} (€):`);
-          if (!imp || isNaN(+imp)) return;
-          const cat = prompt('Categoria (es. Vendite, Affitto, Marketing...):') || '';
-          const rec = {
-            id: uid(),
-            Data: dayStr(new Date()),
-            Tipo: tipo,
-            Importo: +imp,
-            IVA: 22,
-            Categoria: cat,
-            Conto: '',
-            Attivita: ''
-          };
-          rows.value.push(rec);
-          saveAll();
-          recomputeKPIs();
-        }
-
-        function removeRow(id){
-          if (!confirm('Eliminare questa voce?')) return;
-          rows.value = rows.value.filter(r => r.id !== id);
-          saveAll(); recomputeKPIs();
-        }
-
-        // ---------- EVENTI / SCADENZE ----------
-        function openEvent(ev=null){
-          if (ev) Object.assign(eventDraft, JSON.parse(JSON.stringify(ev)));
-          else Object.assign(eventDraft, { id:null, title:'', kind:'Fiscale', date:'', repeat:'', done:false, note:'', fileData:'', fileName:'' });
-          dlgEvent.value.showModal();
-        }
-        function saveEvent(){
-          if (!eventDraft.title || !eventDraft.date) { alert('Titolo e data obbligatori'); return; }
-          const ev = JSON.parse(JSON.stringify(eventDraft));
-          if (ev.id) {
-            const idx = events.value.findIndex(x => x.id === ev.id);
-            if (idx>=0) events.value[idx] = ev;
-          } else {
-            ev.id = uid();
-            events.value.push(ev);
-          }
-          // Ricorrenza: se "Completato" + repeat → genera il prossimo
-          if (ev.done && ev.repeat) {
-            const d = new Date(ev.date+'T00:00:00');
-            if (ev.repeat === 'month') d.setMonth(d.getMonth()+1);
-            if (ev.repeat === 'quarter') d.setMonth(d.getMonth()+3);
-            if (ev.repeat === 'year') d.setFullYear(d.getFullYear()+1);
-            events.value.push({ ...ev, id:uid(), date: dayStr(d), done:false });
-          }
-          dlgEvent.value.close();
-          saveAll(); computeBanner();
-        }
-        function deleteEvent(id){
-          if (!confirm('Eliminare questa scadenza?')) return;
-          events.value = events.value.filter(e => e.id !== id);
-          saveAll(); computeBanner();
-        }
-        function repeatLabel(rep){
-          return rep==='month' ? 'Mensile' : rep==='quarter' ? 'Trimestrale' : rep==='year' ? 'Annuale' : '—';
-        }
-        function attachFile(e){
-          const file = e.target.files?.[0]; if (!file) return;
-          const reader = new FileReader();
-          reader.onload = ev => {
-            eventDraft.fileData = ev.target.result;
-            eventDraft.fileName = file.name;
-          };
-          reader.readAsDataURL(file);
-        }
-
-        // ---------- SETTINGS ----------
-        function saveSettings(){
-          saveAll();
-          recomputeKPIs();
-        }
-
-        // ---------- STORAGE ----------
-        function saveAll(){
-          localStorage.setItem(TX_KEY, JSON.stringify(rows.value));
-          localStorage.setItem(EV_KEY, JSON.stringify(events.value));
-          localStorage.setItem(ST_KEY, JSON.stringify(settings));
-        }
-        function loadAll(){
-          try {
-            const tx = JSON.parse(localStorage.getItem(TX_KEY) || '[]');
-            const ev = JSON.parse(localStorage.getItem(EV_KEY) || '[]');
-            const st = JSON.parse(localStorage.getItem(ST_KEY) || '{}');
-            rows.value = Array.isArray(tx) && tx.length ? tx : demoRows();
-            events.value = Array.isArray(ev) ? ev : [];
-            Object.assign(settings, { proactive: st.proactive ?? true, budgetSpese: st.budgetSpese ?? 5000, ivaThreshold: st.ivaThreshold ?? 2000 });
-          } catch {
-            rows.value = demoRows(); events.value = [];
-          }
-        }
-        function demoRows(){
-          const uid_ = uid;
-          return [
-            { id:uid_(), Data:'2025-08-02', Tipo:'entrata', Importo:2300, IVA:22, Categoria:'PRODOTTO X', Conto:'POS', Attivita:'Negozio 4' },
-            { id:uid_(), Data:'2025-08-03', Tipo:'entrata', Importo:1900, IVA:22, Categoria:'PRODOTTO Z', Conto:'Contanti', Attivita:'Negozio 1' },
-            { id:uid_(), Data:'2025-08-04', Tipo:'entrata', Importo:9397.85, IVA:10, Categoria:'ONLINE', Conto:'Online', Attivita:'Negozio 4' },
-            { id:uid_(), Data:'2025-08-05', Tipo:'entrata', Importo:7054.31, IVA:10, Categoria:'CONTANTI', Conto:'Contanti', Attivita:'Negozio 2' },
-            { id:uid_(), Data:'2025-08-06', Tipo:'spesa', Importo:1280, IVA:22, Categoria:'Affitto', Conto:'Unicredit', Attivita:'Negozio 4' },
-            { id:uid_(), Data:'2025-08-07', Tipo:'spesa', Importo:560, IVA:10, Categoria:'Utenze', Conto:'Unicredit', Attivita:'Negozio 4' },
-            { id:uid_(), Data:'2025-08-08', Tipo:'spesa', Importo:2300, IVA:22, Categoria:'Marketing / Pubblicità', Conto:'Online', Attivita:'Negozio 4' },
-            { id:uid_(), Data:'2025-08-09', Tipo:'spesa', Importo:190, IVA:22, Categoria:'Manutenzione', Conto:'POS', Attivita:'Negozio 1' }
-          ];
-        }
-
-        // ---------- UTILS ----------
-        function uid(){ return Math.random().toString(36).slice(2) + Date.now().toString(36); }
-        function fmtEUR(n){ return (isFinite(n)?n:0).toLocaleString('it-IT',{style:'currency', currency:'EUR'}); }
-        function switchView(v){ view.value = v; nextTick(() => { drawBarHome(); drawChartYear(); }); }
-        function filterCategory(cat){ filters.category = (filters.category === cat ? null : cat); recomputeKPIs(); }
-
-        // ---------- WATCH ----------
-        watch([() => filters.year, () => filters.month], recomputeKPIs);
-        watch(() => filters.category, recomputeKPIs);
-        watch(rows, () => { saveAll(); recomputeKPIs(); }, { deep:true });
-        watch(settings, () => { saveAll(); computeRisk(); }, { deep:true });
-        watch(events, () => { saveAll(); computeBanner(); }, { deep:true });
-
-        // ---------- MOUNT ----------
-        onMounted(async () => {
-          loadAll();
-          await nextTick();
-          recomputeKPIs();
-          computeBanner();
-          drawBarHome();
-          drawChartYear();
-        });
-
-        // ---------- EXPOSE ----------
-        return {
-          // state
-          view, currentViewTitle, settings, filters, rows, kpi,
-          events, eventDraft, dlgEvent,
-          categories, sortedEvents, risk: computed(()=>({flags: riskFlags.value})),
-          banner,
-          // methods
-          fmtEUR, switchView, filterCategory,
-          addQuick, removeRow,
-          openEvent, saveEvent, deleteEvent, repeatLabel, attachFile,
-          saveSettings,
-          deadlineLabel, deadlineClass,
-          dismissBannerToday
-        };
+createApp({
+  data() {
+    return {
+      view: 'home',
+      months: ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'],
+      filters: { category:null, month:new Date().getMonth(), year:new Date().getFullYear() },
+      rows: [],
+      events: [],
+      settings: { proactive:true, budgetSpese:0, ivaThreshold:0 },
+      txDraft: {},
+      eventDraft: {},
+      presetIVA: null,
+      banner: { items:[], today:[], soon:[], overdue:[] },
+      charts: {},
+    }
+  },
+  computed:{
+    headerTitle(){ return this.view==='home'?'Dashboard':this.view==='summary'?'Riepilogo':this.view==='events'?'Scadenze':'Impostazioni' },
+    headerSubtitle(){ return `${this.months[this.filters.month]} ${this.filters.year}` },
+    years(){ const y=new Date().getFullYear(); return [y-1,y,y+1]; },
+    categories(){ return [...new Set(this.rows.map(r=>r.Categoria).filter(Boolean))]; },
+    filteredRows(){
+      return this.rows.filter(r=>{
+        const d=new Date(r.Data);
+        const matchMonth=(d.getMonth()===this.filters.month)&&(d.getFullYear()===this.filters.year);
+        const matchCat=!this.filters.category||r.Categoria===this.filters.category;
+        return matchMonth&&matchCat;
+      });
+    },
+    lastRows(){ return this.rows.slice(-5).reverse(); },
+    kpi(){
+      let e=0,s=0,ivaCred=0,ivaDeb=0;
+      this.filteredRows.forEach(r=>{
+        const netto=this.calcNetto(r);
+        if(r.Tipo==='entrata'){ e+=netto; ivaDeb+=this.calcIVA(r); }
+        else { s+=netto; ivaCred+=this.calcIVA(r); }
+      });
+      return {
+        totEntrate:e, totSpese:s, risparmi:e-s,
+        ivaCredito:ivaCred, ivaDebito:ivaDeb, ivaDaVersare:ivaDeb-ivaCred
       }
-    }).mount('#app');
-  </script>
+    },
+    sortedEvents(){
+      return [...this.events].sort((a,b)=>new Date(a.date)-new Date(b.date));
+    }
+  },
+  watch:{
+    presetIVA(v){ if(v!=null) this.txDraft.IVA=v; },
+    rows:{deep:true, handler(){ localStorage.setItem('rows',JSON.stringify(this.rows)); this.refreshCharts(); }},
+    events:{deep:true, handler(){ localStorage.setItem('events',JSON.stringify(this.events)); this.checkBanner(); }},
+    settings:{deep:true, handler(){ localStorage.setItem('settings',JSON.stringify(this.settings)); }}
+  },
+  mounted(){
+    this.rows=JSON.parse(localStorage.getItem('rows')||'[]');
+    this.events=JSON.parse(localStorage.getItem('events')||'[]');
+    this.settings=Object.assign(this.settings,JSON.parse(localStorage.getItem('settings')||'{}'));
+    this.refreshCharts(); this.checkBanner();
+  },
+  methods:{
+    switchView(v){ this.view=v; setTimeout(this.refreshCharts,300); },
+    fmtEUR(v){ return (v||0).toLocaleString('it-IT',{style:'currency',currency:'EUR'}); },
+    calcIVA(r){ return +(r.Importo*(r.IVA||0)/100).toFixed(2); },
+    calcNetto(r){ return +(r.Importo - this.calcIVA(r)).toFixed(2); },
+    openTx(tipo){ this.txDraft={id:null,Tipo:tipo,Data:new Date().toISOString().slice(0,10),Importo:0,IVA:22,ImportoNetto:0,ImportoIVA:0}; this.presetIVA=null; this.$refs.dlgTx.showModal(); },
+    openEdit(r){ this.txDraft=JSON.parse(JSON.stringify(r)); this.$refs.dlgTx.showModal(); },
+    saveTx(){
+      if(!this.txDraft.Importo) return alert('Importo mancante');
+      const r={...this.txDraft};
+      r.ImportoIVA=this.calcIVA(r); r.ImportoNetto=this.calcNetto(r);
+      if(!r.id) r.id=Date.now(); else this.rows=this.rows.filter(x=>x.id!==r.id);
+      this.rows.push(r);
+      this.$refs.dlgTx.close();
+    },
+    removeRow(id){ if(confirm('Eliminare movimento?')) this.rows=this.rows.filter(r=>r.id!==id); },
 
-</div>
+    // === EVENTI ===
+    openEvent(e=null){ this.eventDraft=e?JSON.parse(JSON.stringify(e)):{id:null,title:'',date:new Date().toISOString().slice(0,10),kind:'Altro',repeat:'',done:false,fileName:'',fileData:''}; this.$refs.dlgEvent.showModal(); },
+    saveEvent(){
+      const e={...this.eventDraft};
+      if(!e.id) e.id=Date.now(); else this.events=this.events.filter(x=>x.id!==e.id);
+      this.events.push(e); this.$refs.dlgEvent.close();
+    },
+    deleteEvent(id){ if(confirm('Eliminare scadenza?')) this.events=this.events.filter(e=>e.id!==id); },
+    attachFile(ev){
+      const file=ev.target.files[0]; if(!file) return;
+      const reader=new FileReader();
+      reader.onload=()=>{ this.eventDraft.fileData=reader.result; this.eventDraft.fileName=file.name; };
+      reader.readAsDataURL(file);
+    },
+    repeatLabel(v){ return v==='month'?'Mensile':v==='quarter'?'Trimestrale':v==='year'?'Annuale':''; },
+    deadlineClass(e){ const dd=this.daysDiff(e.date); if(dd<0)return'border-rose-400 text-rose-300'; if(dd<=7)return'border-amber-400 text-amber-300'; return'border-green-400 text-green-300'; },
+    deadlineLabel(e){ const dd=this.daysDiff(e.date); return dd<0?`Scaduto ${Math.abs(dd)}g fa`:dd===0?'Oggi':`Tra ${dd}g`; },
+    daysDiff(d){ return Math.floor((new Date(d)-new Date())/86400000); },
+
+    // === BANNER ===
+    checkBanner(){
+      const today=[],soon=[],over=[];
+      const now=new Date();
+      this.events.forEach(e=>{
+        const dd=this.daysDiff(e.date);
+        if(!e.done){
+          if(dd===0) today.push({...e,dday:dd});
+          else if(dd>0&&dd<=7) soon.push({...e,dday:dd});
+          else if(dd<0) over.push({...e,dday:dd});
+        }
+      });
+      this.banner={items:[...today,...soon,...over],today,soon,over};
+    },
+    dismissBannerToday(){ this.banner={items:[],today:[],soon:[],over:[]}; },
+
+    // === EXPORT / IMPORT ===
+    exportCSV(){
+      const header=Object.keys(this.rows[0]||{}).join(';');
+      const rows=this.rows.map(r=>Object.values(r).join(';')).join('\n');
+      const blob=new Blob([header+'\n'+rows],{type:'text/csv;charset=utf-8;'});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a'); a.href=url; a.download='contabilita.csv'; a.click();
+    },
+    importCSV(ev){
+      const file=ev.target.files[0]; if(!file)return;
+      const reader=new FileReader();
+      reader.onload=()=>{
+        const lines=reader.result.split('\n').filter(l=>l.trim());
+        const keys=lines[0].split(';');
+        this.rows=lines.slice(1).map(l=>{
+          const vals=l.split(';');
+          const o={}; keys.forEach((k,i)=>o[k]=vals[i]); return o;
+        });
+      };
+      reader.readAsText(file);
+    },
+    exportPDF(){
+      const el=document.querySelector('main');
+      html2canvas(el).then(canvas=>{
+        const pdf=new jspdf.jsPDF('p','mm','a4');
+        const img=canvas.toDataURL('image/png');
+        const w=210; const h=canvas.height*210/canvas.width;
+        pdf.addImage(img,'PNG',0,0,w,h); pdf.save('report.pdf');
+      });
+    },
+    clearAll(){ if(confirm('Cancellare tutti i dati?')){ this.rows=[]; this.events=[]; localStorage.clear(); } },
+
+    // === GRAFICI ===
+    refreshCharts(){
+      setTimeout(()=>{
+        if(!this.rows.length)return;
+        // Home chart
+        const ctx1=document.getElementById('chartHome');
+        if(ctx1){
+          const e=this.filteredRows.filter(r=>r.Tipo==='entrata').reduce((a,b)=>a+this.calcNetto(b),0);
+          const s=this.filteredRows.filter(r=>r.Tipo==='spesa').reduce((a,b)=>a+this.calcNetto(b),0);
+          this.makeBarChart(ctx1,['Entrate','Uscite'],[e,s]);
+        }
+        // Pie categorie
+        const ctx2=document.getElementById('chartPie');
+        if(ctx2){
+          const cats={};
+          this.filteredRows.forEach(r=>{
+            const k=r.Categoria||'Altro';
+            cats[k]=(cats[k]||0)+this.calcNetto(r)*(r.Tipo==='entrata'?1:-1);
+          });
+          this.makePieChart(ctx2,Object.keys(cats),Object.values(cats));
+        }
+        // Year trend
+        const ctx3=document.getElementById('chartYear');
+        if(ctx3){
+          const arr=Array(12).fill(0);
+          this.rows.forEach(r=>{
+            const d=new Date(r.Data);
+            if(d.getFullYear()===this.filters.year){
+              arr[d.getMonth()]+=this.calcNetto(r)*(r.Tipo==='entrata'?1:-1);
+            }
+          });
+          this.makeLineChart(ctx3,this.months,arr);
+        }
+      },200);
+    },
+    makeBarChart(ctx,labels,data){
+      if(this.charts[ctx.id]) this.charts[ctx.id].destroy();
+      this.charts[ctx.id]=new Chart(ctx,{type:'bar',data:{labels,datasets:[{data,backgroundColor:['#10b981','#ef4444']}]},options:{plugins:{legend:{display:false}}}});
+    },
+    makePieChart(ctx,labels,data){
+      if(this.charts[ctx.id]) this.charts[ctx.id].destroy();
+      this.charts[ctx.id]=new Chart(ctx,{type:'doughnut',data:{labels,datasets:[{data,backgroundColor:['#6c7bff','#35d9a3','#fbbf24','#ef4444','#14b8a6','#818cf8']}]},options:{plugins:{legend:{labels:{color:'#e5e7eb'}}}}});
+    },
+    makeLineChart(ctx,labels,data){
+      if(this.charts[ctx.id]) this.charts[ctx.id].destroy();
+      this.charts[ctx.id]=new Chart(ctx,{type:'line',data:{labels,datasets:[{data,fill:true,borderColor:'#6c7bff',backgroundColor:'rgba(108,123,255,0.25)'}]},options:{plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#aaa'}},y:{ticks:{color:'#aaa'}}}}});
+    }
+  }
+}).mount('#app')
+</script>
 </body>
 </html>
