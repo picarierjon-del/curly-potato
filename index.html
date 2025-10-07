@@ -185,7 +185,7 @@
         currencySymbol: '€',
         monthlySavingsTarget: 0,
         categoryBudgets: {},
-        fiscalParams: DEFAULT_FISCAL_PARAMS // NUOVO: Parametri fiscali utente
+        fiscalParams: DEFAULT_FISCAL_PARAMS
     };
     let currentPage = 'activity';
     let reportFilters = { 
@@ -194,6 +194,10 @@
         filterDateStr: String(new Date().getFullYear()),
         categoryFilter: 'all',
         tagFilter: 'all'
+    };
+    // NUOVO: Stato del simulatore per il "What-If Analysis"
+    let simulationState = {
+        additionalRevenue: 0 
     };
 
     // --- UTILITY ---
@@ -223,7 +227,7 @@
     }
 
 
-    // --- THEME (Dark Mode) ---
+    // --- THEME (Dark Mode) (omitted for brevity) ---
     function applySavedTheme() {
       const saved = localStorage.getItem('theme') || 'light';
       document.body.classList.toggle('dark', saved === 'dark');
@@ -523,19 +527,47 @@
       };
     }
     
-    // NUOVO: Calcolo Simulazione Fiscale (per l'anno in corso)
-    function calculateFiscalSimulation(currentYear) {
-        const yearSummary = calculateFinancialSummary('activity', 'year', String(currentYear));
-        const params = appData.fiscalParams; // Ottiene i parametri salvati
+    // NUOVO: Calcolo Proiezione Fiscale Annuale Dinamica (Baseline)
+    function calculateAnnualFiscalProjection() {
+        const today = new Date();
+        const currentYear = today.getFullYear();
+        const daysInYear = (currentYear % 4 === 0 && (currentYear % 100 !== 0 || currentYear % 400 === 0)) ? 366 : 365;
+        const daysPassed = Math.ceil((today - new Date(currentYear, 0, 1)) / (1000 * 60 * 60 * 24));
+        const monthsPassed = today.getMonth() + 1;
+        const monthsRemaining = 12 - monthsPassed;
 
-        // 1. Calcolo Ricavi (Lordo totale Entrate) e Costi (Lordo totale Uscite)
-        const totalRicavi = yearSummary.totalIncomes;
-        const totalCosti = appData.expenses
-            .filter(e => new Date(e.date).getFullYear() === currentYear && e.type === 'activity')
-            .reduce((sum, e) => sum + (e.gross || 0), 0);
+        const yearSummary = calculateFinancialSummary('activity', 'year', String(currentYear));
+        const historicalMonths = Object.keys(yearSummary.transactions.reduce((acc, t) => {
+            acc[t.date.slice(0, 7)] = true;
+            return acc;
+        }, {})).length || 1; // Evita divisione per zero
+
+        const avgMonthlyRevenue = yearSummary.totalIncomes / historicalMonths;
+        const avgMonthlyExpenses = appData.expenses
+            .filter(e => e.type === 'activity' && new Date(e.date).getFullYear() === currentYear)
+            .reduce((sum, e) => sum + (e.gross || 0), 0) / historicalMonths;
+
+        // Proiezione Ricavi e Costi a Fine Anno
+        const projectedRevenue = yearSummary.totalIncomes + (avgMonthlyRevenue * monthsRemaining);
+        const projectedExpenses = yearSummary.totalExpenses + (avgMonthlyExpenses * monthsRemaining);
+
+        return { projectedRevenue, projectedExpenses };
+    }
+
+    // AGGIORNATO: Calcolo Simulazione Fiscale (con input What-If)
+    function calculateFiscalSimulation(currentYear, whatIfRevenue = 0) {
+        const yearSummary = calculateFinancialSummary('activity', 'year', String(currentYear));
+        const projection = calculateAnnualFiscalProjection();
+        const params = appData.fiscalParams;
+        
+        // 1. Calcolo Ricavi (Lordo totale Entrate) per la simulazione
+        // Ricavi Inseriti + Ricavi Proiettati (se whatIf=0) + Ricavi What-If
+        const totalRicaviBase = projection.projectedRevenue;
+        
+        let totalRicaviSimulated = totalRicaviBase + whatIfRevenue;
         
         // 2. Base imponibile Forfettaria (Ricavi * Coeff. Redditività)
-        const baseImponibileFiscale = totalRicavi * params.profitRate;
+        const baseImponibileFiscale = totalRicaviSimulated * params.profitRate;
         
         // 3. Calcolo Imposta (Tassa fissa forfettaria)
         const impostaSostitutiva = baseImponibileFiscale * params.taxRate;
@@ -543,19 +575,25 @@
         // 4. Calcolo Contributi INPS (Contributi INPS sul reddito lordo)
         const contributiINPS = baseImponibileFiscale * params.inpsRate;
 
-        // 5. Saldo Netto Rimanente dopo Tasse/Contributi
-        // Usiamo il Saldo Netto (Entrate Lorde - Uscite Lorde) come base di liquidità
-        const nettaRimanente = yearSummary.netBalance - impostaSostitutiva - contributiINPS;
+        // 5. Saldo Netto Proiettato (per calcolo Liquidità)
+        const projectedNetBalance = projection.projectedRevenue - projection.projectedExpenses;
+        
+        // Liquidità Rimanente dopo Tasse/Contributi
+        const nettaRimanente = projectedNetBalance + whatIfRevenue - impostaSostitutiva - contributiINPS;
+
+        const note = whatIfRevenue > 0 ? 
+            `Simulazione con ${whatIfRevenue.toFixed(2)}${getCurrencySymbol()} di Ricavo Aggiuntivo. Par. Fiscali: Coeff. ${(params.profitRate * 100).toFixed(0)}%, Tasse ${(params.taxRate * 100).toFixed(1)}%, INPS ${(params.inpsRate * 100).toFixed(1)}%` : 
+            `Proiezione annuale basata su media storica. Par. Fiscali: Coeff. ${(params.profitRate * 100).toFixed(0)}%, Tasse ${(params.taxRate * 100).toFixed(1)}%, INPS ${(params.inpsRate * 100).toFixed(1)}%`;
 
         return {
-            totalRicavi: +totalRicavi.toFixed(2),
-            totalCosti: +totalCosti.toFixed(2),
+            totalRicavi: +totalRicaviSimulated.toFixed(2),
             baseImponibile: +baseImponibileFiscale.toFixed(2),
             impostaSostitutiva: +impostaSostitutiva.toFixed(2),
             contributiINPS: +contributiINPS.toFixed(2),
             totaleTasse: +(impostaSostitutiva + contributiINPS).toFixed(2),
             nettaRimanente: +nettaRimanente.toFixed(2),
-            note: `Stima basata su Coeff. ${(params.profitRate * 100).toFixed(0)}% e Tasse ${(params.taxRate * 100).toFixed(1)}% + INPS ${(params.inpsRate * 100).toFixed(1)}%`
+            note: note,
+            projectionIsActive: whatIfRevenue > 0
         };
     }
 
@@ -588,7 +626,6 @@
         const ivaBalance = ivaAddebito - ivaCredito;
         return { ivaAddebito, ivaCredito, ivaBalance: +ivaBalance.toFixed(2) };
     }
-
 
     // --- Contacts / Categories helpers (omitted for brevity) ---
     function addContact(name, scope, relation){
@@ -1180,13 +1217,27 @@
       const todayBalanceColor = todayData.summary.netBalance >= 0 ? 'text-emerald-500' : 'text-red-500';
       const todaySummaryMessage = todayData.summary.netBalance.toFixed(2) + ' ' + symbol;
       
+      // Valore del simulatore What-If
+      const whatIfValue = simulationState.additionalRevenue;
+
       // Calcolo Simulazione Fiscale per l'anno in corso
-      const fiscalSim = isActivity ? calculateFiscalSimulation(year) : null;
+      const fiscalSim = isActivity ? calculateFiscalSimulation(year, whatIfValue) : null;
       const fiscalSection = isActivity && fiscalSim ? `
-        <div class="bg-white dark:bg-gray-800 p-4 rounded-xl card border-l-4 border-red-500 space-y-2">
-            <h3 class="text-xl font-bold mb-2 text-red-600">Simulazione Tasse Annuali (${year})</h3>
+        <div class="bg-white dark:bg-gray-800 p-4 rounded-xl card border-l-4 ${fiscalSim.projectionIsActive ? 'border-indigo-500' : 'border-red-500'} space-y-2">
+            <h3 class="text-xl font-bold mb-2 ${fiscalSim.projectionIsActive ? 'text-indigo-600' : 'text-red-600'}">
+                Simulazione Fiscale (Proiezione ${year}) ${fiscalSim.projectionIsActive ? '✨ WHAT-IF' : ''}
+            </h3>
+            
+            <div class="flex items-center space-x-3 pb-2 border-b dark:border-gray-700">
+                <label for="additional-revenue" class="text-sm text-gray-500 whitespace-nowrap">Ricavo Aggiuntivo (Simula):</label>
+                <input type="number" id="additional-revenue" value="${whatIfValue.toFixed(2)}" step="100" min="0" 
+                       oninput="simulationState.additionalRevenue = parseFloat(this.value) || 0; renderPage('activity');" 
+                       class="w-full p-2 border rounded-lg text-right dark:bg-gray-900 dark:border-gray-700 font-bold text-blue-500" inputmode="decimal">
+                <span class="font-bold">${symbol}</span>
+            </div>
+
             <div class="flex justify-between text-sm">
-                <span>Ricavo Totale (Lordo Entrate):</span>
+                <span>Ricavo Totale Proiettato:</span>
                 <span class="font-bold text-emerald-600">${fiscalSim.totalRicavi.toFixed(2)} ${symbol}</span>
             </div>
             <div class="flex justify-between text-sm">
@@ -1205,7 +1256,7 @@
                 <span>TOTALE TASSE STIMATE DA ACCANTONARE:</span>
                 <span class="text-red-600">${fiscalSim.totaleTasse.toFixed(2)} ${symbol}</span>
             </div>
-            <p class="text-xs text-gray-500 mt-2">${fiscalSim.note}. <span class="font-bold text-blue-500">Saldo Netto Anno - Tasse: ${fiscalSim.nettaRimanente.toFixed(2)} ${symbol}</span></p>
+            <p class="text-xs text-gray-500 mt-2">${fiscalSim.note}. <span class="font-bold text-blue-500">Liquidità Rimanente Proiettata: ${fiscalSim.nettaRimanente.toFixed(2)} ${symbol}</span></p>
         </div>
       ` : '';
 
@@ -1344,7 +1395,7 @@
       `;
     }
 
-    // --- Report page (KPI + Trend + Ricerca + IVA/Cash bars + Dettaglio) (omesso per brevità) ---
+    // --- Report page (KPI + Trend + Ricerca + IVA/Cash bars + Dettaglio) (omitted for brevity) ---
     function filterTransactions(query, transactions){
       const q=(query||'').toLowerCase();
       if (!q) return transactions;
@@ -1978,8 +2029,8 @@
         const taxRate = parseFloat(taxRateInput.value) / 100 || 0;
         const inpsRate = parseFloat(inpsRateInput.value) / 100 || 0;
 
-        if (profitRate <= 0 || taxRate <= 0) {
-            showToast('Tutti i tassi devono essere maggiori di 0.', 'red');
+        if (profitRate <= 0 || taxRate < 0 || inpsRate < 0) {
+            showToast('I tassi non possono essere negativi. Il Coeff. Redditività deve essere positivo.', 'red');
             return;
         }
 
@@ -2021,7 +2072,7 @@
                 </div>
                 <div>
                     <label for="fiscal-tax-rate" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Aliquota Fiscale (%)</label>
-                    <input type="number" id="fiscal-tax-rate" step="0.1" min="1" max="50" value="${(currentFiscal.taxRate * 100).toFixed(1)}" 
+                    <input type="number" id="fiscal-tax-rate" step="0.1" min="0" max="50" value="${(currentFiscal.taxRate * 100).toFixed(1)}" 
                            class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700 text-right"/>
                 </div>
                 <div>
@@ -2295,7 +2346,7 @@
     async function installServiceWorker(){
       if (!('serviceWorker' in navigator)) return;
       const swCode = `
-        const CACHE = 'finanza-smart-v3-pro'; // Cache version updated
+        const CACHE = 'finanza-smart-v4-pro'; // Cache version updated
         self.addEventListener('install', e=>{
           e.waitUntil(caches.open(CACHE).then(c=>c.addAll(['./'])));
           self.skipWaiting();
@@ -2333,6 +2384,12 @@
 
       document.getElementById('app')?.addEventListener('input', (e)=>{
         if (e.target && (e.target.id==='net-amount' || e.target.id==='vat-rate') && (currentPage==='activity'||currentPage==='personal')) calculateGross();
+        
+        // NUOVO: Aggiorna la simulazione What-If in tempo reale se il campo è attivo
+        if (e.target && e.target.id === 'additional-revenue' && currentPage === 'activity') {
+            simulationState.additionalRevenue = parseFloat(e.target.value) || 0;
+            renderPage('activity');
+        }
       });
       document.getElementById('app')?.addEventListener('change', (e)=>{
         if (e.target && e.target.id==='vat-rate' && (currentPage==='activity'||currentPage==='personal')) calculateGross();
