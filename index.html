@@ -13,7 +13,7 @@
     body { font-family:'Inter',sans-serif; background-color:#f7f9fc; color:#1e293b; }
     .card { box-shadow:0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -2px rgba(0,0,0,.06); }
     .tab-active { border-bottom:3px solid #10b981; color:#10b981; }
-    .cta-button { transition:all .2s; box-shadow:0 2px 4px rgba(16,185,129,.4); }
+    .cta-button { transition:all .2s; box-shadow:0 4px 6px -1px rgba(16,185,129,.4), 0 2px 4px -2px rgba(16,185,129,.06); }
     .bar-container { height:20px; border-radius:9999px; overflow:hidden; display:flex; }
     .bar-income{background-color:#10b981}.bar-expense{background-color:#ef4444}
     .bar-addebito{background-color:#fb923c}.bar-credito{background-color:#3b82f6}
@@ -137,10 +137,12 @@
     const DEFAULT_CATEGORIES = ['Affitto','Bollette','Spesa','Marketing','Servizi','Stipendi','Carburante','Ristoranti','Abbonamenti','Altro'];
     const FISCAL_REMINDER_TYPES = ['IVA Trimestrale','IVA Saldo/Acconto','IMU','TARI','Tasse/Acconto','Assicurazione','Bollo Auto','Altri Costi Personali','Altri Costi Attività'];
     
-    // Parametri fiscali (Esempio Forfettario 78%)
-    const FISCAL_PROFIT_RATE = 0.78; // Coefficiente di redditività (es. 78% per alcuni servizi)
-    const FISCAL_TAX_RATE = 0.15; // Tassa fissa (IRPEF/Imposta Sostitutiva)
-    const INPS_RATE = 0.26; // Contributi INPS (circa)
+    // Parametri fiscali di DEFAULT (Ristorazione/Commercio Forfettario 40%)
+    const DEFAULT_FISCAL_PARAMS = {
+        profitRate: 0.40, // Coefficiente di redditività (es. 40% per ristorazione/commercio)
+        taxRate: 0.15,    // Tassa fissa (IRPEF/Imposta Sostitutiva)
+        inpsRate: 0.26    // Contributi INPS (circa)
+    };
 
     // Mappa Icone per Categorie (Usabilità)
     const CATEGORY_ICONS = {
@@ -182,7 +184,8 @@
         pin: '1234',
         currencySymbol: '€',
         monthlySavingsTarget: 0,
-        categoryBudgets: {} 
+        categoryBudgets: {},
+        fiscalParams: DEFAULT_FISCAL_PARAMS // NUOVO: Parametri fiscali utente
     };
     let currentPage = 'activity';
     let reportFilters = { 
@@ -247,20 +250,21 @@
           appData.birthdays ||= [];
           appData.recurringExpenses ||= []; 
           
-          // Ensure categories/lastId/pin/currency/target/budgets exist
+          // Ensure categories/lastId/pin/currency/target/budgets/fiscalParams exist
           appData.categories ||= DEFAULT_CATEGORIES.slice();
           appData.lastId ||= 0;
           appData.pin ||= '1234';
           appData.currencySymbol ||= '€';
           appData.monthlySavingsTarget ||= 0;
           appData.categoryBudgets ||= {}; 
+          appData.fiscalParams = { ...DEFAULT_FISCAL_PARAMS, ...appData.fiscalParams }; // Usa defaults se non salvati
         }
       } catch(e){ console.error(e); showToast('Errore nel caricamento dati','red'); }
     }
     function saveData(){ try{ localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(appData)); }catch(e){ console.error(e); showToast('Errore salvataggio','red'); } }
     function getNextId(){ appData.lastId++; saveData(); return appData.lastId; }
 
-    // --- PIN LOCK LOGIC ---
+    // --- PIN LOCK LOGIC (omitted for brevity) ---
     function setupPinLock() {
       const pinDigits = document.querySelectorAll('.pin-digit');
       const pinModal = document.getElementById('pin-lock-modal');
@@ -395,13 +399,13 @@
       
       if (filterType==='week'){ 
         const d = new Date(filterValue); 
-        let dayOfWeek = d.getDay(); // 0=Dom, 1=Lun, ..., 6=Sab
+        let dayOfWeek = d.getDay(); 
         const diff = d.getDate() - ((dayOfWeek + 6) % 7);
         const start = new Date(d);
-        start.setDate(diff); // Imposta al Lunedì
+        start.setDate(diff); 
         start.setHours(0,0,0,0); 
         const end = new Date(start); 
-        end.setDate(start.getDate()+6); // Imposta alla Domenica
+        end.setDate(start.getDate()+6); 
         end.setHours(23,59,59,999); 
         return itemDate>=start && itemDate<=end; 
       }
@@ -522,27 +526,25 @@
     // NUOVO: Calcolo Simulazione Fiscale (per l'anno in corso)
     function calculateFiscalSimulation(currentYear) {
         const yearSummary = calculateFinancialSummary('activity', 'year', String(currentYear));
+        const params = appData.fiscalParams; // Ottiene i parametri salvati
 
         // 1. Calcolo Ricavi (Lordo totale Entrate) e Costi (Lordo totale Uscite)
         const totalRicavi = yearSummary.totalIncomes;
-        // Solo i costi relativi all'attività (le spese personali non sono deducibili in regime forfettario)
         const totalCosti = appData.expenses
             .filter(e => new Date(e.date).getFullYear() === currentYear && e.type === 'activity')
             .reduce((sum, e) => sum + (e.gross || 0), 0);
         
         // 2. Base imponibile Forfettaria (Ricavi * Coeff. Redditività)
-        const redditoLordo = totalRicavi - totalCosti; // Qui si usa il netto ricavi (se non forfettario puro)
+        const baseImponibileFiscale = totalRicavi * params.profitRate;
         
-        // In un regime forfettario semplificato, si calcola sul ricavo
-        const baseImponibileFiscale = totalRicavi * FISCAL_PROFIT_RATE;
-        
-        // 3. Calcolo Imposta (15% forfettario)
-        const impostaSostitutiva = baseImponibileFiscale * FISCAL_TAX_RATE;
+        // 3. Calcolo Imposta (Tassa fissa forfettaria)
+        const impostaSostitutiva = baseImponibileFiscale * params.taxRate;
 
-        // 4. Calcolo Contributi INPS (26% sul reddito lordo)
-        const contributiINPS = baseImponibileFiscale * INPS_RATE;
+        // 4. Calcolo Contributi INPS (Contributi INPS sul reddito lordo)
+        const contributiINPS = baseImponibileFiscale * params.inpsRate;
 
         // 5. Saldo Netto Rimanente dopo Tasse/Contributi
+        // Usiamo il Saldo Netto (Entrate Lorde - Uscite Lorde) come base di liquidità
         const nettaRimanente = yearSummary.netBalance - impostaSostitutiva - contributiINPS;
 
         return {
@@ -553,7 +555,7 @@
             contributiINPS: +contributiINPS.toFixed(2),
             totaleTasse: +(impostaSostitutiva + contributiINPS).toFixed(2),
             nettaRimanente: +nettaRimanente.toFixed(2),
-            note: `Stima basata su Coeff. ${FISCAL_PROFIT_RATE*100}% e Tasse ${FISCAL_TAX_RATE*100}% + INPS ${INPS_RATE*100}%`
+            note: `Stima basata su Coeff. ${(params.profitRate * 100).toFixed(0)}% e Tasse ${(params.taxRate * 100).toFixed(1)}% + INPS ${(params.inpsRate * 100).toFixed(1)}%`
         };
     }
 
@@ -932,6 +934,8 @@
               appData.birthdays ||= []; 
               appData.recurringExpenses ||= []; 
               appData.categoryBudgets ||= {}; 
+              appData.fiscalParams = { ...DEFAULT_FISCAL_PARAMS, ...appData.fiscalParams }; 
+
               appData.birthdays = appData.birthdays.map(bd => ({
                   ...bd,
                   recurringDate: (bd.date || bd.recurringDate).slice(5) 
@@ -1182,19 +1186,19 @@
         <div class="bg-white dark:bg-gray-800 p-4 rounded-xl card border-l-4 border-red-500 space-y-2">
             <h3 class="text-xl font-bold mb-2 text-red-600">Simulazione Tasse Annuali (${year})</h3>
             <div class="flex justify-between text-sm">
-                <span>Ricavo Lordo:</span>
+                <span>Ricavo Totale (Lordo Entrate):</span>
                 <span class="font-bold text-emerald-600">${fiscalSim.totalRicavi.toFixed(2)} ${symbol}</span>
             </div>
             <div class="flex justify-between text-sm">
-                <span>Base Imponibile (${FISCAL_PROFIT_RATE*100}%):</span>
+                <span>Base Imponibile (${(appData.fiscalParams.profitRate * 100).toFixed(0)}%):</span>
                 <span class="font-bold">${fiscalSim.baseImponibile.toFixed(2)} ${symbol}</span>
             </div>
             <div class="flex justify-between text-sm border-t pt-2">
-                <span class="text-red-700 dark:text-red-400">Imp. Sostitutiva (${FISCAL_TAX_RATE*100}%):</span>
+                <span class="text-red-700 dark:text-red-400">Imp. Sostitutiva (${(appData.fiscalParams.taxRate * 100).toFixed(1)}%):</span>
                 <span class="font-bold text-red-600">${fiscalSim.impostaSostitutiva.toFixed(2)} ${symbol}</span>
             </div>
             <div class="flex justify-between text-sm">
-                <span class="text-red-700 dark:text-red-400">Contributi INPS (${INPS_RATE*100}%):</span>
+                <span class="text-red-700 dark:text-red-400">Contributi INPS (${(appData.fiscalParams.inpsRate * 100).toFixed(1)}%):</span>
                 <span class="font-bold text-red-600">${fiscalSim.contributiINPS.toFixed(2)} ${symbol}</span>
             </div>
             <div class="flex justify-between text-base font-extrabold border-t border-red-300 pt-2">
@@ -1340,7 +1344,7 @@
       `;
     }
 
-    // --- Report page (KPI + Trend + Ricerca + IVA/Cash bars + Dettaglio) ---
+    // --- Report page (KPI + Trend + Ricerca + IVA/Cash bars + Dettaglio) (omesso per brevità) ---
     function filterTransactions(query, transactions){
       const q=(query||'').toLowerCase();
       if (!q) return transactions;
@@ -1356,7 +1360,6 @@
       const all = [...appData.invoices.map(t=>({...t,isIncome:true})), ...appData.expenses.map(t=>({...t,isIncome:false}))];
       if (all.length===0) return {savingRate:0, avgExpense:0, avgIncome:0, topClients:[], topSuppliers:[], topCategories:[]};
 
-      // group by month
       const byMonth = {};
       all.forEach(t=>{
         const ym=t.date?.slice(0,7)||'';
@@ -1372,7 +1375,6 @@
       const net = sumInc - sumExp;
       const savingRate = sumInc > 0 ? (net/sumInc*100) : (net > 0 ? 100 : (net < 0 ? -100 : 0)); 
 
-      // top clients/suppliers by gross
       const sumByDesc = {};
       all.forEach(t=>{
         const key=(t.description||'?').trim();
@@ -1383,7 +1385,6 @@
       const topClients = Object.entries(sumByDesc).filter(([k,v])=>v.inc>0).sort((a,b)=>b[1].inc - a[1].inc).slice(0,3).map(([name,v])=>({name, amount:v.inc}));
       const topSuppliers = Object.entries(sumByDesc).filter(([k,v])=>v.exp>0).sort((a,b)=>b[1].exp - a[1].exp).slice(0,3).map(([name,v])=>({name, amount:v.exp}));
 
-      // top categories (expenses)
       const byCat = {};
       all.forEach(t=>{
         const cat=(t.category||'Altro').trim();
@@ -1966,6 +1967,34 @@
             showToast('Inserisci un importo valido non negativo.', 'red');
         }
     }
+    
+    // NUOVO: Funzione per salvare i parametri fiscali
+    function saveFiscalParams() {
+        const profitRateInput = document.getElementById('fiscal-profit-rate');
+        const taxRateInput = document.getElementById('fiscal-tax-rate');
+        const inpsRateInput = document.getElementById('fiscal-inps-rate');
+
+        const profitRate = parseFloat(profitRateInput.value) / 100 || 0;
+        const taxRate = parseFloat(taxRateInput.value) / 100 || 0;
+        const inpsRate = parseFloat(inpsRateInput.value) / 100 || 0;
+
+        if (profitRate <= 0 || taxRate <= 0) {
+            showToast('Tutti i tassi devono essere maggiori di 0.', 'red');
+            return;
+        }
+
+        showModal('Conferma Parametri Fiscali', 
+            `Salvare i parametri: Redditività ${(profitRate * 100).toFixed(0)}%, Tasse ${(taxRate * 100).toFixed(1)}%, INPS ${(inpsRate * 100).toFixed(1)}%?`, 
+            true, 
+            () => {
+                appData.fiscalParams = { profitRate, taxRate, inpsRate };
+                saveData();
+                showToast('Parametri fiscali aggiornati!');
+                renderPage('settings');
+            }
+        );
+    }
+
 
     function renderSettingsPage(){
       const currentYear=new Date().getFullYear();
@@ -1973,11 +2002,37 @@
       const allContacts = appData.contacts.slice().sort((a,b)=>a.name.localeCompare(b.name));
       const cats = (appData.categories||DEFAULT_CATEGORIES).slice().sort((a,b)=>a.localeCompare(b));
       const symbol = getCurrencySymbol();
+      const currentFiscal = appData.fiscalParams;
+
 
       return `
         <div class="space-y-6">
           <h2 class="text-2xl font-semibold border-b pb-2 text-gray-700 dark:text-gray-300">Gestione e Manutenzione Dati</h2>
           
+          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card space-y-4">
+            <h3 class="text-xl font-medium text-orange-600">Parametri Fiscali (Simulazione)</h3>
+            <p class="text-sm text-gray-700 dark:text-gray-300">Questi parametri influenzano il calcolo delle Tasse in Attività. I valori sono in percentuali (%).</p>
+
+            <div class="grid grid-cols-3 gap-4">
+                <div>
+                    <label for="fiscal-profit-rate" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Coeff. Redditività (%)</label>
+                    <input type="number" id="fiscal-profit-rate" step="1" min="1" max="100" value="${(currentFiscal.profitRate * 100).toFixed(0)}" 
+                           class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700 text-right"/>
+                </div>
+                <div>
+                    <label for="fiscal-tax-rate" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Aliquota Fiscale (%)</label>
+                    <input type="number" id="fiscal-tax-rate" step="0.1" min="1" max="50" value="${(currentFiscal.taxRate * 100).toFixed(1)}" 
+                           class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700 text-right"/>
+                </div>
+                <div>
+                    <label for="fiscal-inps-rate" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Aliquota INPS (%)</label>
+                    <input type="number" id="fiscal-inps-rate" step="0.1" min="0" max="50" value="${(currentFiscal.inpsRate * 100).toFixed(1)}" 
+                           class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700 text-right"/>
+                </div>
+            </div>
+            <button onclick="saveFiscalParams()" class="cta-button w-full bg-orange-500 text-white p-3 rounded-lg font-bold hover:bg-orange-600">Salva Parametri Fiscali</button>
+          </div>
+
           <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card space-y-4">
             <h3 class="text-xl font-medium text-purple-600">Pianificazione (Obiettivi/Budgeting)</h3>
             
@@ -2240,7 +2295,7 @@
     async function installServiceWorker(){
       if (!('serviceWorker' in navigator)) return;
       const swCode = `
-        const CACHE = 'finanza-smart-v2-pro'; 
+        const CACHE = 'finanza-smart-v3-pro'; // Cache version updated
         self.addEventListener('install', e=>{
           e.waitUntil(caches.open(CACHE).then(c=>c.addAll(['./'])));
           self.skipWaiting();
@@ -2287,7 +2342,6 @@
       appContainer?.addEventListener('change', (e) => {
           if (currentPage === 'report') {
               if (e.target.id === 'report-type') {
-                  // Aggiorna e renderizza
                   reportFilters.type = e.target.value;
                   renderPage('report');
               }
@@ -2305,7 +2359,6 @@
           if (currentPage === 'report') {
               if (e.target.id === 'filter-date') {
                   reportFilters.filterDateStr = e.target.value;
-                  // Non renderizzare immediatamente, onchange in HTML gestisce l'input tipo date/month
                   if (e.target.type === 'number') renderPage('report');
               }
               
