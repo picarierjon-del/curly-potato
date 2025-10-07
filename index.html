@@ -1,870 +1,2321 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Contabilità PRO++++ 🇮🇹</title>
-
-<!-- Librerie UI (no logica ancora) -->
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-
-<style>
-:root{
-  --bg:#0b0f17; --panel:#141927; --panel-2:#0f1422; --border:#23283a;
-  --text:#e9edf7; --muted:#a0a8b6; --accent:#6c7bff; --ok:#22c55e; --warn:#f59e0b; --danger:#ef4444;
-}
-*{box-sizing:border-box}
-html,body{height:100%}
-body{margin:0;background:linear-gradient(180deg,#0b0f17 0%,#0d1322 60%,#0b0f17 100%); color:var(--text);
-  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,Segoe UI,Roboto,Arial,sans-serif;}
-.app{max-width:520px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
-.header{position:sticky;top:0;z-index:30;padding:14px 16px 10px;background:rgba(11,15,23,.65);backdrop-filter:blur(10px);border-bottom:1px solid #101629}
-.h-title{font-weight:900;letter-spacing:.2px}
-.led{width:10px;height:10px;border-radius:999px;box-shadow:0 0 8px currentColor}
-.panel{background:var(--panel);border:1px solid var(--border);border-radius:16px}
-.panel-2{background:var(--panel-2);border:1px solid var(--border);border-radius:16px}
-.chip{padding:6px 10px;border-radius:999px;border:1px solid var(--border);background:#0c1220;color:#cfd7eb;font-size:12px}
-.btn{background:var(--accent);color:#fff;padding:10px 14px;border-radius:12px;font-weight:800}
-.btn-ghost{background:transparent;border:1px solid var(--border);color:#cfd7eb;padding:10px 14px;border-radius:12px;font-weight:700}
-.input,select,textarea{background:#0b1222;border:1px solid var(--border);color:var(--text);border-radius:12px;padding:10px 12px;width:100%}
-.input:focus,select:focus,textarea:focus{outline:1px solid var(--accent)}
-.title-sm{color:var(--muted);font-size:12px}
-.value-lg{font-size:26px;font-weight:900}
-.table th{color:#cbd4e6;font-weight:700;border-bottom:1px solid var(--border);padding:10px 8px;text-align:left}
-.table td{border-bottom:1px solid #1b2341;padding:10px 8px}
-.pill{padding:3px 8px;border-radius:999px;border:1px solid var(--border);font-size:11px;background:#0b1222}
-.ok{border-color:var(--ok);color:#bbf7d0;background:rgba(34,197,94,.15)}
-.warn{border-color:var(--warn);color:#fde68a;background:rgba(245,158,11,.15)}
-.danger{border-color:var(--danger);color:#fecaca;background:rgba(239,68,68,.15)}
-.nav{position:sticky;bottom:0;left:0;right:0;z-index:40;background:rgba(9,12,20,.85);backdrop-filter:blur(10px);border-top:1px solid #101629}
-.navbtn{flex:1;text-align:center;padding:8px 0;font-size:12px;color:#a3acc2}
-.navbtn span{display:block;font-size:12px}
-.navbtn.active{color:#bfc7ff;font-weight:800}
-.fabbar{position:fixed;left:50%;transform:translateX(-50%);bottom:74px;display:flex;gap:10px;z-index:45}
-.fab{padding:12px 14px;border-radius:999px;color:white;font-weight:900;box-shadow:0 10px 26px rgba(0,0,0,.35)}
-.fab.in{background:#10b981}.fab.out{background:#ef4444}
-dialog::backdrop{background:rgba(0,0,0,.6)}
-.modal{width:min(560px,92vw);background:#0d1321;border:1px solid var(--border);border-radius:18px;color:var(--text)}
-.modal-h{padding:14px 16px;border-bottom:1px solid var(--border);font-weight:900}
-.modal-b{padding:16px}
-.modal-f{padding:16px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px}
-@supports(padding:max(0px)){ .nav{padding-bottom:calc(env(safe-area-inset-bottom) + 6px)} }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Gestione Finanziaria Unificata Smart 5.0 PRO</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+    :root { color-scheme: light dark; }
+    body { font-family:'Inter',sans-serif; background-color:#f7f9fc; color:#1e293b; }
+    .card { box-shadow:0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -2px rgba(0,0,0,.06); }
+    .tab-active { border-bottom:3px solid #10b981; color:#10b981; }
+    .cta-button { transition:all .2s; box-shadow:0 2px 4px rgba(16,185,129,.4); }
+    .bar-container { height:20px; border-radius:9999px; overflow:hidden; display:flex; }
+    .bar-income{background-color:#10b981}.bar-expense{background-color:#ef4444}
+    .bar-addebito{background-color:#fb923c}.bar-credito{background-color:#3b82f6}
+    #quick-actions{position:fixed;bottom:0;left:0;right:0;background:linear-gradient(to top,#fff, #fff8);padding:10px;box-shadow:0 -2px 10px rgba(0,0,0,.1);z-index:40;}
+    /* Dark mode */
+    .dark body, body.dark { background-color:#0f172a; color:#f1f5f9; }
+    body.dark .card { background-color:#111827; color:#e5e7eb; }
+    body.dark .tab-active { color:#10b981; border-bottom-color:#10b981; }
+    body.dark input, body.dark select, body.dark textarea { background:#111827; color:#e5e7eb; border-color:#374151; }
+    body.dark .bg-white { background-color:#111827 !important; }
+    body.dark .text-gray-700 { color:#e5e7eb !important; }
+    body.dark .text-gray-800 { color:#f9fafb !important; }
+    body.dark .text-gray-500 { color:#9ca3af !important; }
+    
+    /* PIN Lock Specific Styles */
+    #pin-lock-modal {
+      position: fixed;
+      inset: 0;
+      background-color: #0f172a; /* Dark background to cover everything */
+      z-index: 100; /* Ensure it's on top */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      color: #f1f5f9;
+      text-align: center;
+    }
+    .pin-input {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .pin-input input {
+      width: 40px;
+      height: 40px;
+      text-align: center;
+      font-size: 1.5rem;
+      border: 2px solid #374151;
+      border-radius: 8px;
+      background-color: #111827;
+      color: #10b981;
+      caret-color: transparent; /* Hide cursor */
+    }
+  </style>
+  <link id="dynamic-manifest" rel="manifest">
 </head>
-<body>
-<div id="app" class="app">
+<body class="min-h-screen">
 
-  <!-- 🔔 Banner promemoria -->
-  <div v-if="banner.items.length" class="panel mx-4 mt-3 p-3 flex items-start gap-3">
-    <div class="text-xl">🔔</div>
-    <div class="flex-1">
-      <div class="font-semibold">Promemoria</div>
-      <div class="text-sm text-[#cdd6eb]">
-        <span v-if="banner.today.length">Oggi: {{ banner.today.map(e=>e.title).join(', ') }}.</span>
-        <span v-if="banner.soon.length"> In arrivo (7gg): {{ banner.soon.map(e=>`${e.title} (${e.dday}g)`).join(', ') }}.</span>
-        <span v-if="banner.overdue.length" class="text-rose-300"> Scaduti: {{ banner.overdue.map(e=>e.title).join(', ') }}!</span>
+  <div id="app" class="max-w-4xl mx-auto p-4 md:p-6">
+    <header class="mb-6 flex items-center justify-between">
+      <div class="flex-1 text-center">
+        <h1 class="text-3xl font-bold text-gray-800">Finanza Smart 5.0 PRO 🚀</h1>
+        <p class="text-center text-sm text-gray-500">Attività & Personale</p>
+      </div>
+      <button id="theme-toggle"
+        class="ml-4 px-3 py-2 rounded-lg border text-sm hover:bg-gray-100 dark:hover:bg-gray-800">
+        🌙 Dark
+      </button>
+    </header>
+
+    <nav id="navbar" class="flex justify-around bg-white p-2 rounded-xl shadow-lg card"></nav>
+
+    <div id="content-area" class="mt-4"></div>
+
+    <div id="quick-actions" class="hidden md:hidden">
+      <div class="flex space-x-3 max-w-lg mx-auto">
+        <button onclick="quickRegister('true')"
+          class="flex-1 bg-emerald-500 text-white p-3 rounded-xl font-bold hover:bg-emerald-600 shadow-xl transition transform hover:scale-[1.02] text-lg">
+          💰 Registra Entrata (I)
+        </button>
+        <button onclick="quickRegister('false')"
+          class="flex-1 bg-red-500 text-white p-3 rounded-xl font-bold hover:bg-red-600 shadow-xl transition transform hover:scale-[1.02] text-lg">
+          💸 Registra Uscita (E)
+        </button>
       </div>
     </div>
-    <button class="btn-ghost" @click="dismissBannerToday">OK</button>
-  </div>
 
-  <!-- 🧭 Header -->
-  <header class="header flex items-center justify-between">
-    <div class="min-w-0">
-      <div class="text-xs text-[#9aa4b2] truncate">{{ months[filters.month] }} {{ filters.year }}</div>
-      <h1 class="h-title text-xl truncate">Contabilità PRO++++</h1>
+    <div id="modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 z-50 flex justify-center items-center p-4">
+      <div class="bg-white p-6 rounded-xl w-full max-w-sm card">
+        <h3 id="modal-title" class="text-xl font-bold mb-3 text-red-600">Attenzione</h3>
+        <p id="modal-message" class="text-gray-700 mb-4">Messaggio di esempio.</p>
+        <div class="flex justify-end space-x-3">
+          <button id="modal-cancel-btn" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300">Annulla</button>
+          <button id="modal-confirm-btn" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 cta-button">Conferma</button>
+        </div>
+      </div>
     </div>
-    <div class="flex items-center gap-2">
-      <span class="text-xs text-[#9aa4b2]">Sicurezza</span>
-      <span class="led" :style="{ color: securityColor }" :title="securityTitle"></span>
+
+    <div id="toast" class="fixed bottom-5 left-1/2 transform -translate-x-1/2 p-3 bg-green-500 text-white rounded-xl shadow-lg transition-opacity duration-300 opacity-0" role="alert">
+      Azione completata con successo!
     </div>
-  </header>
-
-  <!-- 🔎 Ricerca -->
-  <div class="p-3">
-    <input class="input w-full" v-model="q" placeholder="Cerca movimenti, clienti, fornitori, note…">
   </div>
-
-  <!-- 📄 Pagine -->
-  <main class="flex-1 overflow-y-auto px-4 pb-28 space-y-4">
-
-    <!-- 🏠 Home -->
-    <section v-if="view==='home'">
-      <div class="title-sm mb-1">Categorie</div>
-      <div class="flex flex-wrap gap-2">
-        <button class="chip" :class="{'border-blue-400 text-blue-300': !filters.category}" @click="filters.category=null">Tutte</button>
-        <button v-for="c in categories" :key="c" class="chip" :class="{'border-blue-400 text-blue-300': filters.category===c}" @click="filters.category=(filters.category===c?null:c)">{{ c }}</button>
-      </div>
-
-      <div class="grid grid-cols-2 gap-3 mt-3">
-        <div class="panel p-4 text-center">
-          <div class="title-sm">Entrate (Netto)</div>
-          <div class="value-lg text-emerald-400">{{ fmtEUR(kpi.totEntrate) }}</div>
-        </div>
-        <div class="panel p-4 text-center">
-          <div class="title-sm">Uscite (Netto)</div>
-          <div class="value-lg text-rose-400">{{ fmtEUR(kpi.totSpese) }}</div>
-        </div>
-      </div>
-      <div class="panel p-4 text-center">
-        <div class="title-sm">Risparmi</div>
-        <div class="value-lg text-amber-300">{{ fmtEUR(kpi.risparmi) }}</div>
-      </div>
-
-      <div class="panel p-3">
-        <div class="title-sm mb-1">Entrate vs Uscite (Netto)</div>
-        <canvas id="chartHome" height="160"></canvas>
-      </div>
-      <div class="panel p-3">
-        <div class="title-sm mb-1">Ripartizione per categoria (Netto)</div>
-        <canvas id="chartPie" height="180"></canvas>
-      </div>
-
-      <div class="panel p-3">
-        <div class="flex items-center justify-between mb-2">
-          <div class="title-sm">Ultimi movimenti</div>
-          <button class="btn-ghost text-xs" @click="switchView('summary')">Vedi tutto →</button>
-        </div>
-        <div v-for="r in lastRows" :key="r.id" class="flex items-center justify-between py-2 border-b border-[#1a2240] last:border-0">
-          <div class="min-w-0">
-            <div class="font-semibold text-sm truncate">{{ r.Categoria || '—' }}</div>
-            <div class="text-xs text-[#9aa4b2] truncate">
-              {{ r.Data }} • {{ r.Tipo }}
-              <span v-if="r.Tipo==='entrata' && r.Cliente"> • Cliente: {{ r.Cliente }}</span>
-              <span v-if="r.Tipo==='spesa' && r.Fornitore"> • Forn.: {{ r.Fornitore }}</span>
-            </div>
-          </div>
-          <div class="text-right">
-            <div :class="r.Tipo==='entrata'?'text-emerald-400':'text-rose-400'">{{ fmtEUR(r.ImportoNetto) }}</div>
-            <div class="text-[11px] text-[#9aa4b2]">IVA {{ fmtEUR(r.ImportoIVA) }} • Tot {{ fmtEUR(r.ImportoLordo) }}</div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- 📊 Riepilogo -->
-    <section v-if="view==='summary'">
-      <div class="panel p-3">
-        <div class="grid grid-cols-2 gap-2 mb-2">
-          <select v-model="filters.year"><option v-for="y in years" :key="y" :value="y">{{ y }}</option></select>
-          <select v-model="filters.month"><option v-for="(m,i) in months" :key="m" :value="i">{{ m }}</option></select>
-        </div>
-        <div class="grid grid-cols-2 gap-2">
-          <select v-model="filters.partnerType">
-            <option value="">Tutti i soggetti</option>
-            <option value="cliente">Solo Clienti</option>
-            <option value="fornitore">Solo Fornitori</option>
-          </select>
-          <input class="input" v-model="filters.partnerName" placeholder="Filtra per nome (cliente/fornitore)">
-        </div>
-      </div>
-
-      <div class="grid grid-cols-2 gap-3 mt-3">
-        <div class="panel p-3 text-center">
-          <div class="title-sm">IVA a Debito</div>
-          <div class="value-lg text-indigo-300">{{ fmtEUR(kpi.ivaDebito) }}</div>
-        </div>
-        <div class="panel p-3 text-center">
-          <div class="title-sm">IVA a Credito</div>
-          <div class="value-lg text-cyan-300">{{ fmtEUR(kpi.ivaCredito) }}</div>
-        </div>
-      </div>
-      <div class="panel p-3 text-center">
-        <div class="title-sm">IVA da Versare</div>
-        <div class="value-lg text-amber-300">{{ fmtEUR(kpi.ivaDaVersare) }}</div>
-      </div>
-
-      <div class="panel p-4">
-        <div class="title-sm mb-1">Trend annuale (Netto)</div>
-        <canvas id="chartYear" height="200"></canvas>
-      </div>
-
-      <div class="panel p-3">
-        <div class="flex items-center justify-between mb-2">
-          <div class="title-sm">Movimenti mese</div>
-          <div class="title-sm">{{ filteredRows.length }} righe</div>
-        </div>
-        <div class="overflow-x-auto">
-          <table class="table w-full text-sm">
-            <thead>
-            <tr>
-              <th>Data</th><th>Tipo</th><th>Netto</th><th>IVA</th><th>Totale</th>
-              <th>Categoria</th><th>Conto</th><th>Cliente/Fornitore</th><th>Note</th><th></th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr v-for="r in filteredRows" :key="r.id">
-              <td>{{ r.Data }}</td>
-              <td :class="r.Tipo==='entrata'?'text-emerald-300':'text-rose-300'">{{ r.Tipo }}</td>
-              <td>{{ fmtEUR(r.ImportoNetto) }}</td>
-              <td>{{ fmtEUR(r.ImportoIVA) }} ({{ r.IVA }}%)</td>
-              <td>{{ fmtEUR(r.ImportoLordo) }}</td>
-              <td>{{ r.Categoria }}</td>
-              <td>{{ r.Conto }}</td>
-              <td>{{ r.Tipo==='entrata' ? (r.Cliente||'—') : (r.Fornitore||'—') }}</td>
-              <td class="truncate max-w-[140px]" :title="r.Note">{{ r.Note }}</td>
-              <td class="text-right">
-                <button class="btn-ghost text-xs" @click="openEdit(r)">✏️</button>
-                <button class="btn-ghost text-xs" @click="removeRow(r.id)">🗑️</button>
-              </td>
-            </tr>
-            <tr v-if="!filteredRows.length">
-              <td colspan="10" class="text-center text-[#9aa4b2] py-4">Nessuna voce nel mese selezionato</td>
-            </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- ⏰ Scadenze -->
-    <section v-if="view==='events'">
-      <div class="flex items-center justify-between">
-        <div class="title-sm">Scadenze & Promemoria 🇮🇹</div>
-        <button class="btn text-sm" @click="openEvent()">+ Nuova</button>
-      </div>
-
-      <div class="panel p-3 mt-3">
-        <div class="font-semibold mb-2">IVA Trimestrale</div>
-        <div class="grid grid-cols-1 gap-2">
-          <div v-for="q in ivaQuarters" :key="q.label" class="panel-2 p-3 flex items-center justify-between">
-            <div>
-              <div>{{ q.label }} • Scadenza {{ q.due }}</div>
-              <div class="text-xs text-[#9aa4b2]">Mancano: {{ q.dday>=0 ? q.dday+' giorni' : 'scaduto '+Math.abs(q.dday)+'g fa' }}</div>
-            </div>
-            <span class="pill" :class="q.dday<0 ? 'danger' : q.dday<=7 ? 'warn' : 'ok'">{{ q.dday<0?'Scaduto': q.dday===0?'Oggi':'Tra '+q.dday+'g' }}</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Lista scadenze -->
-      <div v-for="e in sortedEvents" :key="e.id" class="panel-2 p-3 mt-3 flex items-start justify-between">
-        <div>
-          <div class="font-semibold">{{ e.title }}</div>
-          <div class="text-xs text-[#9aa4b2]">{{ e.date }} • {{ e.kind }} <span v-if="e.repeat">• 🔁 {{ repeatLabel(e.repeat) }}</span></div>
-          <div class="mt-1">
-            <span class="pill" :class="deadlineClass(e)">{{ deadlineLabel(e) }}</span>
-            <span v-if="e.done" class="pill ok ml-2">Completato</span>
-          </div>
-          <div v-if="e.fileName" class="text-xs mt-1">📎 <a :href="e.fileData" :download="e.fileName" class="underline text-indigo-400">{{ e.fileName }}</a></div>
-        </div>
-        <div class="flex gap-2">
-          <button class="btn-ghost text-xs" @click="openEvent(e)">✏️</button>
-          <button class="btn-ghost text-xs" @click="deleteEvent(e.id)">🗑️</button>
-        </div>
-      </div>
-      <div v-if="!sortedEvents.length" class="text-center text-[#9aa4b2] text-sm mt-6">Nessuna scadenza</div>
-    </section>
-
-    <!-- 📇 Rubrica -->
-    <section v-if="view==='contacts'">
-      <div class="panel p-3">
-        <div class="flex items-center justify-between mb-2">
-          <div class="title-sm">Rubrica</div>
-          <button class="btn text-sm" @click="openContact()">+ Nuovo</button>
-        </div>
-        <input class="input mb-3" v-model="contactQuery" placeholder="Cerca per nome, P.IVA, note…">
-        <div v-for="c in filteredContacts" :key="c.id" class="panel-2 p-3 mb-2 flex items-start justify-between">
-          <div>
-            <div class="font-semibold">{{ c.nome }}</div>
-            <div class="text-xs text-[#9aa4b2]">
-              <span v-if="c.tipo">Tipo: {{ c.tipo }} • </span>
-              <span v-if="c.piva">P.IVA: {{ c.piva }} • </span>
-              <span v-if="c.email">{{ c.email }} • </span>
-              <span v-if="c.telefono">{{ c.telefono }}</span>
-            </div>
-            <div class="text-xs text-[#9aa4b2]" v-if="c.note">Note: {{ c.note }}</div>
-          </div>
-          <div class="flex gap-2">
-            <button class="btn-ghost text-xs" @click="openContact(c)">✏️</button>
-            <button class="btn-ghost text-xs" @click="deleteContact(c.id)">🗑️</button>
-          </div>
-        </div>
-        <div v-if="!filteredContacts.length" class="text-center text-[#9aa4b2] text-sm mt-4">Nessun contatto</div>
-      </div>
-    </section>
-
-    <!-- ⚙️ Impostazioni -->
-    <section v-if="view==='settings'">
-      <div class="panel p-4 space-y-3">
-        <label class="flex items-center gap-2"><input type="checkbox" v-model="settings.proactive"> <span>Modalità proattiva</span></label>
-        <div><div class="title-sm mb-1">Budget spese (€)</div><input type="number" class="input" v-model.number="settings.budgetSpese"></div>
-        <div><div class="title-sm mb-1">Soglia IVA (€)</div><input type="number" class="input" v-model.number="settings.ivaThreshold"></div>
-
-        <div class="panel-2 p-3 rounded-md">
-          <div class="flex items-center justify-between">
-            <div class="title-sm">Protezione & PIN</div>
-            <span class="led" :style="{ color: securityColor }" :title="securityTitle"></span>
-          </div>
-          <div class="flex flex-wrap gap-2 mt-3">
-            <button class="btn" @click="openPinModal">🔒 Imposta / Cambia PIN</button>
-            <button class="btn-ghost" @click="disablePIN">🔓 Disattiva PIN</button>
-          </div>
-          <div class="text-xs text-[#9aa4b2] mt-2">Con PIN attivo i dati sono cifrati localmente (AES).</div>
-        </div>
-
-        <div class="flex flex-wrap gap-2 pt-2">
-          <input type="file" accept=".csv" class="hidden" ref="csvInput" @change="importCSV">
-          <button class="btn-ghost" @click="$refs.csvInput.click()">📂 Importa CSV</button>
-          <button class="btn-ghost" @click="exportCSV">📤 Esporta CSV</button>
-          <button class="btn-ghost" @click="exportPDF">📄 Esporta PDF</button>
-          <button class="btn bg-rose-600 hover:bg-rose-500" @click="clearAll">🧹 Svuota tutto</button>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <!-- ➕/➖ FAB -->
-  <div class="fabbar">
-    <button class="fab in"  @click="openTx('entrata')">+ Entrata</button>
-    <button class="fab out" @click="openTx('spesa')">− Uscita</button>
+  
+  <div id="pin-lock-modal">
+    <h2 class="text-3xl font-bold mb-3">Finanza Smart 5.0 PRO</h2>
+    <p class="text-lg mb-6 text-gray-400">Inserisci il PIN per sbloccare</p>
+    <div class="pin-input">
+      <input type="password" maxlength="1" id="pin-1" class="pin-digit" pattern="[0-9]" inputmode="numeric" />
+      <input type="password" maxlength="1" id="pin-2" class="pin-digit" pattern="[0-9]" inputmode="numeric" />
+      <input type="password" maxlength="1" id="pin-3" class="pin-digit" pattern="[0-9]" inputmode="numeric" />
+      <input type="password" maxlength="1" id="pin-4" class="pin-digit" pattern="[0-9]" inputmode="numeric" />
+    </div>
+    <p id="pin-error" class="text-red-500 mt-4 text-sm hidden">PIN errato. Riprova.</p>
+    <p class="text-sm text-gray-500 mt-8">PIN di default: 1234</p>
   </div>
+  <script>
+    // --- CONFIG/GLOBAL ---
+    const LOCAL_STORAGE_KEY = 'smartFinApp_v50';
+    const SESSION_STORAGE_PIN_KEY = 'smartFinApp_unlocked';
+    const IVA_RATES = [0,4,5,10,22];
+    const MAX_RECENT_TRANSACTIONS = 10;
+    const DEFAULT_CATEGORIES = ['Affitto','Bollette','Spesa','Marketing','Servizi','Stipendi','Carburante','Ristoranti','Abbonamenti','Altro'];
+    
+    // Mappa Icone per Categorie (Usabilità)
+    const CATEGORY_ICONS = {
+        'Affitto': '🏠',
+        'Bollette': '💡',
+        'Spesa': '🛒',
+        'Marketing': '📢',
+        'Servizi': '🛠️',
+        'Stipendi': '🧑‍💼',
+        'Carburante': '⛽',
+        'Ristoranti': '🍽️',
+        'Abbonamenti': '🔗',
+        'Altro': '📦',
+        'IVA': '🇮🇹' // Aggiunta Icona
+    };
+    
+    // Frequenze comuni per la logica di previsione
+    const COMMON_FREQUENCIES = {
+        'affitto': 'monthly',
+        'stipendio': 'monthly',
+        'bollette': 'monthly',
+        'abbonamento': 'monthly',
+        'assicurazione': 'annual',
+        'tasse': 'quarterly',
+        'imu': 'annual',
+        'mensile': 'monthly',
+        'trimestrale': 'quarterly',
+        'annuale': 'annual'
+    };
+    
+    // NUOVO: Date Scadenza IVA Trimestrale (gg-mm) - Riferimento all'anno precedente/attuale
+    const IVA_DEADLINES_IT = [
+        { date: '16-05', desc: '1° Trimestre IVA (Gen-Mar)', quarter: 1 },
+        { date: '16-08', desc: '2° Trimestre IVA (Apr-Giu)', quarter: 2 },
+        { date: '16-11', desc: '3° Trimestre IVA (Lug-Set)', quarter: 3 },
+        // L'acconto del 4° trim. (Dic) è incluso nel versamento finale di Marzo
+        { date: '16-03', desc: 'Saldo 4° Trimestre IVA (Ott-Dic Precedente)', quarter: 4 } 
+    ];
 
-  <!-- 🧭 Nav -->
-  <nav class="nav px-3 pt-2 pb-[calc(env(safe-area-inset-bottom)+6px)] flex gap-1">
-    <div class="navbtn" :class="{active:view==='home'}" @click="switchView('home')">🏠<span>Home</span></div>
-    <div class="navbtn" :class="{active:view==='summary'}" @click="switchView('summary')">📊<span>Riepilogo</span></div>
-    <div class="navbtn" :class="{active:view==='events'}" @click="switchView('events')">⏰<span>Scadenze</span></div>
-    <div class="navbtn" :class="{active:view==='contacts'}" @click="switchView('contacts')">📇<span>Rubrica</span></div>
-    <div class="navbtn" :class="{active:view==='settings'}" @click="switchView('settings')">⚙️<span>Impostazioni</span></div>
-  </nav>
-</div><!-- === PARTE 2: LOGICA PRO++++ === -->
-<script src="https://cdn.jsdelivr.net/npm/crypto-js@4.2.0/crypto-js.min.js"></script>
-<script>
-const { createApp, reactive, watch } = Vue;
+    let appData = { 
+        invoices:[], 
+        expenses:[], 
+        reminders:[], 
+        contacts:[], 
+        birthdays: [],
+        recurringExpenses: [], 
+        lastId:0, 
+        categories: DEFAULT_CATEGORIES.slice(), 
+        pin: '1234',
+        currencySymbol: '€',
+        monthlySavingsTarget: 0 
+    };
+    let currentPage = 'activity';
 
-createApp({
-  data(){
-    const now=new Date();
-    return {
-      view:'home',
-      months:['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'],
-      years:[now.getFullYear()-1, now.getFullYear(), now.getFullYear()+1],
-      filters:{month:now.getMonth(),year:now.getFullYear(),category:null,partnerType:'',partnerName:''},
-      q:'',
-      rows:[], events:[], clients:[], suppliers:[],
-      settings:{proactive:true,budgetSpese:0,ivaThreshold:0,pinEnabled:false},
-      _key:'', charts:{}, banner:{items:[],today:[],soon:[],overdue:[]},
-      contactQuery:'',
-      // Draft modali
-      txDraft:{}, presetIVA:null,
-      eventDraft:{}, contactDraft:{},
-      // Cataloghi default
-      categoriesIn:['Fatture clienti','Corrispettivi','Servizi','Vendite online','Altro'],
-      categoriesOut:['Acquisti fornitori','Servizi','Affitto','Utenze','Marketing','Varie'],
-      // Mappa “intelligente” (auto-categoria/IVA) per partner
-      smartMap:{ /* nomeLower: { categoria, iva } */ }
+    // --- UTILITY ---
+    function getCurrencySymbol() {
+        return appData.currencySymbol || '€';
     }
-  },
+    function getCategoryIcon(category) {
+        const cat = category || 'Altro';
+        // Match case-insensitive, return default if not found
+        const key = Object.keys(CATEGORY_ICONS).find(k => k.toLowerCase() === cat.toLowerCase());
+        return CATEGORY_ICONS[key] || CATEGORY_ICONS['Altro'];
+    }
 
-  computed:{
-    categories(){
-      const freq={}; this.rows.forEach(r=>{ if(r.Categoria) freq[r.Categoria]=(freq[r.Categoria]||0)+1; });
-      return Object.keys(freq).sort((a,b)=>freq[b]-freq[a]);
-    },
-    filteredRows(){
-      const m=this.filters.month, y=this.filters.year, cat=this.filters.category;
-      const pt=this.filters.partnerType, pn=(this.filters.partnerName||'').toLowerCase();
-      const q=(this.q||'').toLowerCase();
-      return this.rows.filter(r=>{
-        const d=new Date(r.Data+'T00:00:00');
-        if(d.getMonth()!==m||d.getFullYear()!==y) return false;
-        if(cat && r.Categoria!==cat) return false;
-        if(pt==='cliente' && r.Tipo!=='entrata') return false;
-        if(pt==='fornitore' && r.Tipo!=='spesa') return false;
-        if(pn){
-          const s=(r.Cliente||r.Fornitore||'').toLowerCase(); if(!s.includes(pn)) return false;
+
+    // --- THEME (Dark Mode) ---
+    function applySavedTheme() {
+      const saved = localStorage.getItem('theme') || 'light';
+      document.body.classList.toggle('dark', saved === 'dark');
+      document.getElementById('theme-toggle')?.classList.toggle('dark', saved === 'dark');
+      const btn = document.getElementById('theme-toggle');
+      if (btn) btn.textContent = saved === 'dark' ? '☀️ Light' : '🌙 Dark';
+    }
+    function toggleTheme() {
+      const isDark = document.body.classList.toggle('dark');
+      localStorage.setItem('theme', isDark ? 'dark':'light');
+      applySavedTheme();
+    }
+
+    // --- STORAGE ---
+    function loadData() {
+      try {
+        const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          appData = { ...appData, ...parsed };
+          // Ensure arrays exist
+          appData.invoices ||= []; appData.expenses ||= [];
+          appData.reminders ||= []; appData.contacts ||= [];
+          appData.birthdays ||= [];
+          appData.recurringExpenses ||= []; 
+          
+          // Ensure categories/lastId/pin/currency/target exist
+          appData.categories ||= DEFAULT_CATEGORIES.slice();
+          appData.lastId ||= 0;
+          appData.pin ||= '1234';
+          appData.currencySymbol ||= '€';
+          appData.monthlySavingsTarget ||= 0;
         }
-        if(q){
-          const hay=[r.Categoria||'',r.Note||'',r.Conto||'',r.Cliente||'',r.Fornitore||''].join(' ').toLowerCase();
-          if(!hay.includes(q)) return false;
+      } catch(e){ console.error(e); showToast('Errore nel caricamento dati','red'); }
+    }
+    function saveData(){ try{ localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(appData)); }catch(e){ console.error(e); showToast('Errore salvataggio','red'); } }
+    function getNextId(){ appData.lastId++; saveData(); return appData.lastId; }
+
+    // --- PIN LOCK LOGIC (Omessa per brevità, intatta) ---
+    function setupPinLock() {
+      const pinDigits = document.querySelectorAll('.pin-digit');
+      const pinModal = document.getElementById('pin-lock-modal');
+      const isUnlocked = sessionStorage.getItem(SESSION_STORAGE_PIN_KEY) === 'true';
+
+      if (!isUnlocked) {
+        pinModal.style.display = 'flex';
+        pinDigits.forEach((input, index) => {
+          input.value = '';
+          input.removeEventListener('input', handlePinInputListener);
+          input.removeEventListener('keydown', handlePinKeyDownListener);
+          
+          input.addEventListener('input', (e) => handlePinInput(e, index));
+          input.addEventListener('keydown', (e) => handlePinKeyDown(e, index));
+        });
+        
+        setTimeout(() => {
+          document.getElementById('pin-1')?.focus();
+        }, 100); 
+
+      } else {
+        pinModal.style.display = 'none';
+        const initialPage = appData.invoices.length>0 || appData.expenses.length>0 ? 'report':'activity';
+        renderPage(initialPage);
+      }
+    }
+    
+    const handlePinInputListener = (e, index) => handlePinInput(e, index);
+    const handlePinKeyDownListener = (e, index) => handlePinKeyDown(e, index);
+
+    function handlePinInput(e, index) {
+      const pinDigits = document.querySelectorAll('.pin-digit');
+      e.target.value = e.target.value.replace(/[^0-9]/g, '').slice(0, 1);
+      
+      if (e.target.value.length === 1 && index < pinDigits.length - 1) {
+        pinDigits[index + 1].focus();
+      }
+
+      if (Array.from(pinDigits).every(input => input.value.length === 1)) {
+        checkPin();
+      }
+    }
+
+    function handlePinKeyDown(e, index) {
+      const pinDigits = document.querySelectorAll('.pin-digit');
+      if (e.key === 'Backspace' && e.target.value === '' && index > 0) {
+        pinDigits[index - 1].focus();
+      }
+    }
+
+    function checkPin() {
+      const pinDigits = document.querySelectorAll('.pin-digit');
+      const enteredPin = Array.from(pinDigits).map(input => input.value).join('');
+      const pinError = document.getElementById('pin-error');
+      
+      if (enteredPin.length < 4) return;
+
+      if (enteredPin === appData.pin) {
+        pinError.classList.add('hidden');
+        sessionStorage.setItem(SESSION_STORAGE_PIN_KEY, 'true');
+        document.getElementById('pin-lock-modal').style.display = 'none';
+        const initialPage = appData.invoices.length>0 || appData.expenses.length>0 ? 'report':'activity';
+        renderPage(initialPage);
+        showToast('Accesso sbloccato!');
+      } else {
+        pinError.classList.remove('hidden');
+        pinDigits.forEach(input => input.value = '');
+        document.getElementById('pin-1').focus();
+      }
+    }
+
+    // --- UI helpers (Omessa per brevità, intatta) ---
+    function showModal(title,message,isConfirmation,onConfirm,onCancel=null){
+      const modal = document.getElementById('modal');
+      const t = document.getElementById('modal-title'); const m = document.getElementById('modal-message');
+      const ok = document.getElementById('modal-confirm-btn'); const cancel = document.getElementById('modal-cancel-btn');
+      t.textContent = title; m.textContent = message;
+      if (isConfirmation){
+        ok.textContent = 'Conferma'; ok.classList.remove('bg-gray-500','hover:bg-gray-600'); ok.classList.add('bg-red-600','hover:bg-red-700');
+        ok.onclick = ()=>{ modal.classList.add('hidden'); onConfirm&&onConfirm(); };
+        cancel.classList.remove('hidden'); cancel.onclick = ()=>{ modal.classList.add('hidden'); onCancel&&onCancel(); };
+      } else {
+        ok.textContent='OK'; ok.classList.remove('bg-red-600','hover:bg-red-700'); ok.classList.add('bg-gray-500','hover:bg-gray-600');
+        ok.onclick = ()=> modal.classList.add('hidden'); cancel.classList.add('hidden');
+      }
+      modal.classList.remove('hidden');
+    }
+    function showToast(message,type='green'){
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = `fixed bottom-5 left-1/2 transform -translate-x-1/2 p-3 text-white rounded-xl shadow-lg transition-opacity duration-300 opacity-100 ${type==='red'?'bg-red-500':'bg-green-500'}`;
+      setTimeout(()=>{ toast.classList.remove('opacity-100'); toast.classList.add('opacity-0'); }, 2500);
+    }
+
+    // --- QUICK register (Corretto - FIX B) ---
+    function quickRegister(isIncomeString) {
+      const isIncome = isIncomeString === 'true';
+      document.getElementById('transaction-form-anchor')?.scrollIntoView({behavior:'smooth'});
+      const isIncomeSelect = document.getElementById('isIncome');
+      if (isIncomeSelect){
+        isIncomeSelect.value = isIncomeString;
+        isIncomeSelect.dispatchEvent(new Event('change'));
+      }
+      const form = document.getElementById('transaction-form');
+      if (form){
+        form.removeAttribute('data-transaction-id'); form.reset();
+        const submitBtn = form.querySelector('button[type="submit"]');
+        if (submitBtn){ submitBtn.textContent='Registra Movimento'; submitBtn.classList.remove('bg-blue-500','hover:bg-blue-600'); submitBtn.classList.add('bg-emerald-500','hover:bg-emerald-600'); }
+        
+        // Reset default values
+        document.getElementById('date').value = new Date().toISOString().slice(0,10);
+        document.getElementById('net-amount').value = '0.00';
+        calculateGross();
+      }
+      const incomeTypeSelect = document.getElementById('incomeType');
+      if (incomeTypeSelect && isIncome){ incomeTypeSelect.value='Fattura (Cliente)'; incomeTypeSelect.dispatchEvent(new Event('change')); }
+      
+      // FIX: Aggiorna etichetta e autocomplete dopo il cambio
+      document.getElementById('description-label').textContent = isIncome ? 'Cliente / Descrizione' : 'Fornitore / Descrizione';
+      setupContactAutocomplete(currentPage);
+      
+      showToast(isIncome?'Modulo pronto per Entrata!':'Modulo pronto per Uscita!','green');
+    }
+
+    // --- Filters/period helpers (Corretto - FIX C) ---
+    function filterByPeriod(itemDateStr, filterType, filterValue){
+      if (filterType==='all'||!filterValue||filterValue==='all') return true;
+      const itemDate = new Date(itemDateStr); if (isNaN(itemDate)) return false;
+      const y=itemDate.getFullYear(), m=itemDate.getMonth();
+      
+      if (filterType==='year'){ return y===parseInt(filterValue); }
+      if (filterType==='month'){ const [fy,fm]=filterValue.split('-').map(Number); return y===fy && m===(fm-1); }
+      if (filterType==='quarter'){ const [fy,fm]=filterValue.split('-').map(Number); return y===fy && Math.ceil((m+1)/3)===Math.ceil(fm/3); }
+      if (filterType==='day'){ return itemDateStr===filterValue; }
+      
+      // NUOVO: Filtro per Intervallo Libero (Range)
+      if (filterType==='range'){
+        // filterValue è una stringa "start_date|end_date"
+        const [startStr, endStr] = filterValue.split('|');
+        if (!startStr || !endStr) return true; // Nessuna data impostata, ignora
+        
+        const start = new Date(startStr);
+        const end = new Date(endStr);
+        end.setHours(23,59,59,999); // Include l'intera giornata finale
+        
+        return itemDate>=start && itemDate<=end;
+      }
+      
+      // FIX: Improved Week Filter (Starts Monday)
+      if (filterType==='week'){ 
+        const d = new Date(filterValue); 
+        let dayOfWeek = d.getDay(); // 0=Dom, 1=Lun, ..., 6=Sab
+        
+        // Calcola la differenza per arrivare a Lunedì
+        const diff = d.getDate() - ((dayOfWeek + 6) % 7);
+        
+        const start = new Date(d);
+        start.setDate(diff); // Imposta al Lunedì
+        start.setHours(0,0,0,0); 
+        
+        const end = new Date(start); 
+        end.setDate(start.getDate()+6); // Imposta alla Domenica
+        end.setHours(23,59,59,999); 
+        
+        return itemDate>=start && itemDate<=end; 
+      }
+      return false;
+    }
+    
+    // --- Filters for Report page (Omessa per brevità, intatta) ---
+    function filterTransactionsByCriteria(transactions, categoryFilter, tagFilter) {
+        if (!categoryFilter && !tagFilter) return transactions;
+        
+        const cat = categoryFilter ? categoryFilter.toLowerCase() : null;
+        const tag = tagFilter ? tagFilter.toLowerCase() : null;
+
+        return transactions.filter(t => {
+            const matchesCategory = !cat || (t.category || 'altro').toLowerCase() === cat;
+            const matchesTag = !tag || (t.tags || []).map(tg => tg.toLowerCase()).includes(tag);
+            return matchesCategory && matchesTag;
+        });
+    }
+
+    // NUOVO: Calcola Saldo Netto Giornaliero per gli ultimi 7 giorni (Omessa per brevità, intatta)
+    function calculateDailyNetBalance(type) {
+        const days = 7;
+        const today = new Date();
+        const dates = [];
+        for (let i = 0; i < days; i++) {
+            const d = new Date(today);
+            d.setDate(today.getDate() - (days - 1 - i));
+            dates.push(d.toISOString().slice(0, 10));
         }
-        return true;
-      });
-    },
-    lastRows(){ return this.rows.slice(-5).reverse(); },
-    kpi(){
-      let e=0,u=0,deb=0,cred=0;
-      this.filteredRows.forEach(r=>{
-        if(r.Tipo==='entrata'){ e+=r.ImportoNetto; deb+=r.ImportoIVA; }
-        else { u+=r.ImportoNetto; cred+=r.ImportoIVA; }
-      });
-      return { totEntrate:e, totSpese:u, risparmi:e-u, ivaDebito:deb, ivaCredito:cred, ivaDaVersare:deb-cred };
-    },
-    ivaQuarters(){
-      const y=this.filters.year;
-      const arr=[
-        {label:`1° Trimestre ${y}`, due:`${y}-05-16`},
-        {label:`2° Trimestre ${y}`, due:`${y}-08-20`},
-        {label:`3° Trimestre ${y}`, due:`${y}-11-16`},
-        {label:`4° Trimestre ${y+1}`, due:`${y+1}-03-16`}
+
+        const dailyData = dates.map(dateStr => {
+            const summary = calculateFinancialSummary(type, 'day', dateStr);
+            return summary.netBalance;
+        });
+
+        return { labels: dates.map(d => d.slice(5)), data: dailyData };
+    }
+
+    // NUOVO: Renderizza Grafico Saldo Settimanale (Omessa per brevità, intatta)
+    function renderWeeklyBalanceChart(type) {
+        const chartId = `weeklyBalanceChart-${type}`;
+        const ctx = document.getElementById(chartId)?.getContext('2d');
+        if (!ctx) return;
+        
+        const { labels, data } = calculateDailyNetBalance(type);
+        
+        if (ctx.chart) ctx.chart.destroy();
+
+        ctx.chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: `Saldo Netto (${getCurrencySymbol()})`,
+                    data: data,
+                    borderColor: data[data.length - 1] >= 0 ? '#10b981' : '#ef4444',
+                    backgroundColor: data[data.length - 1] >= 0 ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)',
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    title: { display: true, text: 'Saldo Netto Ultimi 7 Giorni', color: document.body.classList.contains('dark') ? '#f1f5f9' : '#1e293b' }
+                },
+                scales: {
+                    x: { ticks: { color: document.body.classList.contains('dark') ? '#9ca3af' : '#6b7280' } },
+                    y: { 
+                        beginAtZero: false,
+                        ticks: { color: document.body.classList.contains('dark') ? '#9ca3af' : '#6b7280' }
+                    }
+                }
+            }
+        });
+    }
+
+
+    // --- Core calculations (Omessa per brevità, intatta) ---
+    function calculateFinancialSummary(type, filterType, filterDateStr) {
+      let totalIncomes=0, totalExpenses=0, ivaAddebito=0, ivaCredito=0;
+      const types = type==='global' ? ['activity','personal'] : [type];
+      const all = [
+        ...appData.invoices.map(t=>({...t,isIncome:true,key:'inv'})),
+        ...appData.expenses.map(t=>({...t,isIncome:false,key:'exp'}))
       ];
-      return arr.map(q=>({ ...q, dday:this.daysDiff(q.due) }));
-    },
-    sortedEvents(){ return this.events.slice().sort((a,b)=> new Date(a.date)-new Date(b.date)); },
-    filteredContacts(){
-      const q=(this.contactQuery||'').toLowerCase();
-      const src=[...this.clients,...this.suppliers];
-      if(!q) return src;
-      return src.filter(c=>[c.nome,c.email,c.telefono,c.piva,c.tipo,c.note].filter(Boolean).join(' ').toLowerCase().includes(q));
-    },
-    securityColor(){ return this.settings.pinEnabled ? '#22c55e' : '#ef4444'; },
-    securityTitle(){ return this.settings.pinEnabled ? 'Dati cifrati (AES, PIN attivo)' : 'Dati in chiaro (PIN disattivo)'; },
-  },
-
-  watch:{
-    rows:{deep:true,handler(){ this.persist(); this.refreshCharts(); this.learnSmart(); }},
-    events:{deep:true,handler(){ this.persist(); this.computeBanner(); }},
-    clients:{deep:true,handler(){ this.persist(); }},
-    suppliers:{deep:true,handler(){ this.persist(); }},
-    settings:{deep:true,handler(){ localStorage.setItem('pro++++_settings',JSON.stringify(this.settings)); this.persist(); }},
-    filters:{deep:true,handler(){ this.refreshCharts(); }},
-    q(){ this.refreshCharts(); }
-  },
-
-  mounted(){
-    try{ Object.assign(this.settings, JSON.parse(localStorage.getItem('pro++++_settings')||'{}')); }catch{}
-    this.secureLoad();
-    if(!this.rows.length) this.seedDemo();
-    this.initFisco();
-    this.computeBanner();
-    this.refreshCharts();
-    this.rebuildSmartFromData();
-  },
-
-  methods:{
-    fmtEUR(v){ return (Number(v)||0).toLocaleString('it-IT',{style:'currency',currency:'EUR'}); },
-    uid(){ return Math.random().toString(36).slice(2)+Date.now().toString(36); },
-    switchView(v){ this.view=v; setTimeout(this.refreshCharts,150); },
-    daysDiff(iso){ const a=new Date(iso+'T00:00:00'), b=new Date(new Date().toISOString().slice(0,10)+'T00:00:00'); return Math.ceil((a-b)/86400000); },
-
-    /* === Sicurezza (PIN + AES) === */
-    secureLoad(){
-      const enc=localStorage.getItem('pro++++_enc');
-      const raw=localStorage.getItem('pro++++_raw');
-      if(enc && this.settings.pinEnabled){
-        let ok=false;
-        while(!ok){
-          const pin=prompt('🔒 PIN per sbloccare i dati'); if(pin===null) break;
-          const key=CryptoJS.SHA256(pin).toString();
-          try{
-            const txt=CryptoJS.AES.decrypt(enc,key).toString(CryptoJS.enc.Utf8);
-            if(!txt) throw 1; const obj=JSON.parse(txt);
-            this.rows=obj.rows||[]; this.events=obj.events||[]; this.clients=obj.clients||[]; this.suppliers=obj.suppliers||[]; this.smartMap=obj.smartMap||{};
-            this._key=key; ok=true;
-          }catch{ alert('PIN errato. Riprova.'); }
+      const filtered = all.filter(i=>types.includes(i.type)).filter(i=>filterByPeriod(i.date,filterType,filterDateStr));
+      
+      filtered.forEach(i=>{
+        // Ensures gross is a number
+        const gross = parseFloat(i.gross) || 0;
+        const vatAmount = parseFloat(i.vatAmount) || 0;
+        
+        if (i.isIncome){ 
+          totalIncomes += gross; 
+          if (i.type==='activity') ivaAddebito += vatAmount; 
         }
-      } else if(raw){
-        try{
-          const obj=JSON.parse(raw);
-          this.rows=obj.rows||[]; this.events=obj.events||[]; this.clients=obj.clients||[]; this.suppliers=obj.suppliers||[]; this.smartMap=obj.smartMap||{};
-        }catch{}
-      }
-    },
-    persist(){
-      const payload=JSON.stringify({rows:this.rows,events:this.events,clients:this.clients,suppliers:this.suppliers,smartMap:this.smartMap});
-      if(this.settings.pinEnabled && this._key){
-        const enc=CryptoJS.AES.encrypt(payload,this._key).toString();
-        localStorage.setItem('pro++++_enc',enc);
-        localStorage.removeItem('pro++++_raw');
-      }else{
-        localStorage.setItem('pro++++_raw',payload);
-        localStorage.removeItem('pro++++_enc');
-      }
-    },
-    openPinModal(){
-      const p1=prompt('Nuovo PIN (min 4 cifre)'); if(!p1||p1.length<4) return alert('PIN troppo corto');
-      const p2=prompt('Ripeti PIN'); if(p1!==p2) return alert('I PIN non coincidono');
-      this._key=CryptoJS.SHA256(p1).toString(); this.settings.pinEnabled=true; this.persist(); alert('PIN impostato. Dati cifrati.');
-    },
-    disablePIN(){ if(confirm('Disattivare PIN e salvare in chiaro?')){ this.settings.pinEnabled=false; this._key=''; this.persist(); } },
-
-    /* === IVA & Totali (Netto→IVA→Lordo) === */
-    calcIVAfromNet(r){ return +(Number(r.ImportoNetto||0)*(Number(r.IVA||0)/100)).toFixed(2); },
-    calcLordo(r){ return +(Number(r.ImportoNetto||0)+this.calcIVAfromNet(r)).toFixed(2); },
-
-    /* === Auto-categoria e Auto-IVA === */
-    smartSuggest({tipo, partnerName}){
-      const k=(partnerName||'').trim().toLowerCase();
-      const v=this.smartMap[k];
-      if(v) return v; // suggerimento “appreso”
-      // fallback per pattern comuni
-      if(tipo==='spesa'){
-        if(/enel|e-on|hera|illumia|acea|ener|luce|gas/.test(k)) return {categoria:'Utenze',iva:10};
-        if(/affit|locaz|canone|rent/.test(k)) return {categoria:'Affitto',iva:22};
-        if(/google|meta|facebook|ads|adv|marketing/.test(k)) return {categoria:'Marketing',iva:22};
-        if(/amazon|fornit|gross|wholesal|magazzino|acquisto/.test(k)) return {categoria:'Acquisti fornitori',iva:22};
-        if(/assicur|rca|polizza/.test(k)) return {categoria:'Varie',iva:22};
-      }else{
-        if(/scontrin|cassa|store|negozio/.test(k)) return {categoria:'Corrispettivi',iva:22};
-        if(/cliente|company|sr[l|l.]|spa|sas|snc|consult|servizi/.test(k)) return {categoria:'Fatture clienti',iva:22};
-        if(/shopify|ecommerce|marketplace|etsy|ebay/.test(k)) return {categoria:'Vendite online',iva:22};
-      }
-      // default
-      return {categoria: tipo==='entrata'?'Fatture clienti':'Acquisti fornitori', iva:22};
-    },
-    learnSmart(){
-      // Impara dall’uso: media IVA per partner, categoria più frequente
-      const acc={};
-      for(const r of this.rows){
-        const k=(r.Cliente||r.Fornitore||'').toLowerCase().trim(); if(!k) continue;
-        acc[k]=acc[k]||{cnt:0,sommaIVA:0,cats:{}};
-        acc[k].cnt++; acc[k].sommaIVA+=Number(r.IVA||0);
-        const c=r.Categoria||''; acc[k].cats[c]=(acc[k].cats[c]||0)+1;
-      }
-      for(const k of Object.keys(acc)){
-        const avg=Math.round((acc[k].sommaIVA/acc[k].cnt)*10)/10;
-        const cat=Object.entries(acc[k].cats).sort((a,b)=>b[1]-a[1])[0]?.[0]||'';
-        if(cat) this.smartMap[k]={categoria:cat,iva:avg||22};
-      }
-      this.persist();
-    },
-    rebuildSmartFromData(){ this.learnSmart(); },
-
-    /* === Movimenti (Editor Modale Completo) === */
-    openTx(tipo){
-      this.txDraft={ id:null, Tipo:tipo, Data:new Date().toISOString().slice(0,10),
-        ImportoNetto:0, IVA:22, Categoria: (tipo==='entrata'? this.categoriesIn[0] : this.categoriesOut[0]),
-        Conto:'', Attivita:'', Cliente:'', Fornitore:'', Note:'' };
-      this.presetIVA=null;
-      // se presente partner, applica suggerimento
-      // (qui no, lo applicheremo onInput partner)
-      this.$nextTick(()=>document.getElementById('dlgTx').showModal());
-    },
-    openEdit(r){ this.txDraft=JSON.parse(JSON.stringify(r)); this.presetIVA=null; document.getElementById('dlgTx').showModal(); },
-    onPartnerInput(){
-      const t=this.txDraft.Tipo;
-      const name = t==='entrata' ? this.txDraft.Cliente : this.txDraft.Fornitore;
-      if(!name) return;
-      const sug = this.smartSuggest({tipo:t, partnerName:name});
-      if(!this.txDraft.Categoria) this.txDraft.Categoria=sug.categoria;
-      if(this.txDraft.IVA==null || this.txDraft.IVA===undefined) this.txDraft.IVA=sug.iva;
-    },
-    saveTx(){
-      const r=JSON.parse(JSON.stringify(this.txDraft));
-      if(!r.Data || !r.Tipo) return alert('Compila data e tipo.');
-      // Se partner inserito, applica o aggiorna smartMap
-      const partner=(r.Tipo==='entrata'?r.Cliente:r.Fornitore)||'';
-      if(partner){
-        const k=partner.toLowerCase().trim();
-        const existing=this.smartMap[k]||{};
-        // tieni categoria scelta e media IVA approssimata
-        this.smartMap[k]={ categoria:r.Categoria||existing.categoria|| (r.Tipo==='entrata'?'Fatture clienti':'Acquisti fornitori'),
-                           iva: Number(r.IVA||existing.iva||22) };
-      }
-      r.ImportoIVA=this.calcIVAfromNet(r);
-      r.ImportoLordo=this.calcLordo(r);
-      if(r.Tipo==='entrata') r.Fornitore=''; else r.Cliente='';
-      if(!r.id) r.id=this.uid();
-      const i=this.rows.findIndex(x=>x.id===r.id);
-      if(i>=0) this.rows.splice(i,1,r); else this.rows.push(r);
-      document.getElementById('dlgTx').close();
-    },
-    removeRow(id){ if(confirm('Eliminare movimento?')) this.rows=this.rows.filter(r=>r.id!==id); },
-
-    /* === Scadenze === */
-    openEvent(e=null){
-      this.eventDraft = e ? JSON.parse(JSON.stringify(e)) :
-        { id:null,title:'',date:new Date().toISOString().slice(0,10),kind:'Altro',repeat:'',done:false,fileName:'',fileData:'' };
-      document.getElementById('dlgEvent').showModal();
-    },
-    saveEvent(){
-      const e=JSON.parse(JSON.stringify(this.eventDraft));
-      if(!e.title || !e.date) return alert('Titolo e data obbligatori');
-      if(!e.id) e.id=this.uid();
-      const i=this.events.findIndex(x=>x.id===e.id);
-      if(i>=0) this.events.splice(i,1,e); else this.events.push(e);
-      if(e.done && e.repeat){
-        const d=new Date(e.date+'T00:00:00');
-        if(e.repeat==='month') d.setMonth(d.getMonth()+1);
-        if(e.repeat==='quarter') d.setMonth(d.getMonth()+3);
-        if(e.repeat==='year') d.setFullYear(d.getFullYear()+1);
-        this.events.push({...e,id:this.uid(),date:d.toISOString().slice(0,10),done:false});
-      }
-      document.getElementById('dlgEvent').close();
-    },
-    deleteEvent(id){ if(confirm('Eliminare scadenza?')) this.events=this.events.filter(x=>x.id!==id); },
-    attachFile(ev){
-      const f=ev.target.files?.[0]; if(!f) return;
-      const rd=new FileReader(); rd.onload=()=>{ this.eventDraft.fileData=rd.result; this.eventDraft.fileName=f.name; };
-      rd.readAsDataURL(f);
-    },
-    repeatLabel(v){ return v==='month'?'Mensile':v==='quarter'?'Trimestrale':v==='year'?'Annuale':'—'; },
-    deadlineClass(e){ const dd=this.daysDiff(e.date); return dd<0?'danger': dd<=7?'warn':'ok'; },
-    deadlineLabel(e){ const dd=this.daysDiff(e.date); return dd<0?`Scaduto ${Math.abs(dd)}g fa`: dd===0?'Oggi':`Tra ${dd}g`; },
-
-    computeBanner(){
-      const today=[], soon=[], overdue=[];
-      for(const e of this.events){
-        if(e.done) continue;
-        const dd=this.daysDiff(e.date);
-        if(dd===0) today.push({...e,dday:0});
-        else if(dd>0 && dd<=7) soon.push({...e,dday:dd});
-        else if(dd<0) overdue.push({...e,dday:dd});
-      }
-      const items=[...today,...soon,...overdue];
-      const seen=localStorage.getItem('pro++++_banner_seen'); const todayS=new Date().toISOString().slice(0,10);
-      this.banner = (items.length && seen!==todayS) ? {items,today,soon,overdue} : {items:[],today:[],soon:[],overdue:[]};
-    },
-    dismissBannerToday(){ localStorage.setItem('pro++++_banner_seen', new Date().toISOString().slice(0,10)); this.banner={items:[],today:[],soon:[],overdue:[]}; },
-
-    /* === Rubrica === */
-    openContact(c=null){
-      this.contactDraft = c ? JSON.parse(JSON.stringify(c)) : { id:null, tipo:'cliente', nome:'', email:'', telefono:'', piva:'', note:'' };
-      document.getElementById('dlgContact').showModal();
-    },
-    saveContact(){
-      const c=JSON.parse(JSON.stringify(this.contactDraft));
-      if(!c.nome) return alert('Inserisci il nome');
-      if(!c.id) c.id=this.uid();
-      const pushTo = c.tipo==='cliente' ? 'clients' : 'suppliers';
-      const idx=this[pushTo].findIndex(x=>x.id===c.id);
-      if(idx>=0) this[pushTo].splice(idx,1,c); else this[pushTo].push(c);
-      document.getElementById('dlgContact').close();
-    },
-    deleteContact(id){
-      if(!confirm('Eliminare contatto?')) return;
-      this.clients=this.clients.filter(c=>c.id!==id);
-      this.suppliers=this.suppliers.filter(c=>c.id!==id);
-    },
-
-    /* === Grafici (Chart.js) === */
-    refreshCharts(){
-      this.$nextTick(()=>{
-        // Bar Entrate/Uscite (mese selezionato)
-        const ctx1=document.getElementById('chartHome');
-        if(ctx1){
-          if(this.charts.home){ this.charts.home.destroy(); delete this.charts.home; }
-          const e=this.filteredRows.filter(r=>r.Tipo==='entrata').reduce((s,r)=>s+r.ImportoNetto,0);
-          const u=this.filteredRows.filter(r=>r.Tipo==='spesa').reduce((s,r)=>s+r.ImportoNetto,0);
-          this.charts.home=new Chart(ctx1,{type:'bar',data:{labels:['Entrate','Uscite'],datasets:[{data:[e,u],backgroundColor:['#10b981','#ef4444']}]},
-            options:{plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#aab3c7'}},y:{ticks:{color:'#aab3c7'}}}}});
-        }
-        // Pie categorie (saldo netto)
-        const ctx2=document.getElementById('chartPie');
-        if(ctx2){
-          if(this.charts.pie){ this.charts.pie.destroy(); delete this.charts.pie; }
-          const map={};
-          this.filteredRows.forEach(r=>{ const k=r.Categoria||'Altro'; map[k]=(map[k]||0) + r.ImportoNetto*(r.Tipo==='entrata'?1:-1); });
-          const labels=Object.keys(map), data=Object.values(map);
-          const palette=['#6c7bff','#35d9a3','#fbbf24','#ef4444','#22d3ee','#818cf8','#14b8a6','#f472b6','#f59e0b'];
-          this.charts.pie=new Chart(ctx2,{type:'doughnut',data:{labels,datasets:[{data,backgroundColor:palette}]},
-            options:{plugins:{legend:{labels:{color:'#e5e7eb'}}}}});
-        }
-        // Line annuale
-        const ctx3=document.getElementById('chartYear');
-        if(ctx3){
-          if(this.charts.year){ this.charts.year.destroy(); delete this.charts.year; }
-          const arr=Array(12).fill(0);
-          this.rows.forEach(r=>{ const d=new Date(r.Data+'T00:00:00'); if(d.getFullYear()===this.filters.year) arr[d.getMonth()]+=r.ImportoNetto*(r.Tipo==='entrata'?1:-1); });
-          this.charts.year=new Chart(ctx3,{type:'line',data:{labels:this.months,datasets:[{data:arr,fill:true,borderColor:'#6c7bff',backgroundColor:'rgba(108,123,255,.22)',tension:.35}]},
-            options:{plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#cbd5e1'}},y:{ticks:{color:'#cbd5e1'}}}}});
+        else { 
+          totalExpenses += gross; 
+          if (i.type==='activity') ivaCredito += vatAmount; 
         }
       });
-    },
-
-    /* === Import / Export === */
-    exportCSV(){
-      const header=['id','Data','Tipo','ImportoNetto','IVA','ImportoIVA','ImportoLordo','Categoria','Conto','Attivita','Cliente','Fornitore','Note'];
-      const lines=this.rows.map(r=>header.map(k=> r[k] ?? '').join(';'));
-      const csv=header.join(';')+'\n'+lines.join('\n');
-      const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
-      const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='contabilita_pro++++.csv'; a.click(); URL.revokeObjectURL(url);
-    },
-    importCSV(ev){
-      const file=ev.target.files?.[0]; if(!file) return;
-      const rdr=new FileReader();
-      rdr.onload=()=>{
-        const txt=String(rdr.result).trim(); const lines=txt.split('\n'); const head=lines.shift().split(';');
-        const parse=(l)=>{ const v=l.split(';'); const o={}; head.forEach((k,i)=>o[k]=v[i]); return o; };
-        const arr=lines.filter(Boolean).map(parse).map(o=>({
-          id:o.id||this.uid(), Data:o.Data, Tipo:o.Tipo,
-          ImportoNetto:+o.ImportoNetto||0, IVA:+o.IVA||0,
-          ImportoIVA:+o.ImportoIVA||0, ImportoLordo:+o.ImportoLordo||0,
-          Categoria:o.Categoria||'', Conto:o.Conto||'', Attivita:o.Attivita||'',
-          Cliente:o.Cliente||'', Fornitore:o.Fornitore||'', Note:o.Note||''
-        }));
-        this.rows=arr;
+      
+      const netBalance = totalIncomes - totalExpenses;
+      const ivaBalance = ivaAddebito - ivaCredito;
+      
+      return { 
+        totalIncomes,
+        totalExpenses,
+        netBalance,
+        ivaAddebito,
+        ivaCredito,
+        ivaBalance, 
+        transactions: filtered.sort((a,b)=> new Date(b.date)-new Date(a.date)) 
       };
-      rdr.readAsText(file);
-    },
-    exportPDF(){
-      const el=document.querySelector('main');
-      html2canvas(el,{backgroundColor:null,scale:2}).then(canvas=>{
-        const pdf=new jspdf.jsPDF('p','mm','a4'); const w=210; const h=canvas.height*w/canvas.width;
-        pdf.addImage(canvas.toDataURL('image/png'),'PNG',0,0,w,h); pdf.save('report-pro++++.pdf');
-      });
-    },
-    clearAll(){ if(confirm('Svuotare tutti i dati?')){ localStorage.clear(); location.reload(); } },
-
-    /* === Fisco 🇮🇹 === */
-    initFisco(){
-      if(localStorage.getItem('pro++++_fisco_init')) return;
-      const y=new Date().getFullYear(), add=(t,d,k)=> this.events.push({id:this.uid(),title:t,date:d,kind:k,repeat:'year',done:false});
-      add('CU',`${y}-03-16`,'Fiscale');
-      add('IVA 1° trim',`${y}-05-16`,'Fiscale');
-      add('IVA 2° trim',`${y}-08-20`,'Fiscale');
-      add('IVA 3° trim',`${y}-11-16`,'Fiscale');
-      add('IVA 4° trim',`${y+1}-03-16`,'Fiscale');
-      add('IMU acconto',`${y}-06-16`,'Fiscale');
-      add('Saldo IRPEF/IRES/IRAP',`${y}-06-30`,'Fiscale');
-      add('Acconto IRPEF/IRES/IRAP',`${y}-11-30`,'Fiscale');
-      add('IMU saldo',`${y}-12-16`,'Fiscale');
-      localStorage.setItem('pro++++_fisco_init','1');
-    },
-
-    /* === Demo seed === */
-    seedDemo(){
-      const y=this.filters.year, m=this.filters.month;
-      const d=(dd)=>`${y}-${String(m+1).padStart(2,'0')}-${String(dd).padStart(2,'0')}`;
-      this.rows=[
-        { id:this.uid(), Data:d(2),  Tipo:'entrata', ImportoNetto:1800, IVA:22, ImportoIVA:396, ImportoLordo:2196, Categoria:'Fatture clienti', Conto:'POS', Attivita:'Negozio', Cliente:'Cliente A', Fornitore:'', Note:'Vendita' },
-        { id:this.uid(), Data:d(4),  Tipo:'entrata', ImportoNetto:1710, IVA:10, ImportoIVA:171, ImportoLordo:1881, Categoria:'Corrispettivi', Conto:'Contanti', Attivita:'Negozio', Cliente:'Cliente B', Fornitore:'', Note:'Cassa' },
-        { id:this.uid(), Data:d(6),  Tipo:'spesa',   ImportoNetto:998,  IVA:22, ImportoIVA:220, ImportoLordo:1218, Categoria:'Affitto', Conto:'Banca', Attivita:'Sede', Cliente:'', Fornitore:'Proprietario', Note:'Canone' },
-        { id:this.uid(), Data:d(7),  Tipo:'spesa',   ImportoNetto:504,  IVA:10, ImportoIVA:50,  ImportoLordo:554,  Categoria:'Utenze', Conto:'Banca', Attivita:'Sede', Cliente:'', Fornitore:'Enel', Note:'Energia' },
-        { id:this.uid(), Data:d(8),  Tipo:'spesa',   ImportoNetto:1794, IVA:22, ImportoIVA:395, ImportoLordo:2189, Categoria:'Marketing', Conto:'Online', Attivita:'Promo', Cliente:'', Fornitore:'Meta Ads', Note:'Campagna' }
-      ];
-      this.clients=[
-        { id:this.uid(), tipo:'cliente', nome:'Cliente A', piva:'IT12345678901', email:'a@clienti.it', telefono:'', pagamento:'Bonifico', note:'' },
-        { id:this.uid(), tipo:'cliente', nome:'Cliente B', piva:'', email:'b@clienti.it', telefono:'', pagamento:'Carta', note:'' }
-      ];
-      this.suppliers=[
-        { id:this.uid(), tipo:'fornitore', nome:'Proprietario', piva:'', email:'', telefono:'', pagamento:'Bonifico', note:'Affitto' },
-        { id:this.uid(), tipo:'fornitore', nome:'Enel', piva:'', email:'', telefono:'', pagamento:'RID', note:'Utenze' },
-        { id:this.uid(), tipo:'fornitore', nome:'Meta Ads', piva:'', email:'', telefono:'', pagamento:'Carta', note:'Marketing' }
-      ];
     }
-  }
-}).mount('#app');
-</script>
 
-<!-- Modali HTML (separate, agganciate dalla logica sopra) -->
-<!-- MOVIMENTO -->
-<dialog id="dlgTx" class="modal">
-  <div class="modal-h">{{ txDraft.id ? 'Modifica movimento' : (txDraft.Tipo==='entrata' ? 'Nuova Entrata' : 'Nuova Uscita') }}</div>
-  <div class="modal-b space-y-3">
-    <div class="grid grid-cols-2 gap-2">
-      <input type="date" class="input" v-model="txDraft.Data">
-      <select class="input" v-model="txDraft.Tipo">
-        <option value="entrata">Entrata</option>
-        <option value="spesa">Uscita</option>
-      </select>
-    </div>
+    // --- Contacts / Categories helpers (Omessa per brevità, intatta) ---
+    function addContact(name, scope, relation){
+      const clean = (name||'').trim(); if (!clean) return;
+      // Normalizzazione: Controlla il nome in minuscolo
+      const exists = appData.contacts.find(c=> c.name.toLowerCase()===clean.toLowerCase() && c.scope===scope );
+      if (!exists){ appData.contacts.push({ id:getNextId(), name:clean, scope, relation }); saveData(); }
+    }
+    
+    function ensureCategory(cat){
+      const c=(cat||'').trim(); if (!c) return;
+      // Normalizzazione: Controlla se la categoria esiste già in minuscolo
+      if (!appData.categories.map(s=>s.toLowerCase()).includes(c.toLowerCase())) { 
+        appData.categories.push(c); 
+        appData.categories.sort((a,b)=>a.localeCompare(b)); 
+        saveData(); 
+      }
+    }
+    
+    // Trova la media storica di spesa per una categoria (Omessa per brevità, intatta)
+    function getAverageMonthlyExpense(category) {
+        const target = (category || 'Altro').toLowerCase();
+        
+        const relevantExpenses = appData.expenses.filter(e => 
+            (e.category || 'Altro').toLowerCase() === target
+        );
+        
+        const monthlyTotals = {};
+        relevantExpenses.forEach(e => {
+            const ym = e.date.slice(0, 7);
+            monthlyTotals[ym] = (monthlyTotals[ym] || 0) + e.gross;
+        });
 
-    <div class="grid grid-cols-2 gap-2">
-      <div>
-        <div class="title-sm mb-1">Importo NETTO (€)</div>
-        <input type="number" step="0.01" class="input" v-model.number="txDraft.ImportoNetto">
-      </div>
-      <div>
-        <div class="title-sm mb-1">IVA %</div>
-        <div class="flex gap-2">
-          <select class="input" v-model.number="presetIVA" @change="txDraft.IVA=presetIVA ?? txDraft.IVA">
-            <option :value="null">—</option>
-            <option :value="0">0%</option>
-            <option :value="4">4%</option>
-            <option :value="5">5%</option>
-            <option :value="10">10%</option>
-            <option :value="22">22%</option>
-          </select>
-          <input type="number" step="0.1" class="input" v-model.number="txDraft.IVA" placeholder="IVA %">
+        const totalMonths = Object.keys(monthlyTotals).length;
+        if (totalMonths === 0) return 0;
+        
+        const totalExpense = Object.values(monthlyTotals).reduce((sum, current) => sum + current, 0);
+        
+        return totalExpense / totalMonths;
+    }
+
+    // Logica di tracciamento spese ricorrenti (Omessa per brevità, intatta)
+    function trackRecurringExpense(description, gross, date) {
+        const desc = description.toLowerCase();
+        
+        const inferredFrequency = Object.keys(COMMON_FREQUENCIES).find(key => desc.includes(key)) 
+                                    ? COMMON_FREQUENCIES[Object.keys(COMMON_FREQUENCIES).find(key => desc.includes(key))]
+                                    : null;
+
+        if (!inferredFrequency) return;
+        
+        const recurringKey = `${inferredFrequency}:${desc.replace(/[^a-z0-9]/g, '-').slice(0, 20)}`;
+
+        const existing = appData.recurringExpenses.find(r => r.key === recurringKey);
+        
+        const newRecord = {
+            key: recurringKey,
+            description: description,
+            lastDate: date,
+            lastAmount: +gross.toFixed(2),
+            frequency: inferredFrequency
+        };
+
+        if (existing) {
+            Object.assign(existing, newRecord);
+        } else {
+            appData.recurringExpenses.push(newRecord);
+        }
+    }
+
+
+    // --- Transactions CRUD (Omessa per brevità, intatta) ---
+    function saveTransaction(isIncome, data){
+      const list = isIncome ? appData.invoices : appData.expenses;
+      
+      const net = parseFloat(data.net)||0;
+      const vatRate = parseFloat(data.vatRate)||0;
+      
+      if (net < 0) { showToast('L\'importo Netto non può essere negativo.','red'); return; }
+
+      const vatAmount = (net*vatRate/100);
+      const gross = net+vatAmount;
+      const tags = (data.tags||'').split(',').map(s=>s.trim()).filter(Boolean);
+
+      const updatedItem = {
+        id: data.id || getNextId(),
+        type: data.dataType, // 'activity' | 'personal'
+        date: data.date,
+        description: data.description,
+        category: (data.category||'Altro').trim(),
+        tags,
+        // Usa unary plus per convertire stringhe formattate (toFixed) in numeri
+        net: +net.toFixed(2),
+        vatRate: +vatRate,
+        vatAmount: +vatAmount.toFixed(2),
+        gross: +gross.toFixed(2),
+        incomeType: data.incomeType || (isIncome && data.dataType==='activity' ? 'Fattura (Cliente)' : null)
+      };
+      
+      // Traccia spese ricorrenti (solo uscite)
+      if (!isIncome && data.dataType === 'personal' && updatedItem.description) {
+          trackRecurringExpense(updatedItem.description, updatedItem.gross, updatedItem.date);
+      }
+
+
+      // maintain contacts and categories
+      const isFatturaOrPersonal = (isIncome && data.dataType==='activity' && data.incomeType==='Fattura (Cliente)') || data.dataType==='personal';
+      if (isFatturaOrPersonal && updatedItem.description?.trim()){
+        if (!data.id || (list.find(it=>it.id===data.id)?.description !== data.description)){
+          addContact(data.description, data.dataType, isIncome?'client':'supplier');
+        }
+      }
+      ensureCategory(updatedItem.category);
+
+      if (isIncome && data.dataType==='activity' && data.incomeType==='Incasso/Corrispettivo'){
+        updatedItem.description = updatedItem.description || "Corrispettivi/Incasso Giornaliero";
+      }
+
+      if (data.id){
+        const idx = list.findIndex(i=>i.id===data.id);
+        if (idx>-1){ list[idx]=updatedItem; showToast(`Transazione ID ${data.id} aggiornata!`); }
+      } else { list.push(updatedItem); showToast(`"${updatedItem.description}" registrato!`); }
+
+      saveData(); renderPage(currentPage);
+    }
+
+    function handleTransactionSubmit(type){
+      const form = document.getElementById('transaction-form');
+      const data = new FormData(form);
+      const isIncome = data.get('isIncome')==='true';
+      const transactionId = form.getAttribute('data-transaction-id');
+
+      const payload = {
+        id: transactionId ? parseInt(transactionId) : null,
+        dataType: type,
+        isIncome,
+        date: data.get('date'),
+        description: data.get('description'),
+        net: data.get('net'),
+        vatRate: data.get('vatRate'),
+        incomeType: data.get('incomeType'),
+        category: data.get('category') || 'Altro',
+        tags: data.get('tags') || ''
+      };
+
+      const isCorrisp = type==='activity' && isIncome && payload.incomeType==='Incasso/Corrispettivo';
+      if (payload.net && payload.date && (isCorrisp || (payload.description && payload.description.trim()))){
+          
+          const grossAmount = parseFloat(payload.net) * (1 + (parseFloat(payload.vatRate) / 100)) || 0;
+          
+          // Allerta di Spesa Anomala (solo nuove uscite, solo Personale)
+          if (!payload.id && !isIncome && type === 'personal') {
+              const monthlyAvg = getAverageMonthlyExpense(payload.category);
+              // Soglia di anomalia: 20% in più della media
+              if (monthlyAvg > 0 && grossAmount > monthlyAvg * 1.20) {
+                  const percentDifference = ((grossAmount / monthlyAvg) * 100).toFixed(0);
+                  showModal(
+                      '🚨 Allerta Spesa Anomala',
+                      `Questa spesa (${grossAmount.toFixed(2)}${getCurrencySymbol()}) è circa ${percentDifference}% superiore alla tua media mensile (${monthlyAvg.toFixed(2)}${getCurrencySymbol()}) per la categoria "${payload.category}". Continuare?`,
+                      true,
+                      () => {
+                          saveTransaction(isIncome, payload); // Confermato
+                          // FIX: Aggiorna etichetta dopo il salvataggio
+                          const isCurrentlyIncome = document.getElementById('isIncome').value === 'true';
+                          document.getElementById('description-label').textContent = isCurrentlyIncome ? 'Cliente / Descrizione' : 'Fornitore / Descrizione';
+                          form.reset();
+                          form.removeAttribute('data-transaction-id');
+                      },
+                      () => showToast('Registrazione annullata.','red') // Annullato
+                  );
+                  return; // Blocca l'invio normale per attendere la modal
+              }
+          }
+          
+          saveTransaction(isIncome, payload);
+          form.reset();
+          form.removeAttribute('data-transaction-id');
+          // FIX: Aggiunto aggiornamento dell'etichetta dopo il reset (Correzione A)
+          const isCurrentlyIncome = document.getElementById('isIncome').value === 'true';
+          document.getElementById('description-label').textContent = isCurrentlyIncome ? 'Cliente / Descrizione' : 'Fornitore / Descrizione';
+      } else {
+        showToast('Compila tutti i campi richiesti.','red');
+      }
+    }
+
+    function editTransaction(isIncome,id,scope){
+      const list = isIncome ? appData.invoices : appData.expenses;
+      const item = list.find(t=>t.id===id);
+      if (!item) return showToast('Transazione non trovata.','red');
+      
+      // Re-render the correct page to ensure form elements exist
+      if (currentPage !== scope) renderPage(scope); 
+      
+      const form = document.getElementById('transaction-form'); if(!form) return;
+      
+      // Scroll to form (anchor)
+      document.getElementById('transaction-form-anchor')?.scrollIntoView({behavior:'smooth'});
+      
+      form.setAttribute('data-transaction-id', item.id);
+      document.getElementById('isIncome').value = isIncome ? 'true':'false';
+      document.getElementById('isIncome').dispatchEvent(new Event('change')); // Trigger listener to update UI
+      
+      document.getElementById('date').value = item.date;
+      document.getElementById('description').value = item.description || '';
+      // Usa toFixed(2) SOLO per pre-popolare il campo in edit mode
+      document.getElementById('net-amount').value = item.net.toFixed(2);
+      document.getElementById('vat-rate').value = item.vatRate;
+      document.getElementById('category').value = item.category || 'Altro';
+      document.getElementById('tags').value = (item.tags||[]).join(', ');
+
+      if (scope==='activity' && isIncome){ 
+        document.getElementById('incomeType').value = item.incomeType || 'Fattura (Cliente)'; 
+        document.getElementById('incomeType').dispatchEvent(new Event('change')); // Trigger listener
+      }
+      
+      // Rerun listeners/autocompletes that depend on form state
+      setupActivityIncomeTypeListeners(scope);
+      setupContactAutocomplete(scope);
+      setupCategoryAutocomplete();
+      calculateGross();
+      
+      const submitBtn = form.querySelector('button[type="submit"]');
+      submitBtn.textContent = `Salva Modifiche (ID ${item.id})`;
+      submitBtn.classList.remove('bg-emerald-500','hover:bg-emerald-600');
+      submitBtn.classList.add('bg-blue-500','hover:bg-blue-600');
+      showToast(`Modulo pronto per modificare ID ${item.id}.`);
+    }
+    
+    // NUOVA FUNZIONE: Duplica Transazione (Omessa per brevità, intatta)
+    function duplicateTransaction(isIncome, id, scope) {
+      const list = isIncome ? appData.invoices : appData.expenses;
+      const item = list.find(t => t.id === id);
+      if (!item) return showToast('Transazione non trovata.', 'red');
+
+      // Riporta alla pagina del form (Activity/Personal)
+      if (currentPage !== scope) renderPage(scope);
+
+      const form = document.getElementById('transaction-form');
+      if (!form) return;
+
+      // Scroll to form and set values
+      document.getElementById('transaction-form-anchor')?.scrollIntoView({ behavior: 'smooth' });
+      form.removeAttribute('data-transaction-id'); // Non è una modifica, ma una nuova registrazione
+      
+      document.getElementById('isIncome').value = isIncome ? 'true' : 'false';
+      document.getElementById('isIncome').dispatchEvent(new Event('change'));
+      document.getElementById('date').value = new Date().toISOString().slice(0, 10); // Nuova data
+      document.getElementById('description').value = item.description || '';
+      document.getElementById('net-amount').value = item.net.toFixed(2);
+      document.getElementById('vat-rate').value = item.vatRate;
+      document.getElementById('category').value = item.category || 'Altro';
+      document.getElementById('tags').value = (item.tags || []).join(', ');
+
+      if (scope === 'activity' && isIncome) {
+        document.getElementById('incomeType').value = item.incomeType || 'Fattura (Cliente)';
+        document.getElementById('incomeType').dispatchEvent(new Event('change'));
+      }
+
+      setupActivityIncomeTypeListeners(scope);
+      setupContactAutocomplete(scope);
+      setupCategoryAutocomplete();
+      calculateGross();
+
+      const submitBtn = form.querySelector('button[type="submit"]');
+      submitBtn.textContent = `Registra Copia Movimento`;
+      submitBtn.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+      submitBtn.classList.add('bg-emerald-500', 'hover:bg-emerald-600');
+      showToast(`Modulo pre-compilato (Copia ID ${item.id})!`);
+    }
+
+
+    function deleteTransaction(isIncome,id){
+      const listName = isIncome ? 'invoices':'expenses';
+      const idx = appData[listName].findIndex(i=>i.id===id);
+      if (idx>-1){
+        showModal('Conferma Eliminazione','Eliminare definitivamente questa transazione?',true,()=>{
+          appData[listName].splice(idx,1); saveData(); showToast('Transazione eliminata.','red'); renderPage(currentPage);
+        });
+      }
+    }
+
+    // --- Reminders CRUD (Omessa per brevità, intatta) ---
+    function saveReminder(data){
+      appData.reminders ||= [];
+      if (data.id){ const i=appData.reminders.findIndex(r=>r.id===data.id); if(i>-1){ appData.reminders[i]={...appData.reminders[i],...data}; } }
+      else { appData.reminders.push({ id:getNextId(), ...data, paid:false }); }
+      saveData(); showToast('Promemoria salvato!'); renderPage('reminders');
+    }
+    function toggleReminderPaid(id){ const r=appData.reminders.find(x=>x.id===id); if(r){ r.paid=!r.paid; saveData(); showToast(r.paid?'Pagamento registrato!':'Pagamento annullato.'); renderPage('reminders'); } }
+    function deleteReminder(id){
+      const i=(appData.reminders||[]).findIndex(r=>r.id===id);
+      if (i>-1){
+        showModal('Eliminare promemoria?','Operazione irreversibile.',true,()=>{
+          appData.reminders.splice(i,1); saveData(); showToast('Promemoria eliminato.','red'); renderPage('reminders');
+        });
+      }
+    }
+    function handleReminderSubmit(){
+      const f=document.getElementById('reminder-form'); const d=new FormData(f);
+      const payload={ type:d.get('type'), description:d.get('description'), date:d.get('date'), amount: parseFloat(d.get('amount'))||0 };
+      if (payload.description && payload.date && payload.amount>0){ 
+        saveReminder(payload); 
+        f.reset(); 
+        document.getElementById('reminder-date').value = new Date().toISOString().slice(0,10); 
+      }
+      else showToast('Compila tutti i campi validi.','red');
+    }
+    
+    // --- Compleanni CRUD (Omessa per brevità, intatta) ---
+    function saveBirthday(data){
+      appData.birthdays ||= [];
+      
+      const dateStr = data.date;
+      const recurringDate = dateStr.slice(5); 
+
+      if (data.id){ 
+          const i=appData.birthdays.findIndex(r=>r.id===data.id); 
+          if(i>-1){ appData.birthdays[i]={...appData.birthdays[i],...data, recurringDate}; } 
+      }
+      else { 
+          appData.birthdays.push({ id:getNextId(), ...data, recurringDate }); 
+      }
+      saveData(); showToast('Compleanno salvato!'); renderPage('reminders');
+    }
+    function deleteBirthday(id){
+      const i=(appData.birthdays||[]).findIndex(r=>r.id===id);
+      if (i>-1){
+        showModal('Eliminare compleanno?','Operazione irreversibile.',true,()=>{
+          appData.birthdays.splice(i,1); saveData(); showToast('Compleanno eliminato.','red'); renderPage('reminders');
+        });
+      }
+    }
+    function handleBirthdaySubmit(){
+        const f=document.getElementById('birthday-form'); const d=new FormData(f);
+        const dateStr = d.get('date');
+        
+        const payload={ 
+            name: d.get('name').trim(), 
+            date: dateStr, 
+        };
+        
+        if (payload.name && payload.date){ 
+            saveBirthday(payload); 
+            f.reset(); 
+            document.getElementById('birthday-date').value = new Date().toISOString().slice(0,10); 
+        }
+        else showToast('Compila tutti i campi validi.','red');
+    }
+
+
+    // --- Import/Export (Omessa per brevità, intatta) ---
+    function exportDataJSON(){
+      const dataStr = JSON.stringify(appData,null,2);
+      const blob = new Blob([dataStr], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a=document.createElement('a'); a.href=url; a.download=`finanza_backup_${new Date().toISOString().slice(0,10)}.json`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+      showToast('Backup JSON esportato!');
+    }
+    function exportCSV(){
+      // Transactions CSV
+      const tx = [...appData.invoices.map(t=>({...t,isIncome:true})), ...appData.expenses.map(t=>({...t,isIncome:false}))].sort((a,b)=> new Date(a.date)-new Date(b.date));
+      const esc = (s)=> `"${String(s??'').replace(/"/g,'""')}"`;
+      // AGGIUNTA: Dati riepilogativi in testa al CSV (molto basic)
+      const summary = calculateFinancialSummary('global','all', 'all');
+      const summaryRow = ['---RIEPILOGO---', `Saldo Netto: ${summary.netBalance.toFixed(2)}${getCurrencySymbol()}`, `Entrate Totali: ${summary.totalIncomes.toFixed(2)}${getCurrencySymbol()}`, `Uscite Totali: ${summary.totalExpenses.toFixed(2)}${getCurrencySymbol()}`].map(esc).join(',');
+      
+      const headerTx = ['ID','Tipo','Scope','Data','Descrizione','Categoria','Tag','AliquotaIVA','Netto','IVA','Lordo','Entrata?','Sottotipo'].join(',');
+      const rowsTx = tx.map(t => [
+        t.id, (t.isIncome?'Entrata':'Uscita'), t.type, t.date, t.description||'', t.category||'',
+        (t.tags||[]).join('|'), t.vatRate, t.net, t.vatAmount, t.gross, t.isIncome, t.incomeType||''
+      ].map(esc).join(','));
+      const csvTx = [summaryRow, headerTx, ...rowsTx].join('\n');
+      
+      // Reminders CSV
+      const headerRm = ['ID','Tipo','Descrizione','Data','Importo','Pagato?'].join(',');
+      const rowsRm = (appData.reminders||[]).map(r => [r.id,r.type,r.description,r.date,r.amount,r.paid].map(esc).join(','));
+      const csvRm = [headerRm, ...rowsRm].join('\n');
+      
+      // Birthdays CSV
+      const headerBd = ['ID','Nome','DataNascita','RicorrenzaMD'].join(',');
+      const rowsBd = (appData.birthdays||[]).map(r => [r.id,r.name,r.date,r.recurringDate].map(esc).join(','));
+      const csvBd = [headerBd, ...rowsBd].join('\n');
+
+      const zipContent = `### Transazioni\n${csvTx}\n\n### Promemoria\n${csvRm}\n\n### Compleanni\n${csvBd}\n`;
+      const blob = new Blob([zipContent], {type:'text/plain;charset=utf-8'});
+      const url = URL.createObjectURL(blob);
+      const a=document.createElement('a'); a.href=url; a.download=`finanza_export_${new Date().toISOString().slice(0,10)}.txt`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+      showToast('Export CSV pronto (testo con 3 sezioni).');
+    }
+
+    function importDataFile(ev){
+      const file = ev.target.files[0]; if(!file) return;
+      const r = new FileReader();
+      r.onload = (e)=>{
+        try{
+          const imported = JSON.parse(e.target.result);
+          if (imported.invoices && imported.expenses && imported.reminders){
+            showModal('Conferma Importazione', 'Sovrascrivere i dati attuali? (Consigliato backup prima)', true, ()=>{
+              const all = [...imported.invoices, ...imported.expenses, ...imported.reminders, ...(imported.contacts||[]), ...(imported.birthdays||[])];
+              const maxId = all.length>0 ? Math.max(...all.map(x=>x.id||0)) : 0;
+              appData = { ...appData, ...imported, lastId: Math.max(maxId, appData.lastId) };
+              appData.categories ||= DEFAULT_CATEGORIES.slice();
+              appData.pin ||= '1234'; 
+              appData.currencySymbol ||= '€'; 
+              appData.birthdays ||= []; 
+              appData.recurringExpenses ||= []; 
+              // Assicurati che i compleanni importati abbiano recurringDate
+              appData.birthdays = appData.birthdays.map(bd => ({
+                  ...bd,
+                  recurringDate: (bd.date || bd.recurringDate).slice(5) 
+              }));
+              appData.monthlySavingsTarget ||= 0;
+              saveData(); showToast('Dati importati!'); renderPage(currentPage);
+            });
+          } else { showToast('Backup JSON non valido.','red'); }
+        } catch(err){ console.error(err); showToast('Errore lettura file JSON.','red'); }
+      };
+      r.readAsText(file);
+    }
+
+    // --- CLEAN DATA (Corretto - FIX D) ---
+    function cleanDataByDate(monthYearStr){
+      const [yearStr, monthStr] = monthYearStr.split('-');
+      const targetYear = parseInt(yearStr);
+      const targetMonth = parseInt(monthStr);
+
+      if (isNaN(targetYear) || isNaN(targetMonth) || targetYear === 0){ 
+        showToast('Seleziona un mese/anno valido.','red'); 
+        return; 
+      }
+      
+      // Crea la data limite (es. 1° Giorno del Mese/Anno Selezionato)
+      const limitDate = new Date(targetYear, targetMonth - 1, 1);
+      
+      showModal('Conferma Pulizia Dati', `Eliminare TUTTO prima del 1° ${limitDate.toLocaleDateString('it-IT', {month:'long', year:'numeric'})}?`, true, ()=>{
+        
+        // La condizione è: la data della transazione è < della data limite
+        const before = (it)=> new Date(it.date) < limitDate;
+        
+        const i0=appData.invoices.length, e0=appData.expenses.length, r0=appData.reminders.length;
+        
+        appData.invoices = appData.invoices.filter(x=>!before(x));
+        appData.expenses = appData.expenses.filter(x=>!before(x));
+        appData.reminders = appData.reminders.filter(x=>!before(x));
+        
+        // MIGLIORAMENTO: Reset lastId se non ci sono più movimenti/promemoria
+        if (appData.invoices.length === 0 && appData.expenses.length === 0 && appData.reminders.length === 0) {
+            appData.lastId = 0;
+        }
+        
+        saveData();
+        showToast(`Pulizia ok. Rimossi ${(i0 - appData.invoices.length)+(e0 - appData.expenses.length)} movimenti e ${(r0 - appData.reminders.length)} promemoria.`);
+        renderPage('settings');
+      });
+    }
+    
+    // --- Delete contact (settings) (Omessa per brevità, intatta) ---
+    function deleteContact(id){
+      const i=appData.contacts.findIndex(c=>c.id===id);
+      if (i>-1){
+        showModal('Conferma Eliminazione Contatto','Le transazioni non verranno cancellate.',true,()=>{
+          appData.contacts.splice(i,1); saveData(); showToast('Contatto eliminato.','red'); renderPage('settings');
+        });
+      }
+    }
+
+
+    // --- UI wiring (Activity/Personal Forms) (Omessa per brevità, intatta) ---
+    function setupActivityIncomeTypeListeners(scope){
+      if (scope!=='activity') return;
+      const incomeTypeSelect = document.getElementById('incomeType');
+      const isIncomeSelect = document.getElementById('isIncome');
+      const descriptionDiv = document.getElementById('description-div');
+
+      const updateVisibility = ()=>{
+        const isIncome = isIncomeSelect.value==='true';
+        const incomeType = incomeTypeSelect?.value || 'Fattura (Cliente)';
+        if (isIncome && incomeType==='Incasso/Corrispettivo'){
+          descriptionDiv.classList.add('hidden');
+          const desc = document.getElementById('description');
+          // Non rendere required la descrizione
+          desc.removeAttribute('required'); 
+          // Se non è in modalità modifica, imposta il valore predefinito
+          if (document.getElementById('transaction-form').getAttribute('data-transaction-id')===null) {
+             desc.value = 'Corrispettivi/Incasso Giornaliero';
+          }
+          document.getElementById('description-label').textContent = 'Descrizione Incasso (Opzionale)';
+        } else {
+          descriptionDiv.classList.remove('hidden');
+          const desc = document.getElementById('description');
+          desc.setAttribute('required','required');
+          // Se non è in modalità modifica, pulisci il valore
+          if (document.getElementById('transaction-form').getAttribute('data-transaction-id')===null){ desc.value=''; }
+          document.getElementById('description-label').textContent = isIncome ? 'Cliente / Descrizione' : 'Fornitore / Descrizione';
+          setupContactAutocomplete(scope);
+        }
+      };
+
+      incomeTypeSelect?.removeEventListener('change', updateVisibility);
+      incomeTypeSelect?.addEventListener('change', updateVisibility);
+      
+      isIncomeSelect.removeEventListener('change', setupIncomeTypeControl);
+      isIncomeSelect.addEventListener('change', setupIncomeTypeControl);
+
+      function setupIncomeTypeControl() {
+        const isIncome=isIncomeSelect.value==='true';
+        const ctl=document.getElementById('income-type-control');
+        if (scope==='activity' && ctl){ ctl.classList.toggle('hidden', !isIncome); }
+        updateVisibility();
+      }
+      
+      setupIncomeTypeControl(); // Run on initial load
+    }
+
+    function setupContactAutocomplete(scope){
+      const isIncome = document.getElementById('isIncome').value==='true';
+      const incomeType = document.getElementById('incomeType')?.value;
+      const input = document.getElementById('description');
+      const datalist = document.getElementById('contact-list');
+      if (!input || !datalist) return;
+
+      if (scope==='activity' && isIncome && incomeType==='Incasso/Corrispettivo'){ datalist.innerHTML=''; return; }
+      const relation = isIncome ? 'client':'supplier';
+      const contacts = appData.contacts
+        .filter(c=> c.scope===scope && (c.relation===relation || c.relation==='both'))
+        .sort((a,b)=> a.name.localeCompare(b.name));
+      datalist.innerHTML = contacts.map(c=> `<option value="${c.name}"></option>`).join('');
+      input.setAttribute('list','contact-list');
+    }
+
+    function setupCategoryAutocomplete(){
+      const dl = document.getElementById('category-list');
+      if (!dl) return;
+      const all = (appData.categories||DEFAULT_CATEGORIES).slice().sort((a,b)=>a.localeCompare(b));
+      dl.innerHTML = all.map(c=> `<option value="${c}"></option>`).join('');
+    }
+    
+    function getAllTags() {
+        const allTags = new Set();
+        [...appData.invoices, ...appData.expenses].forEach(t => {
+            (t.tags || []).forEach(tag => allTags.add(tag));
+        });
+        return Array.from(allTags).sort();
+    }
+
+    function calculateGross(){
+      const netInput=document.getElementById('net-amount');
+      const vatSelect=document.getElementById('vat-rate');
+      const vatAmountDisplay=document.getElementById('vat-amount-display');
+      const grossAmountDisplay=document.getElementById('gross-amount-display');
+      
+      // FIX: Non formattare e riassegnare il valore qui. Prendiamo il valore per il calcolo.
+      let net = parseFloat(netInput.value)||0; 
+      const rate=parseFloat(vatSelect.value)||0;
+      
+      const vatAmt=net*rate/100; 
+      const gross=net+vatAmt;
+      
+      // I display sono solo per l'output, usiamo toFixed(2) qui.
+      vatAmountDisplay.textContent = vatAmt.toFixed(2)+' '+getCurrencySymbol();
+      grossAmountDisplay.textContent = gross.toFixed(2)+' '+getCurrencySymbol();
+    }
+    
+    // Funzione per ottenere i dati di "Focus Oggi" (Omessa per brevità, intatta)
+    function getTodayFocusData(type) {
+        const todayStr = new Date().toISOString().slice(0, 10);
+        
+        const summary = calculateFinancialSummary(type, 'day', todayStr);
+        
+        const todayDate = new Date(todayStr);
+
+        const upcomingReminders = appData.reminders.filter(r => !r.paid && r.date === todayStr);
+        const upcomingBirthdays = appData.birthdays.filter(b => {
+            const bdRecurrence = new Date(`${todayDate.getFullYear()}-${b.recurringDate}`);
+            return bdRecurrence.toISOString().slice(0, 10) === todayStr;
+        });
+        
+        return { summary, upcomingReminders, upcomingBirthdays };
+    }
+
+
+    // --- Rendering pages (Omessa per brevità, intatta) ---
+    function renderNavbar(){
+      const navbar=document.getElementById('navbar');
+      const navItems=[
+        {id:'activity',label:'Attività',icon:'💼'},
+        {id:'personal',label:'Personale',icon:'🏠'},
+        {id:'report',label:'Riepilogo',icon:'📊'},
+        {id:'reminders',label:'Scadenze',icon:'🔔'},
+        {id:'settings',label:'Gestione Dati',icon:'⚙️'}
+      ];
+      navbar.innerHTML = navItems.map(it=>`
+        <button onclick="renderPage('${it.id}')" class="p-2 text-sm font-medium rounded-lg transition hover:bg-gray-100 dark:hover:bg-gray-800 ${currentPage===it.id?'tab-active':'text-gray-500'}">
+          ${it.icon} <span class="hidden sm:inline">${it.label}</span>
+        </button>
+      `).join('');
+    }
+
+    function renderSummaryCard(summary,label){
+      const symbol = getCurrencySymbol();
+      const ivaStatus = summary.ivaBalance>=0?'IVA da Versare':'IVA a Credito';
+      const ivaColor = summary.ivaBalance>=0?'text-red-600':'text-blue-600';
+      const balanceColor = summary.netBalance>=0?'text-emerald-600':'text-red-600';
+      return `
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="bg-white dark:bg-gray-800 p-4 rounded-xl card text-center">
+            <p class="text-sm text-gray-500">Entrate Totali (${label})</p>
+            <p class="text-xl font-bold text-emerald-600">${summary.totalIncomes.toFixed(2)} ${symbol}</p>
+          </div>
+          <div class="bg-white dark:bg-gray-800 p-4 rounded-xl card text-center">
+            <p class="text-sm text-gray-500">Uscite Totali (${label})</p>
+            <p class="text-xl font-bold text-red-600">${summary.totalExpenses.toFixed(2)} ${symbol}</p>
+          </div>
+          <div class="bg-white dark:bg-gray-800 p-4 rounded-xl card text-center col-span-2 md:col-span-1">
+            <p class="text-sm text-gray-500">Saldo Netto (${label})</p>
+            <p class="text-2xl font-extrabold ${balanceColor}">${summary.netBalance.toFixed(2)} ${symbol}</p>
+          </div>
+          <div class="bg-white dark:bg-gray-800 p-4 rounded-xl card text-center col-span-2 md:col-span-1">
+            <p class="text-sm text-gray-500">${ivaStatus} (Attività)</p>
+            <p class="text-xl font-bold ${ivaColor}">${Math.abs(summary.ivaBalance).toFixed(2)} ${symbol}</p>
+            <p class="text-xs text-gray-400">Add: ${summary.ivaAddebito.toFixed(2)} | Cred: ${summary.ivaCredito.toFixed(2)}</p>
+          </div>
         </div>
-      </div>
-    </div>
+      `;
+    }
+    function renderActivityOrPersonalPage(type){
+      const isActivity = type==='activity';
+      const symbol = getCurrencySymbol();
+      const title = isActivity?'Gestione Attività (Partita IVA)':'Gestione Personale (Casa)';
+      const listTitle = isActivity?`Ultime ${MAX_RECENT_TRANSACTIONS} Transazioni Attività`:`Ultime ${MAX_RECENT_TRANSACTIONS} Transazioni Personali`;
+      const year = new Date().getFullYear();
+      const summary = calculateFinancialSummary(type,'year', String(year));
+      const tx = summary.transactions.filter(t=>t.type===type).slice(0,MAX_RECENT_TRANSACTIONS);
+      
+      // Dati Focus Oggi
+      const todayData = getTodayFocusData(type);
+      const todayBalanceColor = todayData.summary.netBalance >= 0 ? 'text-emerald-500' : 'text-red-500';
+      const todaySummaryMessage = todayData.summary.netBalance.toFixed(2) + ' ' + symbol;
 
-    <div class="grid grid-cols-3 gap-2">
-      <div class="panel-2 p-2 text-center">
-        <div class="text-[11px] text-[#9aa4b2]">IVA (€)</div>
-        <div class="font-bold">{{ fmtEUR(calcIVAfromNet(txDraft)) }}</div>
-      </div>
-      <div class="panel-2 p-2 text-center">
-        <div class="text-[11px] text-[#9aa4b2]">Totale LORDO</div>
-        <div class="font-bold">{{ fmtEUR(calcLordo(txDraft)) }}</div>
-      </div>
-      <div class="panel-2 p-2 text-center">
-        <div class="text-[11px] text-[#9aa4b2]">{{ txDraft.Tipo==='entrata' ? 'IVA Debito' : 'IVA Credito' }}</div>
-        <div class="font-bold">{{ fmtEUR(calcIVAfromNet(txDraft)) }}</div>
-      </div>
-    </div>
 
-    <div class="grid grid-cols-2 gap-2">
-      <select class="input" v-model="txDraft.Categoria">
-        <option v-for="c in (txDraft.Tipo==='entrata'? categoriesIn : categoriesOut)" :key="c" :value="c">{{ c }}</option>
-      </select>
+      return `
+        <div class="space-y-6">
+          <h2 class="text-2xl font-semibold border-b pb-2 text-gray-700 dark:text-gray-300">${title}</h2>
+          ${renderSummaryCard(summary,year)}
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-white dark:bg-gray-800 p-4 rounded-xl card border-l-4 border-blue-500">
+                <h3 class="text-xl font-bold mb-2">Focus Oggi (${new Date().toLocaleDateString('it-IT')})</h3>
+                <p class="text-sm text-gray-500">Saldo Netto del Giorno:</p>
+                <p class="text-2xl font-extrabold ${todayBalanceColor} mb-2">${todaySummaryMessage}</p>
+                
+                <p class="text-xs text-gray-500">
+                    ${todayData.upcomingReminders.length > 0 ? `🔔 ${todayData.upcomingReminders.length} scadenza/e oggi. ` : ''}
+                    ${todayData.upcomingBirthdays.length > 0 ? `🎂 ${todayData.upcomingBirthdays.length} compleanno/i oggi!` : ''}
+                    ${todayData.upcomingReminders.length === 0 && todayData.upcomingBirthdays.length === 0 ? 'Nessun evento o scadenza urgente.' : ''}
+                </p>
+            </div>
+            
+            <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card" style="height: 200px;">
+                <canvas id="weeklyBalanceChart-${type}"></canvas>
+            </div>
+          </div>
+          <div id="transaction-form-anchor" class="pt-4"></div>
 
-      <!-- Partner con suggerimento intelligente -->
-      <div v-if="txDraft.Tipo==='entrata'">
-        <input class="input" v-model="txDraft.Cliente" @input="onPartnerInput" list="dlClients" placeholder="Cliente (autocompletamento)">
-        <datalist id="dlClients"><option v-for="c in clients" :key="c.id" :value="c.nome"></option></datalist>
-      </div>
-      <div v-else>
-        <input class="input" v-model="txDraft.Fornitore" @input="onPartnerInput" list="dlSuppliers" placeholder="Fornitore (autocompletamento)">
-        <datalist id="dlSuppliers"><option v-for="s in suppliers" :key="s.id" :value="s.nome"></option></datalist>
-      </div>
-    </div>
+          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card">
+            <h3 class="text-xl font-medium mb-4 text-emerald-600">Registra Nuovo Movimento</h3>
+            <form id="transaction-form" onsubmit="event.preventDefault(); handleTransactionSubmit('${type}');" class="space-y-4">
+              <input type="hidden" name="dataType" value="${type}">
+              <div class="grid grid-cols-1 ${isActivity?'md:grid-cols-2':''} gap-4">
+                <div>
+                  <label for="isIncome" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipo</label>
+                  <select id="isIncome" name="isIncome" required class="w-full p-2 border rounded-lg focus:ring-emerald-500 focus:border-emerald-500 dark:bg-gray-900 dark:border-gray-700">
+                    <option value="true">Entrata</option>
+                    <option value="false">${isActivity?'Spesa (Uscita)':'Uscita/Costo'}</option>
+                  </select>
+                </div>
+                ${isActivity?`
+                <div id="income-type-control">
+                  <label for="incomeType" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sottotipo Entrata</label>
+                  <select id="incomeType" name="incomeType" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
+                    <option value="Fattura (Cliente)">Fattura (Cliente)</option>
+                    <option value="Incasso/Corrispettivo">Incasso/Corrispettivo (POS/Contanti)</option>
+                  </select>
+                </div>`:''}
+              </div>
 
-    <div class="grid grid-cols-2 gap-2">
-      <input class="input" v-model="txDraft.Conto" placeholder="Conto (POS, Contanti, Banca...)">
-      <input class="input" v-model="txDraft.Attivita" placeholder="Attività (Negozio, Online...)">
-    </div>
-    <textarea class="input" rows="2" v-model="txDraft.Note" placeholder="Note / Descrizione"></textarea>
-  </div>
-  <div class="modal-f">
-    <button class="btn-ghost" @click="document.getElementById('dlgTx').close()">Annulla</button>
-    <button class="btn" @click="saveTx">Salva</button>
-  </div>
-</dialog>
+              <div>
+                <label for="date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data</label>
+                <input type="date" id="date" name="date" value="${new Date().toISOString().slice(0,10)}" required class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
+              </div>
 
-<!-- SCADENZA -->
-<dialog id="dlgEvent" class="modal">
-  <div class="modal-h">{{ eventDraft.id ? 'Modifica scadenza' : 'Nuova scadenza' }}</div>
-  <div class="modal-b space-y-3">
-    <input class="input" v-model="eventDraft.title" placeholder="Titolo (es. IVA 3° trim / Assicurazione auto)">
-    <input type="date" class="input" v-model="eventDraft.date">
-    <select class="input" v-model="eventDraft.kind">
-      <option>Fiscale</option><option>Assicurazione</option><option>Bolletta</option><option>Compleanno</option><option>Altro</option>
-    </select>
-    <select class="input" v-model="eventDraft.repeat">
-      <option value="">Nessuna ricorrenza</option>
-      <option value="month">Mensile</option>
-      <option value="quarter">Trimestrale</option>
-      <option value="year">Annuale</option>
-    </select>
-    <label class="flex items-center gap-2 text-sm"><input type="checkbox" v-model="eventDraft.done"> Completato</label>
-    <input type="file" @change="attachFile($event)">
-    <div v-if="eventDraft.fileName" class="text-xs">📎 <a :href="eventDraft.fileData" :download="eventDraft.fileName" class="underline text-indigo-400">{{ eventDraft.fileName }}</a></div>
-  </div>
-  <div class="modal-f">
-    <button class="btn-ghost" @click="document.getElementById('dlgEvent').close()">Annulla</button>
-    <button class="btn" @click="saveEvent">Salva</button>
-  </div>
-</dialog>
+              <div id="description-div">
+                <label id="description-label" for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cliente / Descrizione</label>
+                <input type="text" id="description" name="description" required placeholder="Seleziona o digita" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
+                <datalist id="contact-list"></datalist>
+                <p class="text-xs text-gray-500 mt-1">Suggerimento: i nomi digitati vengono salvati nei contatti.</p>
+              </div>
 
-<!-- CONTATTO -->
-<dialog id="dlgContact" class="modal">
-  <div class="modal-h">{{ contactDraft.id ? 'Modifica contatto' : 'Nuovo contatto' }}</div>
-  <div class="modal-b space-y-3">
-    <div class="grid grid-cols-2 gap-2">
-      <select class="input" v-model="contactDraft.tipo"><option value="cliente">Cliente</option><option value="fornitore">Fornitore</option></select>
-      <input class="input" v-model="contactDraft.nome" placeholder="Nome / Ragione sociale">
-    </div>
-    <div class="grid grid-cols-2 gap-2">
-      <input class="input" v-model="contactDraft.piva" placeholder="P.IVA / CF (opz.)">
-      <input class="input" v-model="contactDraft.email" placeholder="Email (opz.)">
-    </div>
-    <div class="grid grid-cols-2 gap-2">
-      <input class="input" v-model="contactDraft.telefono" placeholder="Telefono (opz.)">
-      <input class="input" v-model="contactDraft.pagamento" placeholder="Pagamento preferito (opz.)">
-    </div>
-    <textarea class="input" rows="2" v-model="contactDraft.note" placeholder="Note (opz.)"></textarea>
-  </div>
-  <div class="modal-f">
-    <button class="btn-ghost" @click="document.getElementById('dlgContact').close()">Annulla</button>
-    <button class="btn" @click="saveContact">Salva</button>
-  </div>
-</dialog>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label for="category" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Categoria</label>
+                  <input id="category" name="category" list="category-list" placeholder="Es. Affitto / Marketing" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700"/>
+                  <datalist id="category-list"></datalist>
+                </div>
+                <div>
+                  <label for="tags" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tag (separati da virgola)</label>
+                  <input id="tags" name="tags" placeholder="es. Q3, fattura-ricorrente" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700"/>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label for="net-amount" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Importo Netto (${symbol})</label>
+                  <input type="number" id="net-amount" name="net" step="0.01" min="0" required placeholder="100.00" 
+                         class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700" 
+                         inputmode="decimal">
+                </div>
+                <div>
+                  <label for="vat-rate" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Aliquota IVA (%)</label>
+                  <select id="vat-rate" name="vatRate" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
+                    ${IVA_RATES.map(r=>`<option value="${r}">${r}%</option>`).join('')}
+                  </select>
+                </div>
+              </div>
+
+              <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg text-sm">
+                <p class="flex justify-between"><span>IVA Calcolata:</span> <span id="vat-amount-display" class="font-bold text-blue-600">0.00 ${symbol}</span></p>
+                <p class="flex justify-between border-t mt-1 pt-1 font-bold"><span>Importo Lordo Totale:</span> <span id="gross-amount-display" class="text-lg text-emerald-600">0.00 ${symbol}</span></p>
+              </div>
+
+              <button type="submit" class="cta-button w-full bg-emerald-500 text-white p-3 rounded-lg font-bold hover:bg-emerald-600">
+                Registra Movimento
+              </button>
+            </form>
+          </div>
+
+          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card mb-20">
+            <h3 class="text-xl font-medium mb-4">${listTitle} (${year})</h3>
+            <div id="transactions-list" class="space-y-3">
+              ${tx.length? tx.map(t=>{
+                const isIncomeTx = appData.invoices.some(i=>i.id===t.id);
+                const colorClass = isIncomeTx?'bg-emerald-50 dark:bg-emerald-900/50':'bg-red-50 dark:bg-red-900/50';
+                const incomeTag = isActivity && isIncomeTx && t.incomeType==='Incasso/Corrispettivo' ? '<span class="text-xs text-orange-600 dark:text-orange-300 font-semibold">(Corrispettivo)</span>':'';
+                return `
+                  <div class="flex justify-between items-center p-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0 ${colorClass} rounded-lg">
+                    <div class="flex-grow">
+                      <p class="font-semibold text-sm">
+                        ${getCategoryIcon(t.category)} ${t.description||''} ${incomeTag}
+                      </p>
+                      <p class="text-xs text-gray-500 dark:text-gray-400">
+                        ${new Date(t.date).toLocaleDateString('it-IT')} | Cat: ${t.category||'-'} 
+                        ${(t.tags||[]).length > 0 ? '| Tag: '+(t.tags||[]).join(', ') : ''}
+                      </p>
+                    </div>
+                    <div class="text-right ml-4 flex items-center space-x-3">
+                      <div>
+                        <p class="font-bold ${isIncomeTx?'text-emerald-700 dark:text-emerald-300':'text-red-700 dark:text-red-300'}">${t.gross.toFixed(2)} ${symbol}</p>
+                        <p class="text-xs text-gray-600 dark:text-gray-400">Netto: ${t.net.toFixed(2)}</p>
+                      </div>
+                      <button onclick="duplicateTransaction(${isIncomeTx},${t.id},'${type}')" class="text-orange-500 hover:text-orange-700" title="Duplica Transazione">📋</button>
+                      <button onclick="editTransaction(${isIncomeTx},${t.id},'${type}')" class="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-200">✏️</button>
+                      <button onclick="deleteTransaction(${isIncomeTx},${t.id})" class="text-red-400 hover:text-red-600">🗑️</button>
+                    </div>
+                  </div>
+                `;
+              }).join('') : '<p class="text-gray-500 text-center">Nessuna transazione nell\'anno.</p>'}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // --- Report page (KPI + Trend + Ricerca + IVA/Cash bars + Dettaglio) ---
+    function filterTransactions(query, transactions){
+      const q=(query||'').toLowerCase();
+      if (!q) return transactions;
+      return transactions.filter(t =>
+        (t.description||'').toLowerCase().includes(q) ||
+        (t.category||'').toLowerCase().includes(q) ||
+        (t.tags||[]).some(tag => tag.toLowerCase().includes(q)) ||
+        String(t.gross).includes(q)
+      );
+    }
+
+    function computeKPIs(){
+      const all = [...appData.invoices.map(t=>({...t,isIncome:true})), ...appData.expenses.map(t=>({...t,isIncome:false}))];
+      if (all.length===0) return {savingRate:0, avgExpense:0, avgIncome:0, topClients:[], topSuppliers:[], topCategories:[]};
+
+      // group by month
+      const byMonth = {};
+      all.forEach(t=>{
+        const ym=t.date?.slice(0,7)||'';
+        if (!byMonth[ym]) byMonth[ym] = {inc:0, exp:0};
+        // Ensure gross is a number
+        const gross = parseFloat(t.gross) || 0;
+        if (t.isIncome) byMonth[ym].inc += gross; else byMonth[ym].exp += gross;
+      });
+      const months = Object.keys(byMonth);
+      const sumInc = months.reduce((s,m)=>s+byMonth[m].inc,0);
+      const sumExp = months.reduce((s,m)=>s+byMonth[m].exp,0);
+      const avgIncome = months.length? sumInc/months.length : 0;
+      const avgExpense = months.length? sumExp/months.length : 0;
+      const net = sumInc - sumExp;
+      const savingRate = sumInc > 0 ? (net/sumInc*100) : (net > 0 ? 100 : (net < 0 ? -100 : 0)); // Handle zero income case robustly
+
+      // top clients/suppliers by gross
+      const sumByDesc = {};
+      all.forEach(t=>{
+        const key=(t.description||'?').trim();
+        sumByDesc[key] ||= {inc:0,exp:0};
+        const gross = parseFloat(t.gross) || 0;
+        if (t.isIncome) sumByDesc[key].inc += gross; else sumByDesc[key].exp += gross;
+      });
+      const topClients = Object.entries(sumByDesc).filter(([k,v])=>v.inc>0).sort((a,b)=>b[1].inc - a[1].inc).slice(0,3).map(([name,v])=>({name, amount:v.inc}));
+      const topSuppliers = Object.entries(sumByDesc).filter(([k,v])=>v.exp>0).sort((a,b)=>b[1].exp - a[1].exp).slice(0,3).map(([name,v])=>({name, amount:v.exp}));
+
+      // top categories (expenses)
+      const byCat = {};
+      all.forEach(t=>{
+        const cat=(t.category||'Altro').trim();
+        byCat[cat] ||= {inc:0,exp:0};
+        const gross = parseFloat(t.gross) || 0;
+        if (t.isIncome) byCat[cat].inc += gross; else byCat[cat].exp += gross;
+      });
+      const topCategories = Object.entries(byCat).sort((a,b)=>b[1].exp - a[1].exp).slice(0,3).map(([cat,v])=>({cat, amount:v.exp}));
+
+      return {savingRate, avgExpense, avgIncome, topClients, topSuppliers, topCategories};
+    }
+
+    function renderTrendChart(transactions){
+      const canvas = document.getElementById('trendChart');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d'); 
+      
+      // Cleanup previous chart instance if it exists
+      if (canvas.chart) { canvas.chart.destroy(); }
+      
+      const grouped={};
+      transactions.forEach(t=>{
+        const ym=t.date?.slice(0,7); if(!ym) return;
+        if (!grouped[ym]) grouped[ym]={income:0,expense:0};
+        const gross = parseFloat(t.gross) || 0;
+        if (t.isIncome) grouped[ym].income += gross; else grouped[ym].expense += gross;
+      });
+      const labels=Object.keys(grouped).sort();
+      const incomes=labels.map(l=>grouped[l].income);
+      const expenses=labels.map(l=>grouped[l].expense);
+      
+      canvas.chart = new Chart(ctx,{
+        type:'line',
+        data:{ labels, datasets:[
+          { label:'Entrate', data:incomes, borderColor:'#10b981', backgroundColor:'#10b981', tension: 0.1, fill:false },
+          { label:'Uscite', data:expenses, borderColor:'#ef4444', backgroundColor:'#ef4444', tension: 0.1, fill:false }
+        ]},
+        options:{ 
+          responsive:true, 
+          maintainAspectRatio:false,
+          scales: {
+            y: { beginAtZero: true }
+          },
+          plugins: {
+            legend: {
+              labels: {
+                color: document.body.classList.contains('dark') ? '#f1f5f9' : '#1e293b' // Adjust label color for dark mode
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // --- Report Page Rendering (Modificato per Filtro Range - FIX C) ---
+    function renderReportPage(){
+      const symbol = getCurrencySymbol();
+      // default filters
+      const currentType = document.getElementById('report-type')?.value || 'global';
+      const filterType = document.getElementById('filter-type')?.value || 'year';
+      
+      let filterDateStr;
+      
+      // NUOVA LOGICA PER RANGE
+      if (filterType === 'range') { 
+        const start = document.getElementById('filter-date-start')?.value;
+        const end = document.getElementById('filter-date-end')?.value;
+        filterDateStr = (start && end) ? `${start}|${end}` : 'all';
+      } else {
+        // Logica esistente per Anno/Mese/Giorno
+        let filterDateInput = document.getElementById('filter-date');
+        filterDateStr = filterDateInput?.value || (filterType==='year'? String(new Date().getFullYear()) : (filterType==='month'||filterType==='quarter')? new Date().toISOString().slice(0,7) : new Date().toISOString().slice(0,10));
+        if (filterType==='all') filterDateStr='all';
+      }
+      
+      // Nuovi filtri
+      const categoryFilter = document.getElementById('filter-category')?.value || 'all';
+      const tagFilter = document.getElementById('filter-tag')?.value || 'all';
+
+      const summary = calculateFinancialSummary(currentType, filterType, filterDateStr);
+      const cashSummary = calculateFinancialSummary('global', filterType, filterDateStr);
+      const ivaSummary = calculateFinancialSummary('activity', filterType, filterDateStr);
+      
+      // Filtra le transazioni del periodo/tipo in base a Categoria e Tag
+      let transactionsList = filterTransactionsByCriteria(summary.transactions, categoryFilter === 'all' ? null : categoryFilter, tagFilter === 'all' ? null : tagFilter);
+
+      const totalCash = cashSummary.totalIncomes + cashSummary.totalExpenses;
+      const cashIncomePercent = totalCash>0 ? (cashSummary.totalIncomes/totalCash)*100 : 50;
+      const cashExpensePercent = 100 - cashIncomePercent;
+
+      const totalIva = ivaSummary.ivaAddebito + ivaSummary.ivaCredito;
+      const ivaAddebitoPercent = totalIva>0 ? (ivaSummary.ivaAddebito/totalIva)*100 : 50;
+      const ivaCreditoPercent = 100 - ivaAddebitoPercent;
+
+      // KPIs
+      const KPIs = computeKPIs();
+      
+      // Calcolo Obiettivo Risparmio
+      const averageMonthlyNet = (KPIs.avgIncome || 0) - (KPIs.avgExpense || 0);
+      const targetDelta = averageMonthlyNet - (appData.monthlySavingsTarget || 0);
+      const targetColor = targetDelta >= 0 ? 'text-emerald-600' : 'text-red-600';
+      const targetLabel = targetDelta >= 0 ? 'Obiettivo Raggiunto (Surplus)' : 'Obiettivo Mancato (Deficit)';
+
+
+      // period label
+      let periodLabel='Periodo Selezionato';
+      if (filterType==='all') periodLabel='Tutti i Dati';
+      else if (filterType==='year') periodLabel=filterDateStr;
+      else if (filterType==='month'){ const [y,m]=filterDateStr.split('-').map(Number); const d=new Date(y,m-1,1); periodLabel=d.toLocaleDateString('it-IT',{year:'numeric',month:'long'}); }
+      else if (filterType==='quarter'){ const [y,m]=filterDateStr.split('-').map(Number); periodLabel=`Trimestre Q${Math.ceil(m/3)}/${y}`; }
+      else if (filterType==='week'){ periodLabel=`Settimana di ${new Date(filterDateStr).toLocaleDateString('it-IT')}`; }
+      else if (filterType==='day') periodLabel=new Date(filterDateStr).toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'});
+      else if (filterType==='range'){
+          const [start, end] = filterDateStr.split('|');
+          if (start && end) periodLabel = `Dal ${new Date(start).toLocaleDateString('it-IT')} al ${new Date(end).toLocaleDateString('it-IT')}`;
+          else periodLabel = 'Seleziona Intervallo';
+      }
+      
+      const allCategories = appData.categories || DEFAULT_CATEGORIES.slice();
+      const allTags = getAllTags();
+
+      return `
+        <div class="space-y-6">
+          <h2 class="text-2xl font-semibold border-b pb-2 text-gray-700 dark:text-gray-300">Riepilogo Finanziario Globale</h2>
+
+          <div class="bg-white dark:bg-gray-800 p-4 rounded-xl card grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div class="md:col-span-1">
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipo</label>
+              <select id="report-type" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
+                <option value="global" ${currentType==='global'?'selected':''}>Totale</option>
+                <option value="activity" ${currentType==='activity'?'selected':''}>Attività</option>
+                <option value="personal" ${currentType==='personal'?'selected':''}>Personale</option>
+              </select>
+            </div>
+            <div class="md:col-span-1">
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Periodo</label>
+              <select id="filter-type" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700" value="${filterType}">
+                <option value="day" ${filterType==='day'?'selected':''}>Giorno</option>
+                <option value="week" ${filterType==='week'?'selected':''}>Settimana</option>
+                <option value="month" ${filterType==='month'?'selected':''}>Mese</option>
+                <option value="quarter" ${filterType==='quarter'?'selected':''}>Trimestre</option>
+                <option value="year" ${filterType==='year'?'selected':''}>Anno</option>
+                <option value="range" ${filterType==='range'?'selected':''}>Intervallo Libero</option>
+                <option value="all" ${filterType==='all'?'selected':''}>Tutti</option>
+              </select>
+            </div>
+            <div class="md:col-span-1">
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data/Anno</label>
+              <input type="${filterType==='year'?'number':(filterType==='month'||filterType==='quarter')?'month':'date'}" id="filter-date" value="${filterDateStr}" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700 ${filterType==='all'||filterType==='range'?'hidden':''}">
+            </div>
+            
+            <div id="filter-range-container" class="md:col-span-2 ${filterType==='range'?'':'hidden'}">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data Inizio</label>
+                        <input type="date" id="filter-date-start" value="${filterType==='range' && filterDateStr!=='all'?filterDateStr.split('|')[0]:''}" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data Fine</label>
+                        <input type="date" id="filter-date-end" value="${filterType==='range' && filterDateStr!=='all'?filterDateStr.split('|')[1]:''}" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
+                    </div>
+                </div>
+            </div>
+            <div class="md:col-span-1">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Categoria</label>
+                <select id="filter-category" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
+                    <option value="all">Tutte le Categorie</option>
+                    ${allCategories.map(c => `<option value="${c}" ${categoryFilter === c ? 'selected' : ''}>${getCategoryIcon(c)} ${c}</option>`).join('')}
+                </select>
+            </div>
+            <div class="md:col-span-1">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tag</label>
+                <select id="filter-tag" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
+                    <option value="all">Tutti i Tag</option>
+                    ${allTags.map(t => `<option value="${t}" ${tagFilter === t ? 'selected' : ''}>${t}</option>`).join('')}
+                </select>
+            </div>
+          </div>
+          
+          <div class="bg-white dark:bg-gray-800 p-4 rounded-xl card text-center border-l-4 border-dashed border-purple-500">
+              <p class="text-sm text-gray-500">Obiettivo Risparmio Mensile: ${appData.monthlySavingsTarget.toFixed(2)} ${symbol}</p>
+              <p class="text-xl font-bold ${targetColor}">
+                  Proiezione Media Mensile: ${targetDelta.toFixed(2)} ${symbol} 
+                  <span class="text-xs text-gray-500">(${targetLabel})</span>
+              </p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-white dark:bg-gray-800 p-4 rounded-xl card text-center">
+              <p class="text-sm text-gray-500">Tasso di Risparmio</p>
+              <p class="text-2xl font-extrabold ${KPIs.savingRate>=0?'text-emerald-600':'text-red-600'}">${(KPIs.savingRate||0).toFixed(1)}%</p>
+            </div>
+            <div class="bg-white dark:bg-gray-800 p-4 rounded-xl card text-center">
+              <p class="text-sm text-gray-500">Media Mensile Entrate</p>
+              <p class="text-2xl font-extrabold text-emerald-600">${(KPIs.avgIncome||0).toFixed(2)} ${symbol}</p>
+            </div>
+            <div class="bg-white dark:bg-gray-800 p-4 rounded-xl card text-center">
+              <p class="text-sm text-gray-500">Media Mensile Uscite</p>
+              <p class="text-2xl font-extrabold text-red-600">${(KPIs.avgExpense||0).toFixed(2)} ${symbol}</p>
+            </div>
+          </div>
+
+          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card">
+            <h3 class="text-xl font-extrabold mb-3 text-gray-800 dark:text-gray-200">Totale Globale: ${periodLabel}</h3>
+            ${renderSummaryCard(summary, periodLabel)}
+          </div>
+
+          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card" style="height: 280px;">
+            <h3 class="text-xl font-medium mb-3 text-gray-800 dark:text-gray-200">Andamento Mensile Entrate/Uscite</h3>
+            <canvas id="trendChart"></canvas>
+          </div>
+
+          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card">
+            <h3 class="text-xl font-medium mb-3 text-gray-800 dark:text-gray-200">Analisi Cash Flow (${periodLabel})</h3>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-2 font-semibold">Distribuzione Entrate vs Uscite</p>
+            <div class="bar-container">
+              <div class="bar-income h-full" style="width:${cashIncomePercent.toFixed(1)}%"></div>
+              <div class="bar-expense h-full" style="width:${cashExpensePercent.toFixed(1)}%"></div>
+            </div>
+            <div class="flex justify-between text-xs mt-1">
+              <span class="text-emerald-700 dark:text-emerald-300">${cashIncomePercent.toFixed(1)}% Entrate</span>
+              <span class="text-red-700 dark:text-red-300">${cashExpensePercent.toFixed(1)}% Uscite</span>
+            </div>
+          </div>
+
+          ${currentType!=='personal'?`
+          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card">
+            <h3 class="text-xl font-medium mb-3 text-gray-800 dark:text-gray-200">Analisi IVA (Attività - ${periodLabel})</h3>
+            <div class="bar-container">
+              <div class="bar-addebito h-full" style="width:${ivaAddebitoPercent.toFixed(1)}%"></div>
+              <div class="bar-credito h-full" style="width:${ivaCreditoPercent.toFixed(1)}%"></div>
+            </div>
+            <div class="flex justify-between text-xs mt-1">
+              <span class="text-orange-700 dark:text-orange-300">${ivaAddebitoPercent.toFixed(1)}% Addebito</span>
+              <span class="text-indigo-700 dark:text-indigo-300">${ivaCreditoPercent.toFixed(1)}% Credito</span>
+            </div>
+          </div>`:''}
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-white dark:bg-gray-800 p-4 rounded-xl card">
+              <h4 class="font-semibold mb-2">Top 3 Clienti</h4>
+              <ul class="text-sm">${KPIs.topClients.map(c=>`<li class="flex justify-between"><span>${c.name}</span><span class="font-bold text-emerald-600 dark:text-emerald-300">${c.amount.toFixed(2)} ${symbol}</span></li>`).join('') || '<li class="text-gray-500">-</li>'}</ul>
+            </div>
+            <div class="bg-white dark:bg-gray-800 p-4 rounded-xl card">
+              <h4 class="font-semibold mb-2">Top 3 Fornitori</h4>
+              <ul class="text-sm">${KPIs.topSuppliers.map(c=>`<li class="flex justify-between"><span>${c.name}</span><span class="font-bold text-red-600 dark:text-red-300">${c.amount.toFixed(2)} ${symbol}</span></li>`).join('') || '<li class="text-gray-500">-</li>'}</ul>
+            </div>
+            <div class="bg-white dark:bg-gray-800 p-4 rounded-xl card">
+              <h4 class="font-semibold mb-2">Top 3 Categorie (Uscite)</h4>
+              <ul class="text-sm">${KPIs.topCategories.map(c=>`<li class="flex justify-between"><span>${getCategoryIcon(c.cat)} ${c.cat}</span><span class="font-bold text-red-600 dark:text-red-300">${c.amount.toFixed(2)} ${symbol}</span></li>`).join('') || '<li class="text-gray-500">-</li>'}</ul>
+            </div>
+          </div>
+
+          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card mb-20">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-xl font-medium text-gray-800 dark:text-gray-200">Dettaglio Movimenti (${transactionsList.length})</h3>
+              <input type="text" id="search" placeholder="🔍 Cerca (descrizione, categoria, tag, importo)" class="w-64 p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
+            </div>
+            <div id="transactions-detail" class="space-y-3">
+              ${transactionsList.map(t=>`
+                <div class="flex justify-between items-center p-3 border-l-4 ${t.isIncome?'bg-emerald-50 border-emerald-300 dark:bg-emerald-900/50 dark:border-emerald-700':'bg-red-50 border-red-300 dark:bg-red-900/50 dark:border-red-700'} rounded-lg">
+                  <div class="flex-grow">
+                    <p class="font-semibold text-sm">${getCategoryIcon(t.category)} ${new Date(t.date).toLocaleDateString('it-IT')}: ${t.description||''}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                      ${t.type==='activity'?'Attività':'Personale'} | IVA ${t.vatRate}% | Cat: ${t.category||'-'} 
+                      ${(t.tags||[]).length > 0 ? '| Tag: '+(t.tags||[]).join(', ') : ''}
+                    </p>
+                  </div>
+                  <div class="text-right ml-4">
+                    <p class="font-bold ${t.isIncome?'text-emerald-700 dark:text-emerald-300':'text-red-700 dark:text-red-300'}">${t.gross.toFixed(2)} ${symbol}</p>
+                  </div>
+                </div>
+              `).join('') || '<p class="text-gray-500">Nessuna transazione nel periodo.</p>'}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function updateReportDateInput(){
+      const filterType = document.getElementById('filter-type')?.value;
+      const input = document.getElementById('filter-date');
+      if (!input) return;
+
+      let type='date', visible=true, def=new Date().toISOString().slice(0,10);
+      const rangeContainer = document.getElementById('filter-range-container'); // Prendi il nuovo container
+
+      switch(filterType){
+        case 'year': 
+          type='number'; 
+          input.min=2000; 
+          input.max=new Date().getFullYear(); 
+          def=new Date().getFullYear(); 
+          rangeContainer?.classList.add('hidden'); // Nascondi range
+          break;
+        case 'month': 
+        case 'quarter': 
+          type='month'; 
+          def=new Date().toISOString().slice(0,7); 
+          rangeContainer?.classList.add('hidden'); // Nascondi range
+          break;
+        case 'week': 
+        case 'day': 
+          type='date'; 
+          def=new Date().toISOString().slice(0,10); 
+          rangeContainer?.classList.add('hidden'); // Nascondi range
+          break;
+        case 'range': // NUOVO CASE: Mostra i campi data di inizio e fine
+          type='hidden';
+          visible=false;
+          def='all';
+          rangeContainer?.classList.remove('hidden'); // Mostra range
+          break;
+        default: 
+          type='hidden'; 
+          visible=false; 
+          def='all';
+          rangeContainer?.classList.add('hidden'); // Nascondi range
+      }
+      
+      input.type=type; 
+      input.classList.toggle('hidden',!visible);
+      
+      // Gestione della visibilità del range container
+      rangeContainer?.classList.toggle('hidden', filterType !== 'range'); 
+      
+      // Set value only if filter is not 'all' and not currently editing a specific date
+      if (visible && filterType!=='all' && !input.value) {
+          input.value=def;
+      }
+      
+      // If filter is active and the input is visible, trigger page re-render
+      if (visible || filterType === 'all' || filterType === 'range') {
+          renderPage('report');
+      }
+    }
+    
+    // Calcola la data di previsione basata sulla frequenza (Omessa per brevità, intatta)
+    function calculateNextRecurrence(lastDateStr, frequency) {
+        let nextDate = new Date(lastDateStr);
+        nextDate.setDate(nextDate.getDate() + 1); // Start checking from next day
+
+        if (frequency === 'monthly') {
+            const currentMonth = nextDate.getMonth();
+            nextDate.setMonth(currentMonth + 1);
+            if (nextDate.getMonth() !== (currentMonth + 1) % 12) {
+                // Gestione giorni mancanti (es. 31/01 -> 03/03)
+                nextDate.setDate(0); 
+            }
+        } else if (frequency === 'quarterly') {
+            nextDate.setMonth(nextDate.getMonth() + 3);
+        } else if (frequency === 'annual') {
+            nextDate.setFullYear(nextDate.getFullYear() + 1);
+        } else {
+            return null;
+        }
+
+        // Formatta a YYYY-MM-DD per la visualizzazione
+        return nextDate.toISOString().slice(0, 10);
+    }
+
+    // NUOVO: Funzione per generare Promemoria IVA Trimestrale
+    function getIvaReminders() {
+      const today = new Date();
+      const currentYear = today.getFullYear();
+      const reminders = [];
+      
+      IVA_DEADLINES_IT.forEach(item => {
+        let [day, month] = item.date.split('-').map(Number);
+        let year = currentYear;
+        
+        // Se la scadenza è Marzo (4° trimestre anno precedente), potrebbe essere l'anno prossimo se siamo già oltre
+        if (month < today.getMonth() + 1) { // Mese di scadenza passato
+            year++;
+        }
+        
+        // Caso speciale: se la scadenza è marzo, ma la data di oggi è l'anno dopo
+        if (item.date === '16-03' && today.getMonth() + 1 > 3 && year === currentYear) {
+            year++;
+        }
+        
+        let targetDate = new Date(year, month - 1, day);
+        
+        // Per evitare duplicati, controlla se esiste già un promemoria IVA molto simile
+        const exists = appData.reminders.some(r => 
+          r.type === 'IVA' && 
+          r.date === targetDate.toISOString().slice(0, 10)
+        );
+        
+        if (!exists) {
+            reminders.push({
+                type: 'IVA',
+                description: `IVA Trimestrale: ${item.desc} ${year}`,
+                date: targetDate.toISOString().slice(0, 10),
+                amount: 0 // L'importo deve essere calcolato dall'utente o inserito manualmente
+            });
+        }
+      });
+      
+      return reminders;
+    }
+
+
+    function renderRemindersPage(){
+      const symbol = getCurrencySymbol();
+      // AGGIUNTO: Promemoria IVA automatici (senza salvarli, solo mostrati in cima)
+      const ivaReminders = getIvaReminders().sort((a, b) => new Date(a.date) - new Date(b.date));
+      
+      const list = appData.reminders||[];
+      const birthdays = appData.birthdays||[];
+      const recurring = appData.recurringExpenses||[];
+      const today = new Date(); today.setHours(0,0,0,0);
+      
+      // Ordina i promemoria (scadenze finanziarie) per data
+      const sortedReminders = list.slice().sort((a,b)=> new Date(a.date)-new Date(b.date));
+      const upcomingReminders = sortedReminders.filter(r=> !r.paid && new Date(r.date)>=today);
+      const paidReminders = sortedReminders.filter(r=> r.paid);
+      const overdueReminders = sortedReminders.filter(r=> {
+        const rDate = new Date(r.date); rDate.setHours(0,0,0,0);
+        return !r.paid && rDate < today;
+      });
+      
+      // Calcola le previsioni ricorrenti (Omessa per brevità, intatta)
+      const predictedRecurrences = recurring
+          .map(r => {
+              const nextDateStr = calculateNextRecurrence(r.lastDate, r.frequency);
+              if (!nextDateStr) return null;
+              
+              const nextDate = new Date(nextDateStr);
+              const diffDays = Math.ceil((nextDate - today) / (1000 * 60 * 60 * 24));
+              
+              if (diffDays > 90 || diffDays < 0) return null; // Mostra solo i prossimi 90 giorni
+              
+              return {
+                  ...r,
+                  nextDate: nextDateStr,
+                  status: `Previsto in ${diffDays} giorni`,
+                  amount: r.lastAmount
+              };
+          })
+          .filter(r => r !== null)
+          .sort((a, b) => new Date(a.nextDate) - new Date(b.nextDate));
+      
+      const types = ['IVA','IMU','TARI','Tasse/Acconto','Assicurazione','Bollo Auto','Affitto','Altri Costi Personali','Altri Costi Attività'];
+      
+      // Funzione per calcolare l'età e la scadenza annuale dei compleanni (Omessa per brevità, intatta)
+      const getBirthdayInfo = (bd) => {
+        const bdDate = new Date(bd.date);
+        const currentYear = new Date().getFullYear();
+        
+        // Data di ricorrenza nel *prossimo* anno per l'ordinamento
+        let recurrence = new Date(`${currentYear}-${bd.recurringDate}`);
+        if (recurrence < today) {
+            recurrence = new Date(`${currentYear + 1}-${bd.recurringDate}`);
+        }
+        
+        let age = currentYear - bdDate.getFullYear();
+        if (new Date(bd.recurringDate).setFullYear(currentYear) > today) {
+            age -= 1; // Se il compleanno non è ancora passato quest'anno
+        }
+        
+        const diffDays = Math.ceil((recurrence - today) / (1000 * 60 * 60 * 24));
+        const status = diffDays === 0 ? 'Oggi!' : (diffDays > 0 && diffDays <= 7 ? `In ${diffDays} giorni` : `Mancano ${diffDays} giorni`);
+
+        return {
+            ...bd,
+            recurrenceDate: recurrence,
+            displayDate: new Date(`${bd.date}`).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' }),
+            annualDate: new Date(`${bd.date}`).toLocaleDateString('it-IT', { day: 'numeric', month: 'long' }),
+            age: age >= 0 ? age : 'N/A',
+            status: status
+        };
+      };
+
+      // Ordina compleanni per data di ricorrenza più vicina
+      const sortedBirthdays = birthdays.map(getBirthdayInfo).sort((a, b) => a.recurrenceDate - b.recurrenceDate);
+      
+      const pill = (r)=>{
+        if (r.paid) return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300';
+        const rDate = new Date(r.date); rDate.setHours(0,0,0,0);
+        const diff = (rDate-today)/(1000*60*60*24);
+        if (diff<0) return 'bg-red-100 text-red-700 font-bold dark:bg-red-900 dark:text-red-300';
+        if (diff<=30) return 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300';
+        return 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300';
+      };
+      
+      const reminderSection = (list,title, type='payment')=>`
+        <h3 class="text-xl font-medium mb-3 border-b pb-1 text-gray-700 dark:text-gray-300 mt-6">${title} (${list.length})</h3>
+        <div class="space-y-3">
+          ${list.length? list.map(r=>`
+            <div class="bg-white dark:bg-gray-800 p-4 rounded-xl card flex justify-between items-center">
+              <div class="flex-grow">
+                ${type === 'payment' ? `<span class="text-xs font-semibold px-2 py-1 rounded-full ${pill(r)}">${r.paid?'PAGATO':r.type}</span>` : type === 'recurring' ? `<span class="text-xs font-semibold px-2 py-1 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300">PREVISTO (${r.frequency.toUpperCase().slice(0,1)})</span>` : (type === 'iva' ? `<span class="text-xs font-semibold px-2 py-1 rounded-full bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300">🇮🇹 IVA</span>` : '')}
+                
+                <p class="font-bold mt-1 ${r.paid?'line-through text-gray-500':'text-gray-800 dark:text-gray-200'}">${type === 'payment' ? r.description : r.name || r.description}</p>
+                
+                ${type === 'payment' ? 
+                    `<p class="text-sm text-gray-600 dark:text-gray-400">Scadenza: ${new Date(r.date).toLocaleDateString('it-IT')} | Importo: ${r.amount.toFixed(2)} ${symbol}</p>` :
+                type === 'recurring' ?
+                    `<p class="text-sm text-gray-600 dark:text-gray-400">Previsto il: ${new Date(r.nextDate).toLocaleDateString('it-IT')} | Est: ${r.amount.toFixed(2)} ${symbol} | ${r.status}</p>` :
+                type === 'iva' ? 
+                    `<p class="text-sm text-gray-600 dark:text-gray-400 font-bold">SCADENZA: ${new Date(r.date).toLocaleDateString('it-IT')} | Stima Saldo IVA: ${ivaSummary.ivaBalance.toFixed(2)} ${symbol}</p>` :
+                    `<p class="text-sm text-gray-600 dark:text-gray-400">Ricorre il: ${r.annualDate} | Età Proiettata: ${r.age} | ${r.status}</p>`}
+              </div>
+              <div class="flex space-x-2">
+                ${type === 'payment' ? 
+                    `<button onclick="toggleReminderPaid(${r.id})" class="text-sm px-3 py-1 rounded-lg ${r.paid?'bg-orange-500 hover:bg-orange-600':'bg-emerald-500 hover:bg-emerald-600'} text-white">${r.paid?'Annulla Pag.':'Paga'}</button>` : ''}
+                <button onclick="${type === 'payment' ? `deleteReminder(${r.id})` : (type === 'birthday' ? `deleteBirthday(${r.id})` : (type === 'iva' ? `showToast('Aggiungi manualmente per eliminarlo.', 'red')` : `showToast('Non eliminabile da qui.', 'red')`))}" class="text-red-400 hover:text-red-600">🗑️</button>
+              </div>
+            </div>
+          `).join(''):'<p class="text-gray-500">Nessun promemoria in questa categoria.</p>'}
+        </div>
+      `;
+      
+      return `
+        <div class="space-y-6">
+          <h2 class="text-2xl font-semibold border-b pb-2 text-gray-700 dark:text-gray-300">Promemoria Scadenze & Eventi</h2>
+          
+          ${reminderSection(ivaReminders, 'Scadenze IVA (Trimestrali Automatiche)', 'iva')}
+          ${reminderSection(sortedBirthdays, 'Compleanni in Arrivo', 'birthday')}
+          
+          ${reminderSection(predictedRecurrences, 'Spese Ricorrenti Previste (90gg)', 'recurring')}
+
+          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card mt-6">
+            <h3 class="text-xl font-medium mb-4 text-pink-600">Aggiungi Compleanno 🎂</h3>
+            <form id="birthday-form" onsubmit="event.preventDefault(); handleBirthdaySubmit();" class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome</label>
+                <input id="birthday-name" name="name" required placeholder="Es. Mario Rossi" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
+              </div>
+              <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data di Nascita (Anno opzionale)</label>
+                <input type="date" id="birthday-date" name="date" value="${new Date().toISOString().slice(0,10)}" required class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
+              </div>
+              <button type="submit" class="cta-button w-full bg-pink-500 text-white p-3 rounded-lg font-bold hover:bg-pink-600">Aggiungi Compleanno</button>
+            </form>
+          </div>
+
+          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card mt-6">
+            <h3 class="text-xl font-medium mb-4 text-emerald-600">Aggiungi Nuovo Promemoria (Pagamento)</h3>
+            <form id="reminder-form" onsubmit="event.preventDefault(); handleReminderSubmit();" class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipo Scadenza</label>
+                <select id="reminder-type" name="type" required class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
+                  ${types.map(t=>`<option value="${t}">${t}</option>`).join('')}
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Descrizione</label>
+                <input id="reminder-description" name="description" required placeholder="Es. TARI 2° Rata" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data Scadenza</label>
+                  <input type="date" id="reminder-date" name="date" value="${new Date().toISOString().slice(0,10)}" required class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Importo (${symbol})</label>
+                  <input type="number" id="reminder-amount" name="amount" step="0.01" min="0" required placeholder="500.00" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
+                </div>
+              </div>
+              <button type="submit" class="cta-button w-full bg-emerald-500 text-white p-3 rounded-lg font-bold hover:bg-emerald-600">Aggiungi Promemoria</button>
+            </form>
+          </div>
+
+          ${reminderSection(overdueReminders,'Scaduti (Urgenti)', 'payment')}
+          ${reminderSection(upcomingReminders,'In Arrivo', 'payment')}
+          ${reminderSection(paidReminders,'Pagati', 'payment')}
+        </div>
+      `;
+    }
+
+    // --- Settings Page Rendering (Modificato per Pulizia Mese/Anno - FIX D) ---
+    function renderSettingsPage(){
+      const currentYear=new Date().getFullYear();
+      // Nota: la logica di pulizia ora usa l'input type="month"
+      const allContacts = appData.contacts.slice().sort((a,b)=>a.name.localeCompare(b.name));
+      const cats = (appData.categories||DEFAULT_CATEGORIES).slice().sort((a,b)=>a.localeCompare(b));
+      const symbol = getCurrencySymbol();
+
+      return `
+        <div class="space-y-6">
+          <h2 class="text-2xl font-semibold border-b pb-2 text-gray-700 dark:text-gray-300">Gestione e Manutenzione Dati</h2>
+          
+          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card space-y-4">
+            <h3 class="text-xl font-medium text-purple-600">Pianificazione (Budgeting)</h3>
+            <div>
+              <label for="monthly-target" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Obiettivo Risparmio Mensile (${symbol})</label>
+              <input type="number" id="monthly-target" step="0.01" min="0" value="${appData.monthlySavingsTarget.toFixed(2)}"
+                     class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700" 
+                     inputmode="decimal"/>
+            </div>
+            <button onclick="saveMonthlyTarget()" class="cta-button w-full bg-purple-500 text-white p-3 rounded-lg font-bold hover:bg-purple-600">Salva Obiettivo</button>
+          </div>
+          
+          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card space-y-4">
+              <h3 class="text-xl font-medium text-blue-600">Configurazione Valuta</h3>
+              <p class="text-sm text-gray-700 dark:text-gray-300">Simbolo Valuta Attuale: <span class="font-bold text-lg">${symbol}</span></p>
+              <div>
+                  <label for="currency-symbol-input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Imposta Simbolo Valuta (es. €, $, £)</label>
+                  <input type="text" id="currency-symbol-input" maxlength="2" value="${symbol}" placeholder="€" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700"/>
+              </div>
+              <button onclick="changeCurrencySymbol()" class="cta-button w-full bg-blue-500 text-white p-3 rounded-lg font-bold hover:bg-blue-600">Salva Valuta</button>
+          </div>
+          
+          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card space-y-4">
+            <h3 class="text-xl font-medium text-emerald-600">Fornitori / Clienti Salvati (${allContacts.length})</h3>
+            <div class="max-h-60 overflow-y-auto border dark:border-gray-700 p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
+              ${allContacts.length? allContacts.map(c=>`
+                <div class="flex justify-between items-center py-2 border-b dark:border-gray-700 last:border-b-0">
+                  <div class="flex-grow">
+                    <span class="font-semibold text-sm">${c.name}</span>
+                    <span class="text-xs ml-2 px-2 py-0.5 rounded-full ${c.scope==='activity'?'bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300':'bg-pink-100 text-pink-700 dark:bg-pink-900 dark:text-pink-300'}">
+                      ${c.scope==='activity'?'Attività':'Personale'}
+                    </span>
+                  </div>
+                  <button onclick="deleteContact(${c.id})" class="text-red-400 hover:text-red-600">🗑️</button>
+                </div>
+              `).join('') : '<p class="text-gray-500 text-sm">Nessun contatto salvato.</p>'}
+            </div>
+          </div>
+
+          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card space-y-3">
+            <h3 class="text-lg font-semibold">Categorie (${cats.length})</h3>
+            <div class="flex items-center space-x-2">
+              <input id="new-cat" placeholder="Nuova categoria" class="p-2 border rounded-lg flex-1 dark:bg-gray-900 dark:border-gray-700">
+              <button class="px-3 py-2 bg-emerald-500 text-white rounded-lg" onclick="(function(){const v=document.getElementById('new-cat').value.trim(); if(!v) return; ensureCategory(v); showToast('Categoria aggiunta!'); renderPage('settings');})()">Aggiungi</button>
+            </div>
+            <div class="text-sm text-gray-500">Usate nell’autocomplete del form. Icona: ${getCategoryIcon('Altro')}</div>
+            <div class="flex flex-wrap gap-2 mt-2">
+              ${cats.map(c=>`<span class="px-2 py-1 rounded-full bg-gray-100 text-gray-700 border dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">${getCategoryIcon(c)} ${c}</span>`).join('')}
+            </div>
+          </div>
+          
+          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card space-y-4">
+            <h3 class="text-xl font-medium text-purple-600">Gestione Sicurezza (PIN)</h3>
+            <p class="text-sm text-gray-700 dark:text-gray-300">PIN Attuale: <span class="font-bold">${appData.pin.replace(/./g, '•')}</span></p>
+            <div>
+              <label for="current-pin" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">PIN Attuale (Conferma)</label>
+              <input type="password" id="current-pin" maxlength="4" placeholder="Inserisci PIN Attuale" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700 mb-2"/>
+            </div>
+            <div>
+              <label for="new-pin" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Imposta Nuovo PIN (4 cifre)</label>
+              <input type="password" id="new-pin" maxlength="4" placeholder="Nuovo PIN (4 cifre)" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700"/>
+            </div>
+            <button onclick="changePin()" class="cta-button w-full bg-purple-500 text-white p-3 rounded-lg font-bold hover:bg-purple-600">Cambia PIN</button>
+          </div>
+
+          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card space-y-4">
+            <h3 class="text-xl font-medium text-indigo-600">Importa / Esporta Dati</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <button onclick="exportDataJSON()" class="cta-button w-full bg-indigo-500 text-white p-3 rounded-lg font-bold hover:bg-indigo-600">Esporta Dati (JSON)</button>
+              <button onclick="exportCSV()" class="cta-button w-full bg-blue-500 text-white p-3 rounded-lg font-bold hover:bg-blue-600">Esporta CSV (testo)</button>
+            </div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mt-2">Importa Backup (.json)</label>
+            <input type="file" id="import-file" accept=".json" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 dark:file:bg-indigo-900 dark:file:text-indigo-300 dark:hover:file:bg-indigo-800"/>
+            <p class="text-xs text-red-500 mt-1">Attenzione: sovrascrive i dati attuali.</p>
+          </div>
+
+          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card space-y-4">
+            <h3 class="text-xl font-medium text-red-600">Pulisci Dati Vecchi</h3>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Elimina i dati precedenti al mese/anno:</label>
+            <input type="month" id="clean-date-month" value="${new Date().toISOString().slice(0,7)}" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700"/>
+            <button id="clean-btn" class="cta-button w-full bg-red-500 text-white p-3 rounded-lg font-bold hover:bg-red-600">Conferma Pulizia</button>
+          </div>
+        </div>
+      `;
+    }
+    
+    // NUOVA FUNZIONE: Salvataggio Obiettivo Risparmio (Omessa per brevità, intatta)
+    function saveMonthlyTarget() {
+        const input = document.getElementById('monthly-target');
+        const target = parseFloat(input?.value) || 0;
+
+        showModal('Conferma Obiettivo', `Impostare l'obiettivo di risparmio su: ${target.toFixed(2)} ${getCurrencySymbol()}?`, true, () => {
+            appData.monthlySavingsTarget = target;
+            saveData();
+            showToast('Obiettivo risparmio salvato!');
+            renderPage('settings');
+        });
+    }
+
+    // NUOVA FUNZIONE: Cambio Simbolo Valuta (Omessa per brevità, intatta)
+    function changeCurrencySymbol() {
+        const symbolInput = document.getElementById('currency-symbol-input');
+        const newSymbol = symbolInput?.value.trim() || '€';
+
+        if (newSymbol.length > 2) {
+            showToast('Il simbolo valuta dovrebbe essere al massimo di 2 caratteri.', 'red');
+            return;
+        }
+
+        showModal('Conferma Valuta', `Impostare il simbolo valuta su: ${newSymbol}?`, true, () => {
+            appData.currencySymbol = newSymbol;
+            saveData();
+            showToast('Simbolo Valuta aggiornato!');
+            renderPage('settings');
+        });
+    }
+
+    // --- PIN Management (Settings Page) (Omessa per brevità, intatta) ---
+    function changePin() {
+      const currentPinInput = document.getElementById('current-pin');
+      const newPinInput = document.getElementById('new-pin');
+      
+      const currentPin = currentPinInput?.value.trim();
+      const newPin = newPinInput?.value.trim();
+      
+      if (currentPin !== appData.pin) {
+        showToast('Il PIN attuale non è corretto.','red');
+        currentPinInput.value = '';
+        return;
+      }
+
+      if (!newPin || newPin.length !== 4 || isNaN(newPin)) {
+        showToast('Il nuovo PIN deve essere esattamente di 4 cifre.','red');
+        return;
+      }
+
+      showModal('Conferma Cambio PIN', `Sei sicuro di voler cambiare il PIN a: ${newPin}?`, true, () => {
+        appData.pin = newPin;
+        saveData();
+        currentPinInput.value = '';
+        newPinInput.value = '';
+        showToast('PIN modificato con successo! Sarà richiesto al prossimo riavvio.');
+        renderPage('settings');
+      });
+    }
+    
+    // --- Notifications (every hour) (Omessa per brevità, intatta) ---
+    function checkReminders(){
+      const today=new Date();
+      
+      // 1. Check Payments
+      (appData.reminders||[]).forEach(r=>{
+        const diff=(new Date(r.date)-today)/(1000*60*60*24);
+        if (!r.paid && diff>=0 && diff<=3){
+          if (Notification.permission==='granted'){
+            new Notification(`🔔 Scadenza: ${r.type}`, { body:`${r.description} - Scade il ${new Date(r.date).toLocaleDateString('it-IT')}` });
+          }
+        }
+      });
+      
+      // 2. Check Birthdays
+      const currentMonthDay = today.toISOString().slice(5, 10);
+      (appData.birthdays||[]).forEach(bd => {
+        const bdMonthDay = bd.recurringDate; // MM-DD
+        const bdDate = new Date(bd.date);
+        
+        // Calcola la data di ricorrenza nell'anno corrente
+        let recurrence = new Date(`${today.getFullYear()}-${bdMonthDay}`);
+        
+        // Considera solo i compleanni passati o futuri entro 7 giorni
+        const diffDays = Math.ceil((recurrence - today) / (1000 * 60 * 60 * 24));
+        
+        if (diffDays >= 0 && diffDays <= 7) {
+            const age = today.getFullYear() - bdDate.getFullYear();
+            if (Notification.permission === 'granted') {
+                new Notification(`🎂 Compleanno di ${bd.name}`, { body: diffDays === 0 ? `Compie ${age} anni oggi!` : `Compie ${age} anni in ${diffDays} giorni.` });
+            }
+        }
+      });
+    }
+
+
+    // --- Page router (Omessa per brevità, intatta) ---
+    function renderPage(pageId){
+      currentPage = pageId;
+      renderNavbar();
+      const area=document.getElementById('content-area');
+      const qa=document.getElementById('quick-actions');
+
+      if (pageId==='activity'||pageId==='personal'){ qa.classList.remove('hidden'); qa.classList.add('flex','justify-center'); }
+      else { qa.classList.add('hidden'); qa.classList.remove('flex','justify-center'); }
+
+      // Reset edit state if any
+      document.getElementById('transaction-form')?.removeAttribute('data-transaction-id');
+
+      switch(pageId){
+        case 'activity':
+        case 'personal':
+          area.innerHTML = renderActivityOrPersonalPage(pageId);
+          // Rerun necessary setup functions after rendering
+          if (pageId==='activity'){ setupActivityIncomeTypeListeners(pageId); } 
+          else { document.getElementById('isIncome')?.addEventListener('change', ()=>setupContactAutocomplete(pageId)); setupContactAutocomplete(pageId); }
+          setupCategoryAutocomplete();
+          calculateGross(); // Initialize gross/vat amounts
+          // NUOVO: Renderizza grafico saldo settimanale
+          renderWeeklyBalanceChart(pageId);
+          break;
+        case 'report':
+          area.innerHTML = renderReportPage();
+          // Rerunning updateReportDateInput ensures the initial display and filter logic runs correctly
+          updateReportDateInput(); 
+          
+          const allTx = [...appData.invoices.map(t=>({...t,isIncome:true})), ...appData.expenses.map(t=>({...t,isIncome:false}))];
+          renderTrendChart(allTx);
+          
+          // Add listeners for new filters
+          document.getElementById('filter-category')?.addEventListener('change', ()=>renderPage('report'));
+          document.getElementById('filter-tag')?.addEventListener('change', ()=>renderPage('report'));
+          
+          break;
+        case 'reminders':
+          area.innerHTML = renderRemindersPage();
+          break;
+        case 'settings':
+          area.innerHTML = renderSettingsPage();
+          document.getElementById('import-file')?.addEventListener('change', importDataFile);
+          // Aggiorna listener per la nuova funzione di pulizia (FIX D)
+          document.getElementById('clean-btn')?.addEventListener('click', ()=> cleanDataByDate(document.getElementById('clean-date-month').value));
+          break;
+      }
+    }
+
+    // --- PWA (Manifest + Service Worker all-in-one) (Omessa per brevità, intatta) ---
+    function installManifest(){
+      const manifest = {
+        name: "Finanza Smart 5.0 PRO",
+        short_name: "FinanzaPRO",
+        start_url: ".",
+        display: "standalone",
+        background_color: "#0f172a",
+        theme_color: "#10b981",
+        icons: [
+          { src:"https://fav.farm/✅", sizes:"192x192", type:"image/png" },
+          { src:"https://fav.farm/💶", sizes:"512x512", type:"image/png" }
+        ]
+      };
+      const blob = new Blob([JSON.stringify(manifest)], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      document.getElementById('dynamic-manifest').setAttribute('href', url);
+    }
+
+    async function installServiceWorker(){
+      if (!('serviceWorker' in navigator)) return;
+      const swCode = `
+        const CACHE = 'finanza-smart-v1';
+        self.addEventListener('install', e=>{
+          e.waitUntil(caches.open(CACHE).then(c=>c.addAll(['./'])));
+          self.skipWaiting();
+        });
+        self.addEventListener('activate', e=>{
+          e.waitUntil(caches.keys().then(keys=>Promise.all(keys.map(k=> k===CACHE?null:caches.delete(k)))));
+          self.clients.claim();
+        });
+        self.addEventListener('fetch', e=>{
+          const req = e.request;
+          e.respondWith(
+            caches.match(req).then(res=> res || fetch(req).then(fr=>{
+              const copy = fr.clone();
+              caches.open(CACHE).then(c=> c.put(req, copy)).catch(()=>{});
+              return fr;
+            }).catch(()=>res))
+          );
+        });
+      `;
+      const blob = new Blob([swCode], {type:'text/javascript'});
+      const url = URL.createObjectURL(blob);
+      try{ await navigator.serviceWorker.register(url); }catch(e){ console.warn('SW register failed',e); }
+    }
+
+    // --- Init ---
+    window.onload = function(){
+      applySavedTheme();
+      document.getElementById('theme-toggle')?.addEventListener('click', toggleTheme);
+
+      loadData();
+      
+      // Security Check: Lock app if not explicitly unlocked in this session
+      setupPinLock();
+
+      // --- PERMANENT LISTENERS (Event Delegation) ---
+
+      // 1. Transaction Form Calculation
+      document.getElementById('app')?.addEventListener('input', (e)=>{
+        if (e.target && (e.target.id==='net-amount' || e.target.id==='vat-rate') && (currentPage==='activity'||currentPage==='personal')) calculateGross();
+      });
+      document.getElementById('app')?.addEventListener('change', (e)=>{
+        if (e.target && e.target.id==='vat-rate' && (currentPage==='activity'||currentPage==='personal')) calculateGross();
+      });
+
+      // 2. Report Filtering (Prevent Duplicate Listeners)
+      const appContainer = document.getElementById('app');
+      appContainer?.addEventListener('change', (e) => {
+          if (currentPage === 'report') {
+              if (e.target.id === 'report-type' || e.target.id === 'filter-type') {
+                  // Se cambi il tipo di filtro, si attiva l'aggiornamento automatico in updateReportDateInput
+                  updateReportDateInput();
+              }
+              // Report Category/Tag filter is handled by separate change listeners in renderPage('report')
+          }
+      });
+      appContainer?.addEventListener('input', (e) => {
+          if (currentPage === 'report') {
+              // NUOVI ID per il range
+              if (e.target.id === 'filter-date' 
+                  || e.target.id === 'filter-date-start' 
+                  || e.target.id === 'filter-date-end') { 
+                  renderPage('report');
+              }
+              
+              // Search Handler
+              if (e.target.id === 'search') {
+                const query = e.target.value;
+                const filterType = document.getElementById('filter-type').value;
+                let filterDate;
+                
+                if (filterType === 'range') {
+                  const start = document.getElementById('filter-date-start')?.value;
+                  const end = document.getElementById('filter-date-end')?.value;
+                  filterDate = (start && end) ? `${start}|${end}` : 'all';
+                } else {
+                  filterDate = document.getElementById('filter-date').value || 'all';
+                }
+                
+                const currentReportType = document.getElementById('report-type').value;
+                const categoryFilter = document.getElementById('filter-category').value || 'all';
+                const tagFilter = document.getElementById('filter-tag').value || 'all';
+                
+                let results = calculateFinancialSummary(currentReportType, filterType, filterDate).transactions;
+                results = filterTransactionsByCriteria(results, categoryFilter === 'all' ? null : categoryFilter, tagFilter === 'all' ? null : tagFilter);
+                results = filterTransactions(query, results);
+                
+                const symbol = getCurrencySymbol();
+                
+                document.getElementById('transactions-detail').innerHTML = results.map(t=>`
+                  <div class="flex justify-between items-center p-3 border-l-4 ${t.isIncome?'bg-emerald-50 border-emerald-300 dark:bg-emerald-900/50 dark:border-emerald-700':'bg-red-50 border-red-300 dark:bg-red-900/50 dark:border-red-700'} rounded-lg">
+                    <div class="flex-grow">
+                      <p class="font-semibold text-sm">${getCategoryIcon(t.category)} ${new Date(t.date).toLocaleDateString('it-IT')}: ${t.description||''}</p>
+                      <p class="text-xs text-gray-500 dark:text-gray-400">
+                        ${t.type==='activity'?'Attività':'Personale'} | IVA ${t.vatRate}% | Cat: ${t.category||'-'} 
+                        ${(t.tags||[]).length > 0 ? '| Tag: '+(t.tags||[]).join(', ') : ''}
+                      </p>
+                    </div>
+                    <div class="text-right ml-4">
+                      <p class="font-bold ${t.isIncome?'text-emerald-700 dark:text-emerald-300':'text-red-700 dark:text-red-300'}">${t.gross.toFixed(2)} ${symbol}</p>
+                    </div>
+                  </div>
+                `).join('') || '<p class="text-gray-500">Nessuna transazione trovata.</p>';
+              }
+          }
+      });
+      
+      // 3. Hotkeys (I=Income, E=Expense)
+      document.addEventListener('keydown', (e) => {
+          if (document.getElementById('pin-lock-modal').style.display !== 'none') return;
+          
+          if (currentPage === 'activity' || currentPage === 'personal') {
+              
+              // Submit form with ENTER
+              if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+                  const form = document.getElementById('transaction-form');
+                  if (form && form.querySelector('button[type="submit"]')) {
+                      e.preventDefault();
+                      // We must explicitly click the submit button to trigger the form's onSubmit handler
+                      form.querySelector('button[type="submit"]').click();
+                      return;
+                  }
+              }
+              
+              // Ignore if focus is in an input field (to allow normal typing)
+              if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') {
+                  return;
+              }
+
+              if (e.key === 'i' || e.key === 'I') {
+                  e.preventDefault();
+                  quickRegister('true');
+              } else if (e.key === 'e' || e.key === 'E') {
+                  e.preventDefault();
+                  quickRegister('false');
+              }
+          }
+      });
+      
+      // Notifications
+      if (Notification.permission!=='granted') Notification.requestPermission();
+      // Only check reminders if the app is active
+      setInterval(checkReminders, 60*60*1000); 
+      
+      // PWA
+      installManifest();
+      installServiceWorker();
+    };
+  </script>
+</body>
 </html>
