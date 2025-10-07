@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Gestione Finanziaria Unificata Smart 5.0 PRO</title>
+  <title>Gestione Finanziaria Unificata Smart 5.0 (Pro)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -27,13 +27,12 @@
     body.dark .text-gray-700 { color:#e5e7eb !important; }
     body.dark .text-gray-800 { color:#f9fafb !important; }
     body.dark .text-gray-500 { color:#9ca3af !important; }
-    
-    /* PIN Lock Specific Styles */
+    /* PIN Lock */
     #pin-lock-modal {
       position: fixed;
       inset: 0;
-      background-color: #0f172a; /* Dark background to cover everything */
-      z-index: 100; /* Ensure it's on top */
+      background-color: #0f172a;
+      z-index: 100;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -41,21 +40,11 @@
       color: #f1f5f9;
       text-align: center;
     }
-    .pin-input {
-      display: flex;
-      gap: 10px;
-      margin-top: 20px;
-    }
+    .pin-input { display:flex; gap:10px; margin-top:20px; }
     .pin-input input {
-      width: 40px;
-      height: 40px;
-      text-align: center;
-      font-size: 1.5rem;
-      border: 2px solid #374151;
-      border-radius: 8px;
-      background-color: #111827;
-      color: #10b981;
-      caret-color: transparent; /* Hide cursor */
+      width: 40px; height: 40px; text-align: center; font-size: 1.5rem;
+      border: 2px solid #374151; border-radius: 8px; background-color: #111827; color: #10b981;
+      caret-color: transparent;
     }
   </style>
   <link id="dynamic-manifest" rel="manifest">
@@ -65,257 +54,309 @@
   <div id="app" class="max-w-4xl mx-auto p-4 md:p-6">
     <header class="mb-6 flex items-center justify-between">
       <div class="flex-1 text-center">
-        <h1 class="text-3xl font-bold text-gray-800">Finanza Smart 5.0 PRO 🚀</h1>
-        <p class="text-center text-sm text-gray-500">Attività & Personale</p>
+        <h1 class="text-3xl font-bold text-gray-800">Finanza Smart 5.0 Pro 🚀</h1>
+        <p class="text-center text-sm text-gray-500">Attività &amp; Personale</p>
       </div>
       <button id="theme-toggle"
-        class="ml-4 px-3 py-2 rounded-lg border text-sm hover:bg-gray-100 dark:hover:bg-gray-800">
-        🌙 Dark
-      </button>
+        class="ml-4 px-3 py-2 rounded-lg border text-sm hover:bg-gray-100 dark:hover:bg-gray-800"
+        type="button">🌙 Dark</button>
     </header>
 
     <nav id="navbar" class="flex justify-around bg-white p-2 rounded-xl shadow-lg card"></nav>
-
     <div id="content-area" class="mt-4"></div>
 
-    <div id="quick-actions" class="hidden md:hidden">
+    <div id="quick-actions" class="hidden md:hidden" role="region" aria-label="Azioni rapide">
       <div class="flex space-x-3 max-w-lg mx-auto">
         <button onclick="quickRegister('true')"
-          class="flex-1 bg-emerald-500 text-white p-3 rounded-xl font-bold hover:bg-emerald-600 shadow-xl transition transform hover:scale-[1.02] text-lg">
-          💰 Registra Entrata (I)
-        </button>
+          class="flex-1 bg-emerald-500 text-white p-3 rounded-xl font-bold hover:bg-emerald-600 shadow-xl transition transform hover:scale-[1.02] text-lg"
+          type="button">💰 Registra Entrata (I)</button>
         <button onclick="quickRegister('false')"
-          class="flex-1 bg-red-500 text-white p-3 rounded-xl font-bold hover:bg-red-600 shadow-xl transition transform hover:scale-[1.02] text-lg">
-          💸 Registra Uscita (E)
-        </button>
+          class="flex-1 bg-red-500 text-white p-3 rounded-xl font-bold hover:bg-red-600 shadow-xl transition transform hover:scale-[1.02] text-lg"
+          type="button">💸 Registra Uscita (E)</button>
       </div>
     </div>
 
-    <div id="modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 z-50 flex justify-center items-center p-4">
+    <div id="modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 z-50 flex justify-center items-center p-4" role="dialog" aria-modal="true">
       <div class="bg-white p-6 rounded-xl w-full max-w-sm card">
         <h3 id="modal-title" class="text-xl font-bold mb-3 text-red-600">Attenzione</h3>
         <p id="modal-message" class="text-gray-700 mb-4">Messaggio di esempio.</p>
         <div class="flex justify-end space-x-3">
-          <button id="modal-cancel-btn" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300">Annulla</button>
-          <button id="modal-confirm-btn" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 cta-button">Conferma</button>
+          <button id="modal-cancel-btn" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300" type="button">Annulla</button>
+          <button id="modal-confirm-btn" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 cta-button" type="button">Conferma</button>
         </div>
       </div>
     </div>
 
-    <div id="toast" class="fixed bottom-5 left-1/2 transform -translate-x-1/2 p-3 bg-green-500 text-white rounded-xl shadow-lg transition-opacity duration-300 opacity-0" role="alert">
+    <div id="toast" class="fixed bottom-5 left-1/2 transform -translate-x-1/2 p-3 bg-green-500 text-white rounded-xl shadow-lg transition-opacity duration-300 opacity-0" role="status" aria-live="polite">
       Azione completata con successo!
     </div>
   </div>
-  
+
+  <!-- PIN LOCK -->
   <div id="pin-lock-modal">
-    <h2 class="text-3xl font-bold mb-3">Finanza Smart 5.0 PRO</h2>
+    <h2 class="text-3xl font-bold mb-3">Finanza Smart 5.0</h2>
     <p class="text-lg mb-6 text-gray-400">Inserisci il PIN per sbloccare</p>
     <div class="pin-input">
-      <input type="password" maxlength="1" id="pin-1" class="pin-digit" pattern="[0-9]" inputmode="numeric" />
-      <input type="password" maxlength="1" id="pin-2" class="pin-digit" pattern="[0-9]" inputmode="numeric" />
-      <input type="password" maxlength="1" id="pin-3" class="pin-digit" pattern="[0-9]" inputmode="numeric" />
-      <input type="password" maxlength="1" id="pin-4" class="pin-digit" pattern="[0-9]" inputmode="numeric" />
+      <input type="password" maxlength="1" id="pin-1" class="pin-digit" pattern="[0-9]" inputmode="numeric" aria-label="PIN cifra 1"/>
+      <input type="password" maxlength="1" id="pin-2" class="pin-digit" pattern="[0-9]" inputmode="numeric" aria-label="PIN cifra 2"/>
+      <input type="password" maxlength="1" id="pin-3" class="pin-digit" pattern="[0-9]" inputmode="numeric" aria-label="PIN cifra 3"/>
+      <input type="password" maxlength="1" id="pin-4" class="pin-digit" pattern="[0-9]" inputmode="numeric" aria-label="PIN cifra 4"/>
     </div>
     <p id="pin-error" class="text-red-500 mt-4 text-sm hidden">PIN errato. Riprova.</p>
     <p class="text-sm text-gray-500 mt-8">PIN di default: 1234</p>
   </div>
+
   <script>
-    // --- CONFIG/GLOBAL ---
-    const LOCAL_STORAGE_KEY = 'smartFinApp_v50';
+    /* =============================
+       CONFIG & COSTANTI GLOBALI
+       ============================= */
+    const LOCAL_STORAGE_KEY = 'smartFinApp_v50_pro';
     const SESSION_STORAGE_PIN_KEY = 'smartFinApp_unlocked';
     const IVA_RATES = [0,4,5,10,22];
     const MAX_RECENT_TRANSACTIONS = 10;
     const DEFAULT_CATEGORIES = ['Affitto','Bollette','Spesa','Marketing','Servizi','Stipendi','Carburante','Ristoranti','Abbonamenti','Altro'];
-    
-    // Mappa Icone per Categorie (Usabilità)
-    const CATEGORY_ICONS = {
-        'Affitto': '🏠',
-        'Bollette': '💡',
-        'Spesa': '🛒',
-        'Marketing': '📢',
-        'Servizi': '🛠️',
-        'Stipendi': '🧑‍💼',
-        'Carburante': '⛽',
-        'Ristoranti': '🍽️',
-        'Abbonamenti': '🔗',
-        'Altro': '📦',
-        'IVA': '🇮🇹' // Aggiunta Icona
-    };
-    
-    // Frequenze comuni per la logica di previsione
-    const COMMON_FREQUENCIES = {
-        'affitto': 'monthly',
-        'stipendio': 'monthly',
-        'bollette': 'monthly',
-        'abbonamento': 'monthly',
-        'assicurazione': 'annual',
-        'tasse': 'quarterly',
-        'imu': 'annual',
-        'mensile': 'monthly',
-        'trimestrale': 'quarterly',
-        'annuale': 'annual'
-    };
-    
-    // NUOVO: Date Scadenza IVA Trimestrale (gg-mm) - Riferimento all'anno precedente/attuale
-    const IVA_DEADLINES_IT = [
-        { date: '16-05', desc: '1° Trimestre IVA (Gen-Mar)', quarter: 1 },
-        { date: '16-08', desc: '2° Trimestre IVA (Apr-Giu)', quarter: 2 },
-        { date: '16-11', desc: '3° Trimestre IVA (Lug-Set)', quarter: 3 },
-        // L'acconto del 4° trim. (Dic) è incluso nel versamento finale di Marzo
-        { date: '16-03', desc: 'Saldo 4° Trimestre IVA (Ott-Dic Precedente)', quarter: 4 } 
-    ];
 
-    let appData = { 
-        invoices:[], 
-        expenses:[], 
-        reminders:[], 
-        contacts:[], 
-        birthdays: [],
-        recurringExpenses: [], 
-        lastId:0, 
-        categories: DEFAULT_CATEGORIES.slice(), 
-        pin: '1234',
-        currencySymbol: '€',
-        monthlySavingsTarget: 0 
+    // Icone categorie
+    const CATEGORY_ICONS = {
+      'Affitto':'🏠','Bollette':'💡','Spesa':'🛒','Marketing':'📢','Servizi':'🛠️','Stipendi':'🧑‍💼',
+      'Carburante':'⛽','Ristoranti':'🍽️','Abbonamenti':'🔗','Altro':'📦'
+    };
+
+    // Frequenze
+    const COMMON_FREQUENCIES = {
+      'affitto':'monthly','stipendio':'monthly','bollette':'monthly','abbonamento':'monthly',
+      'assicurazione':'annual','tasse':'quarterly','imu':'annual','mensile':'monthly',
+      'trimestrale':'quarterly','annuale':'annual'
+    };
+
+    // Registro grafici per cleanup
+    const charts = new Map(); // id -> Chart instance
+
+    let appData = {
+      invoices:[], expenses:[], reminders:[], contacts:[], birthdays:[], recurringExpenses:[],
+      lastId:0, categories: DEFAULT_CATEGORIES.slice(),
+      // PIN in chiaro NON usato più; manteniamo compat migrazione
+      pin: '1234',
+      pinMeta: null,   // {salt, hash, iterations}
+      currencySymbol:'€',
+      monthlySavingsTarget:0
+      // NOTA: transazioni ora supportano 'supplier' esplicito
     };
     let currentPage = 'activity';
 
-    // --- UTILITY ---
-    function getCurrencySymbol() {
-        return appData.currencySymbol || '€';
-    }
-    function getCategoryIcon(category) {
-        const cat = category || 'Altro';
-        // Match case-insensitive, return default if not found
-        const key = Object.keys(CATEGORY_ICONS).find(k => k.toLowerCase() === cat.toLowerCase());
-        return CATEGORY_ICONS[key] || CATEGORY_ICONS['Altro'];
+    /* =============================
+       UTILITÀ SICUREZZA / XSS / DENARO
+       ============================= */
+    // Escape per evitare XSS quando inseriamo stringhe in HTML
+    function h(v){
+      return String(v??'').replace(/[&<>"'`=\/]/g, s => ({
+        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','/':'&#47;','`':'&#96;','=':'&#61;'
+      }[s]));
     }
 
+    // Valuta / centesimi
+    const fmt = new Intl.NumberFormat('it-IT',{minimumFractionDigits:2, maximumFractionDigits:2});
+    const sym = ()=> getCurrencySymbol();
+    const toCents = v => Math.round((parseFloat(v)||0)*100);
+    const fromCents = c => (c||0)/100;
+    function calcGrossCents(netCents, vatRate){
+      const vat = Math.round(netCents * (vatRate/100));
+      return { vatCents: vat, grossCents: netCents + vat };
+    }
 
-    // --- THEME (Dark Mode) ---
-    function applySavedTheme() {
+    function getCurrencySymbol(){ return appData.currencySymbol || '€'; }
+    function getCategoryIcon(cat){
+      const key = Object.keys(CATEGORY_ICONS).find(k => k.toLowerCase() === String(cat||'Altro').toLowerCase());
+      return CATEGORY_ICONS[key] || CATEGORY_ICONS['Altro'];
+    }
+
+    // Chart helpers
+    function getCtx(id){
+      const c = document.getElementById(id);
+      if (!c) return null;
+      if (charts.has(id)) { try{ charts.get(id).destroy(); }catch{} charts.delete(id); }
+      return { id, ctx: c.getContext('2d') };
+    }
+
+    /* =============================
+       THEME
+       ============================= */
+    function applySavedTheme(){
       const saved = localStorage.getItem('theme') || 'light';
       document.body.classList.toggle('dark', saved === 'dark');
-      document.getElementById('theme-toggle')?.classList.toggle('dark', saved === 'dark');
       const btn = document.getElementById('theme-toggle');
       if (btn) btn.textContent = saved === 'dark' ? '☀️ Light' : '🌙 Dark';
     }
-    function toggleTheme() {
+    function toggleTheme(){
       const isDark = document.body.classList.toggle('dark');
-      localStorage.setItem('theme', isDark ? 'dark':'light');
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
       applySavedTheme();
     }
 
-    // --- STORAGE ---
-    function loadData() {
-      try {
+    /* =============================
+       STORAGE + MIGRAZIONE
+       ============================= */
+    function saveData(){
+      try{ localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(appData)); }
+      catch(e){ console.error(e); showToast('Errore salvataggio','red'); }
+    }
+    function getNextId(){ appData.lastId++; saveData(); return appData.lastId; }
+
+    function loadData(){
+      try{
         const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
         if (raw) {
           const parsed = JSON.parse(raw);
           appData = { ...appData, ...parsed };
-          // Ensure arrays exist
+          // ensure array/props
           appData.invoices ||= []; appData.expenses ||= [];
           appData.reminders ||= []; appData.contacts ||= [];
-          appData.birthdays ||= [];
-          appData.recurringExpenses ||= []; 
-          
-          // Ensure categories/lastId/pin/currency/target exist
+          appData.birthdays ||= []; appData.recurringExpenses ||= [];
           appData.categories ||= DEFAULT_CATEGORIES.slice();
           appData.lastId ||= 0;
-          appData.pin ||= '1234';
           appData.currencySymbol ||= '€';
           appData.monthlySavingsTarget ||= 0;
         }
-      } catch(e){ console.error(e); showToast('Errore nel caricamento dati','red'); }
+        // MIGRAZIONE PIN -> PBKDF2 se necessario
+        if (appData.pin && !appData.pinMeta) {
+          (async ()=>{
+            const meta = await hashPin(appData.pin);
+            appData.pinMeta = meta;
+            delete appData.pin;
+            saveData();
+          })();
+        }
+      }catch(e){ console.error(e); showToast('Errore nel caricamento dati','red'); }
     }
-    function saveData(){ try{ localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(appData)); }catch(e){ console.error(e); showToast('Errore salvataggio','red'); } }
-    function getNextId(){ appData.lastId++; saveData(); return appData.lastId; }
 
-    // --- PIN LOCK LOGIC (Omessa per brevità, intatta) ---
-    function setupPinLock() {
+    /* =============================
+       PIN SICURO (PBKDF2 + LOCKOUT)
+       ============================= */
+    const PIN_KDF = { iterations: 150_000, digest: 'SHA-256' };
+    const PIN_LOCK_KEY = 'smartFinApp_pinLock';
+    function u8(b){ return new Uint8Array(b); }
+    function hex(b){ return [...u8(b)].map(x=>x.toString(16).padStart(2,'0')).join(''); }
+    function dehex(hh){ return new Uint8Array(String(hh).match(/.{1,2}/g).map(b=>parseInt(b,16))); }
+    async function kdf(pass, salt, iterations=PIN_KDF.iterations){
+      const enc = new TextEncoder();
+      const key = await crypto.subtle.importKey('raw', enc.encode(pass), 'PBKDF2', false, ['deriveBits']);
+      return crypto.subtle.deriveBits({ name:'PBKDF2', hash: PIN_KDF.digest, salt, iterations }, key, 256);
+    }
+    async function hashPin(pin, saltHex){
+      const salt = saltHex ? dehex(saltHex) : crypto.getRandomValues(new Uint8Array(16));
+      const bits = await kdf(pin, salt);
+      return { salt: hex(salt), hash: hex(bits), iterations: PIN_KDF.iterations };
+    }
+    function getPinMeta(){ return appData.pinMeta || null; }
+    function setPinMeta(meta){ appData.pinMeta = meta; saveData(); }
+    function getLock(){ try{return JSON.parse(localStorage.getItem(PIN_LOCK_KEY)||'{}')}catch{return{}} }
+    function setLock(l){ localStorage.setItem(PIN_LOCK_KEY, JSON.stringify(l)); }
+
+    // PIN modal listeners
+    const handlePinInputListener = (e, index) => handlePinInput(e, index);
+    const handlePinKeyDownListener = (e, index) => handlePinKeyDown(e, index);
+
+    function setupPinLock(){
       const pinDigits = document.querySelectorAll('.pin-digit');
       const pinModal = document.getElementById('pin-lock-modal');
       const isUnlocked = sessionStorage.getItem(SESSION_STORAGE_PIN_KEY) === 'true';
-
       if (!isUnlocked) {
         pinModal.style.display = 'flex';
         pinDigits.forEach((input, index) => {
           input.value = '';
           input.removeEventListener('input', handlePinInputListener);
           input.removeEventListener('keydown', handlePinKeyDownListener);
-          
-          input.addEventListener('input', (e) => handlePinInput(e, index));
-          input.addEventListener('keydown', (e) => handlePinKeyDown(e, index));
+          input.addEventListener('input', (e)=>handlePinInput(e,index));
+          input.addEventListener('keydown', (e)=>handlePinKeyDown(e,index));
         });
-        
-        setTimeout(() => {
-          document.getElementById('pin-1')?.focus();
-        }, 100); 
-
+        setTimeout(()=> document.getElementById('pin-1')?.focus(), 100);
       } else {
         pinModal.style.display = 'none';
         const initialPage = appData.invoices.length>0 || appData.expenses.length>0 ? 'report':'activity';
         renderPage(initialPage);
       }
     }
-    
-    const handlePinInputListener = (e, index) => handlePinInput(e, index);
-    const handlePinKeyDownListener = (e, index) => handlePinKeyDown(e, index);
-
-    function handlePinInput(e, index) {
+    function handlePinInput(e, index){
       const pinDigits = document.querySelectorAll('.pin-digit');
-      e.target.value = e.target.value.replace(/[^0-9]/g, '').slice(0, 1);
-      
-      if (e.target.value.length === 1 && index < pinDigits.length - 1) {
-        pinDigits[index + 1].focus();
-      }
-
-      if (Array.from(pinDigits).every(input => input.value.length === 1)) {
-        checkPin();
-      }
+      e.target.value = e.target.value.replace(/[^0-9]/g, '').slice(0,1);
+      if (e.target.value.length === 1 && index < pinDigits.length - 1) pinDigits[index+1].focus();
+      if (Array.from(pinDigits).every(i=>i.value.length===1)) checkPin();
     }
-
-    function handlePinKeyDown(e, index) {
+    function handlePinKeyDown(e, index){
       const pinDigits = document.querySelectorAll('.pin-digit');
-      if (e.key === 'Backspace' && e.target.value === '' && index > 0) {
-        pinDigits[index - 1].focus();
-      }
+      if (e.key==='Backspace' && e.target.value==='' && index>0) pinDigits[index-1].focus();
     }
-
-    function checkPin() {
+    async function checkPin(){
       const pinDigits = document.querySelectorAll('.pin-digit');
-      const enteredPin = Array.from(pinDigits).map(input => input.value).join('');
-      const pinError = document.getElementById('pin-error');
-      
+      const enteredPin = Array.from(pinDigits).map(i=>i.value).join('');
       if (enteredPin.length < 4) return;
-
-      if (enteredPin === appData.pin) {
+      // lockout
+      const lock = getLock();
+      const now = Date.now();
+      if (lock.until && now < lock.until){
+        showToast(`Troppi tentativi. Riprova tra ${Math.ceil((lock.until-now)/1000)}s`,'red');
+        return;
+      }
+      const meta = getPinMeta();
+      if (!meta){ showToast('Errore PIN: non inizializzato.','red'); return; }
+      const bits = await kdf(enteredPin, dehex(meta.salt), meta.iterations);
+      const ok = hex(bits) === meta.hash;
+      const pinError = document.getElementById('pin-error');
+      if (ok){
         pinError.classList.add('hidden');
         sessionStorage.setItem(SESSION_STORAGE_PIN_KEY, 'true');
         document.getElementById('pin-lock-modal').style.display = 'none';
+        lock.count = 0; lock.until = 0; setLock(lock);
         const initialPage = appData.invoices.length>0 || appData.expenses.length>0 ? 'report':'activity';
         renderPage(initialPage);
         showToast('Accesso sbloccato!');
       } else {
         pinError.classList.remove('hidden');
-        pinDigits.forEach(input => input.value = '');
+        pinDigits.forEach(i=>i.value='');
         document.getElementById('pin-1').focus();
+        lock.count = (lock.count||0)+1;
+        if (lock.count >= 5){ lock.until = Date.now() + Math.min(60000, 2000*(lock.count-4)); }
+        setLock(lock);
       }
     }
 
-    // --- UI helpers (Omessa per brevità, intatta) ---
+    async function changePin(){
+      const currentPin = document.getElementById('current-pin')?.value.trim();
+      const newPin = document.getElementById('new-pin')?.value.trim();
+      const meta = getPinMeta();
+      if (!/^\d{4}$/.test(newPin||'')) { showToast('Il nuovo PIN deve essere 4 cifre.','red'); return; }
+      if (!meta){ showToast('PIN non inizializzato.','red'); return; }
+      const bits = await kdf(currentPin||'', dehex(meta.salt), meta.iterations);
+      if (hex(bits)!==meta.hash){ showToast('PIN attuale errato.','red'); return; }
+      const next = await hashPin(newPin, meta.salt);
+      setPinMeta(next);
+      document.getElementById('current-pin').value='';
+      document.getElementById('new-pin').value='';
+      showToast('PIN aggiornato (memorizzato in modo sicuro).');
+      renderPage('settings');
+    }
+
+    /* =============================
+       UI HELPERS: modal / toast
+       ============================= */
     function showModal(title,message,isConfirmation,onConfirm,onCancel=null){
       const modal = document.getElementById('modal');
       const t = document.getElementById('modal-title'); const m = document.getElementById('modal-message');
       const ok = document.getElementById('modal-confirm-btn'); const cancel = document.getElementById('modal-cancel-btn');
       t.textContent = title; m.textContent = message;
       if (isConfirmation){
-        ok.textContent = 'Conferma'; ok.classList.remove('bg-gray-500','hover:bg-gray-600'); ok.classList.add('bg-red-600','hover:bg-red-700');
+        ok.textContent = 'Conferma';
+        ok.classList.remove('bg-gray-500','hover:bg-gray-600');
+        ok.classList.add('bg-red-600','hover:bg-red-700');
         ok.onclick = ()=>{ modal.classList.add('hidden'); onConfirm&&onConfirm(); };
-        cancel.classList.remove('hidden'); cancel.onclick = ()=>{ modal.classList.add('hidden'); onCancel&&onCancel(); };
+        cancel.classList.remove('hidden');
+        cancel.onclick = ()=>{ modal.classList.add('hidden'); onCancel&&onCancel(); };
       } else {
-        ok.textContent='OK'; ok.classList.remove('bg-red-600','hover:bg-red-700'); ok.classList.add('bg-gray-500','hover:bg-gray-600');
-        ok.onclick = ()=> modal.classList.add('hidden'); cancel.classList.add('hidden');
+        ok.textContent='OK';
+        ok.classList.remove('bg-red-600','hover:bg-red-700');
+        ok.classList.add('bg-gray-500','hover:bg-gray-600');
+        ok.onclick = ()=> modal.classList.add('hidden');
+        cancel.classList.add('hidden');
       }
       modal.classList.remove('hidden');
     }
@@ -326,8 +367,10 @@
       setTimeout(()=>{ toast.classList.remove('opacity-100'); toast.classList.add('opacity-0'); }, 2500);
     }
 
-    // --- QUICK register (Corretto - FIX B) ---
-    function quickRegister(isIncomeString) {
+    /* =============================
+       QUICK register & hotkeys helpers
+       ============================= */
+    function quickRegister(isIncomeString){
       const isIncome = isIncomeString === 'true';
       document.getElementById('transaction-form-anchor')?.scrollIntoView({behavior:'smooth'});
       const isIncomeSelect = document.getElementById('isIncome');
@@ -339,293 +382,194 @@
       if (form){
         form.removeAttribute('data-transaction-id'); form.reset();
         const submitBtn = form.querySelector('button[type="submit"]');
-        if (submitBtn){ submitBtn.textContent='Registra Movimento'; submitBtn.classList.remove('bg-blue-500','hover:bg-blue-600'); submitBtn.classList.add('bg-emerald-500','hover:bg-emerald-600'); }
-        
-        // Reset default values
+        if (submitBtn){
+          submitBtn.textContent='Registra Movimento';
+          submitBtn.classList.remove('bg-blue-500','hover:bg-blue-600');
+          submitBtn.classList.add('bg-emerald-500','hover:bg-emerald-600');
+        }
         document.getElementById('date').value = new Date().toISOString().slice(0,10);
         document.getElementById('net-amount').value = '0.00';
         calculateGross();
       }
       const incomeTypeSelect = document.getElementById('incomeType');
-      if (incomeTypeSelect && isIncome){ incomeTypeSelect.value='Fattura (Cliente)'; incomeTypeSelect.dispatchEvent(new Event('change')); }
-      
-      // FIX: Aggiorna etichetta e autocomplete dopo il cambio
-      document.getElementById('description-label').textContent = isIncome ? 'Cliente / Descrizione' : 'Fornitore / Descrizione';
-      setupContactAutocomplete(currentPage);
-      
+      if (incomeTypeSelect && isIncome){
+        incomeTypeSelect.value='Fattura (Cliente)';
+        incomeTypeSelect.dispatchEvent(new Event('change'));
+      }
       showToast(isIncome?'Modulo pronto per Entrata!':'Modulo pronto per Uscita!','green');
     }
 
-    // --- Filters/period helpers (Corretto - FIX C) ---
+    /* =============================
+       FILTRI PERIODO & SUPPORTO
+       ============================= */
     function filterByPeriod(itemDateStr, filterType, filterValue){
       if (filterType==='all'||!filterValue||filterValue==='all') return true;
       const itemDate = new Date(itemDateStr); if (isNaN(itemDate)) return false;
       const y=itemDate.getFullYear(), m=itemDate.getMonth();
-      
       if (filterType==='year'){ return y===parseInt(filterValue); }
       if (filterType==='month'){ const [fy,fm]=filterValue.split('-').map(Number); return y===fy && m===(fm-1); }
       if (filterType==='quarter'){ const [fy,fm]=filterValue.split('-').map(Number); return y===fy && Math.ceil((m+1)/3)===Math.ceil(fm/3); }
       if (filterType==='day'){ return itemDateStr===filterValue; }
-      
-      // NUOVO: Filtro per Intervallo Libero (Range)
-      if (filterType==='range'){
-        // filterValue è una stringa "start_date|end_date"
-        const [startStr, endStr] = filterValue.split('|');
-        if (!startStr || !endStr) return true; // Nessuna data impostata, ignora
-        
-        const start = new Date(startStr);
-        const end = new Date(endStr);
-        end.setHours(23,59,59,999); // Include l'intera giornata finale
-        
-        return itemDate>=start && itemDate<=end;
-      }
-      
-      // FIX: Improved Week Filter (Starts Monday)
-      if (filterType==='week'){ 
-        const d = new Date(filterValue); 
-        let dayOfWeek = d.getDay(); // 0=Dom, 1=Lun, ..., 6=Sab
-        
-        // Calcola la differenza per arrivare a Lunedì
+      if (filterType==='week'){
+        const d = new Date(filterValue);
+        let dayOfWeek = d.getDay();
         const diff = d.getDate() - ((dayOfWeek + 6) % 7);
-        
-        const start = new Date(d);
-        start.setDate(diff); // Imposta al Lunedì
-        start.setHours(0,0,0,0); 
-        
-        const end = new Date(start); 
-        end.setDate(start.getDate()+6); // Imposta alla Domenica
-        end.setHours(23,59,59,999); 
-        
-        return itemDate>=start && itemDate<=end; 
+        const start = new Date(d); start.setDate(diff); start.setHours(0,0,0,0);
+        const end = new Date(start); end.setDate(start.getDate()+6); end.setHours(23,59,59,999);
+        return itemDate>=start && itemDate<=end;
       }
       return false;
     }
-    
-    // --- Filters for Report page (Omessa per brevità, intatta) ---
-    function filterTransactionsByCriteria(transactions, categoryFilter, tagFilter) {
-        if (!categoryFilter && !tagFilter) return transactions;
-        
-        const cat = categoryFilter ? categoryFilter.toLowerCase() : null;
-        const tag = tagFilter ? tagFilter.toLowerCase() : null;
 
-        return transactions.filter(t => {
-            const matchesCategory = !cat || (t.category || 'altro').toLowerCase() === cat;
-            const matchesTag = !tag || (t.tags || []).map(tg => tg.toLowerCase()).includes(tag);
-            return matchesCategory && matchesTag;
-        });
+    /* =============================
+       CONTATTI / CATEGORIE / FORNITORI
+       ============================= */
+    function addContact(name, scope, relation){
+      const clean = (name||'').trim(); if (!clean) return;
+      const exists = appData.contacts.find(c=> c.name.toLowerCase()===clean.toLowerCase() && c.scope===scope && c.relation===relation);
+      if (!exists){ appData.contacts.push({ id:getNextId(), name:clean, scope, relation }); saveData(); }
+    }
+    function ensureCategory(cat){
+      const c=(cat||'').trim(); if (!c) return;
+      if (!appData.categories.map(s=>s.toLowerCase()).includes(c.toLowerCase())) {
+        appData.categories.push(c);
+        appData.categories.sort((a,b)=>a.localeCompare(b));
+        saveData();
+      }
+    }
+    function getAllTags(){
+      const set = new Set();
+      [...appData.invoices, ...appData.expenses].forEach(t => (t.tags||[]).forEach(tag => set.add(tag)));
+      return Array.from(set).sort();
+    }
+    // Nuovo: elenco Fornitori (dai contatti relation='supplier')
+    function getAllSuppliers(scopeFilter=null){
+      return appData.contacts
+        .filter(c => c.relation==='supplier' && (!scopeFilter || c.scope===scopeFilter))
+        .map(c => c.name)
+        .sort();
     }
 
-    // NUOVO: Calcola Saldo Netto Giornaliero per gli ultimi 7 giorni (Omessa per brevità, intatta)
-    function calculateDailyNetBalance(type) {
-        const days = 7;
-        const today = new Date();
-        const dates = [];
-        for (let i = 0; i < days; i++) {
-            const d = new Date(today);
-            d.setDate(today.getDate() - (days - 1 - i));
-            dates.push(d.toISOString().slice(0, 10));
-        }
-
-        const dailyData = dates.map(dateStr => {
-            const summary = calculateFinancialSummary(type, 'day', dateStr);
-            return summary.netBalance;
-        });
-
-        return { labels: dates.map(d => d.slice(5)), data: dailyData };
+    /* =============================
+       PREVISIONI / MEDIA SPESE
+       ============================= */
+    function getAverageMonthlyExpense(category){
+      const target = (category || 'Altro').toLowerCase();
+      const relevant = appData.expenses.filter(e => (e.category||'Altro').toLowerCase()===target);
+      const monthlyTotals = {};
+      relevant.forEach(e => {
+        const ym = e.date.slice(0,7);
+        monthlyTotals[ym] = (monthlyTotals[ym] || 0) + (parseFloat(e.gross)||0);
+      });
+      const totalMonths = Object.keys(monthlyTotals).length;
+      if (!totalMonths) return 0;
+      const total = Object.values(monthlyTotals).reduce((s,c)=>s+c,0);
+      return total/totalMonths;
+    }
+    function trackRecurringExpense(description, gross, date){
+      const desc = String(description||'').toLowerCase();
+      const keyMatch = Object.keys(COMMON_FREQUENCIES).find(k => desc.includes(k));
+      const inferred = keyMatch ? COMMON_FREQUENCIES[keyMatch] : null;
+      if (!inferred) return;
+      const recurringKey = `${inferred}:${desc.replace(/[^a-z0-9]/g,'-').slice(0,20)}`;
+      const existing = appData.recurringExpenses.find(r => r.key===recurringKey);
+      const newRecord = { key:recurringKey, description, lastDate:date, lastAmount:+(parseFloat(gross)||0).toFixed(2), frequency: inferred };
+      if (existing) Object.assign(existing,newRecord); else appData.recurringExpenses.push(newRecord);
     }
 
-    // NUOVO: Renderizza Grafico Saldo Settimanale (Omessa per brevità, intatta)
-    function renderWeeklyBalanceChart(type) {
-        const chartId = `weeklyBalanceChart-${type}`;
-        const ctx = document.getElementById(chartId)?.getContext('2d');
-        if (!ctx) return;
-        
-        const { labels, data } = calculateDailyNetBalance(type);
-        
-        if (ctx.chart) ctx.chart.destroy();
-
-        ctx.chart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: `Saldo Netto (${getCurrencySymbol()})`,
-                    data: data,
-                    borderColor: data[data.length - 1] >= 0 ? '#10b981' : '#ef4444',
-                    backgroundColor: data[data.length - 1] >= 0 ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)',
-                    fill: true,
-                    tension: 0.3
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    title: { display: true, text: 'Saldo Netto Ultimi 7 Giorni', color: document.body.classList.contains('dark') ? '#f1f5f9' : '#1e293b' }
-                },
-                scales: {
-                    x: { ticks: { color: document.body.classList.contains('dark') ? '#9ca3af' : '#6b7280' } },
-                    y: { 
-                        beginAtZero: false,
-                        ticks: { color: document.body.classList.contains('dark') ? '#9ca3af' : '#6b7280' }
-                    }
-                }
-            }
-        });
-    }
-
-
-    // --- Core calculations (Omessa per brevità, intatta) ---
-    function calculateFinancialSummary(type, filterType, filterDateStr) {
+    /* =============================
+       CALCOLI BASE
+       ============================= */
+    function calculateFinancialSummary(type, filterType, filterDateStr){
       let totalIncomes=0, totalExpenses=0, ivaAddebito=0, ivaCredito=0;
       const types = type==='global' ? ['activity','personal'] : [type];
       const all = [
         ...appData.invoices.map(t=>({...t,isIncome:true,key:'inv'})),
         ...appData.expenses.map(t=>({...t,isIncome:false,key:'exp'}))
       ];
-      const filtered = all.filter(i=>types.includes(i.type)).filter(i=>filterByPeriod(i.date,filterType,filterDateStr));
-      
+      const filtered = all
+        .filter(i=>types.includes(i.type))
+        .filter(i=>filterByPeriod(i.date,filterType,filterDateStr));
       filtered.forEach(i=>{
-        // Ensures gross is a number
-        const gross = parseFloat(i.gross) || 0;
-        const vatAmount = parseFloat(i.vatAmount) || 0;
-        
-        if (i.isIncome){ 
-          totalIncomes += gross; 
-          if (i.type==='activity') ivaAddebito += vatAmount; 
-        }
-        else { 
-          totalExpenses += gross; 
-          if (i.type==='activity') ivaCredito += vatAmount; 
-        }
+        const gross = parseFloat(i.gross)||0;
+        const vatAmount = parseFloat(i.vatAmount)||0;
+        if (i.isIncome){ totalIncomes += gross; if (i.type==='activity') ivaAddebito += vatAmount; }
+        else { totalExpenses += gross; if (i.type==='activity') ivaCredito += vatAmount; }
       });
-      
       const netBalance = totalIncomes - totalExpenses;
       const ivaBalance = ivaAddebito - ivaCredito;
-      
-      return { 
-        totalIncomes,
-        totalExpenses,
-        netBalance,
-        ivaAddebito,
-        ivaCredito,
-        ivaBalance, 
-        transactions: filtered.sort((a,b)=> new Date(b.date)-new Date(a.date)) 
+      return {
+        totalIncomes, totalExpenses, netBalance,
+        ivaAddebito, ivaCredito, ivaBalance,
+        transactions: filtered.sort((a,b)=> new Date(b.date)-new Date(a.date))
       };
     }
 
-    // --- Contacts / Categories helpers (Omessa per brevità, intatta) ---
-    function addContact(name, scope, relation){
-      const clean = (name||'').trim(); if (!clean) return;
-      // Normalizzazione: Controlla il nome in minuscolo
-      const exists = appData.contacts.find(c=> c.name.toLowerCase()===clean.toLowerCase() && c.scope===scope );
-      if (!exists){ appData.contacts.push({ id:getNextId(), name:clean, scope, relation }); saveData(); }
-    }
-    
-    function ensureCategory(cat){
-      const c=(cat||'').trim(); if (!c) return;
-      // Normalizzazione: Controlla se la categoria esiste già in minuscolo
-      if (!appData.categories.map(s=>s.toLowerCase()).includes(c.toLowerCase())) { 
-        appData.categories.push(c); 
-        appData.categories.sort((a,b)=>a.localeCompare(b)); 
-        saveData(); 
-      }
-    }
-    
-    // Trova la media storica di spesa per una categoria (Omessa per brevità, intatta)
-    function getAverageMonthlyExpense(category) {
-        const target = (category || 'Altro').toLowerCase();
-        
-        const relevantExpenses = appData.expenses.filter(e => 
-            (e.category || 'Altro').toLowerCase() === target
-        );
-        
-        const monthlyTotals = {};
-        relevantExpenses.forEach(e => {
-            const ym = e.date.slice(0, 7);
-            monthlyTotals[ym] = (monthlyTotals[ym] || 0) + e.gross;
-        });
-
-        const totalMonths = Object.keys(monthlyTotals).length;
-        if (totalMonths === 0) return 0;
-        
-        const totalExpense = Object.values(monthlyTotals).reduce((sum, current) => sum + current, 0);
-        
-        return totalExpense / totalMonths;
+    /* =============================
+       FORM CALCOLO LORDO
+       ============================= */
+    function calculateGross(){
+      const netInput = document.getElementById('net-amount');
+      const vatSelect = document.getElementById('vat-rate');
+      const vatAmountDisplay = document.getElementById('vat-amount-display');
+      const grossAmountDisplay = document.getElementById('gross-amount-display');
+      let net = parseFloat(netInput?.value)||0;
+      const rate = parseFloat(vatSelect?.value)||0;
+      const netC = toCents(net);
+      const { vatCents, grossCents } = calcGrossCents(netC, rate);
+      if (vatAmountDisplay) vatAmountDisplay.textContent = `${fmt.format(fromCents(vatCents))} ${sym()}`;
+      if (grossAmountDisplay) grossAmountDisplay.textContent = `${fmt.format(fromCents(grossCents))} ${sym()}`;
     }
 
-    // Logica di tracciamento spese ricorrenti (Omessa per brevità, intatta)
-    function trackRecurringExpense(description, gross, date) {
-        const desc = description.toLowerCase();
-        
-        const inferredFrequency = Object.keys(COMMON_FREQUENCIES).find(key => desc.includes(key)) 
-                                    ? COMMON_FREQUENCIES[Object.keys(COMMON_FREQUENCIES).find(key => desc.includes(key))]
-                                    : null;
-
-        if (!inferredFrequency) return;
-        
-        const recurringKey = `${inferredFrequency}:${desc.replace(/[^a-z0-9]/g, '-').slice(0, 20)}`;
-
-        const existing = appData.recurringExpenses.find(r => r.key === recurringKey);
-        
-        const newRecord = {
-            key: recurringKey,
-            description: description,
-            lastDate: date,
-            lastAmount: +gross.toFixed(2),
-            frequency: inferredFrequency
-        };
-
-        if (existing) {
-            Object.assign(existing, newRecord);
-        } else {
-            appData.recurringExpenses.push(newRecord);
-        }
-    }
-
-
-    // --- Transactions CRUD (Omessa per brevità, intatta) ---
+    /* =============================
+       TRANSAZIONI (CRUD) con FORNITORE
+       ============================= */
     function saveTransaction(isIncome, data){
       const list = isIncome ? appData.invoices : appData.expenses;
-      
-      const net = parseFloat(data.net)||0;
-      const vatRate = parseFloat(data.vatRate)||0;
-      
-      if (net < 0) { showToast('L\'importo Netto non può essere negativo.','red'); return; }
 
-      const vatAmount = (net*vatRate/100);
-      const gross = net+vatAmount;
+      // Importi sicuri
+      const netCents = toCents(data.net);
+      const vatRate = parseFloat(data.vatRate)||0;
+      if (netCents < 0){ showToast('L\'importo Netto non può essere negativo.','red'); return; }
+      const { vatCents, grossCents } = calcGrossCents(netCents, vatRate);
+
       const tags = (data.tags||'').split(',').map(s=>s.trim()).filter(Boolean);
+
+      // NEW: supplier (solo per uscite di solito, ma lo permettiamo sempre)
+      const supplierName = (data.supplier||'').trim();
 
       const updatedItem = {
         id: data.id || getNextId(),
         type: data.dataType, // 'activity' | 'personal'
         date: data.date,
-        description: data.description,
+        description: data.description,     // cliente/descrizione libera
+        supplier: supplierName || null,    // NUOVO campo visibile e filtrabile
         category: (data.category||'Altro').trim(),
         tags,
-        // Usa unary plus per convertire stringhe formattate (toFixed) in numeri
-        net: +net.toFixed(2),
+        net: fromCents(netCents),
         vatRate: +vatRate,
-        vatAmount: +vatAmount.toFixed(2),
-        gross: +gross.toFixed(2),
+        vatAmount: fromCents(vatCents),
+        gross: fromCents(grossCents),
         incomeType: data.incomeType || (isIncome && data.dataType==='activity' ? 'Fattura (Cliente)' : null)
       };
-      
-      // Traccia spese ricorrenti (solo uscite)
-      if (!isIncome && data.dataType === 'personal' && updatedItem.description) {
-          trackRecurringExpense(updatedItem.description, updatedItem.gross, updatedItem.date);
+
+      // Tracking spese ricorrenti su personale / uscite
+      if (!isIncome && data.dataType==='personal' && updatedItem.description) {
+        trackRecurringExpense(updatedItem.description, updatedItem.gross, updatedItem.date);
       }
 
-
-      // maintain contacts and categories
+      // Contatti: cliente o fornitore (anche entrambi)
       const isFatturaOrPersonal = (isIncome && data.dataType==='activity' && data.incomeType==='Fattura (Cliente)') || data.dataType==='personal';
       if (isFatturaOrPersonal && updatedItem.description?.trim()){
         if (!data.id || (list.find(it=>it.id===data.id)?.description !== data.description)){
-          addContact(data.description, data.dataType, isIncome?'client':'supplier');
+          addContact(updatedItem.description, data.dataType, isIncome ? 'client' : 'supplier');
         }
       }
+      // NUOVO: fornitore esplicito
+      if (updatedItem.supplier){
+        addContact(updatedItem.supplier, data.dataType, 'supplier');
+      }
+
       ensureCategory(updatedItem.category);
 
       if (isIncome && data.dataType==='activity' && data.incomeType==='Incasso/Corrispettivo'){
@@ -635,7 +579,7 @@
       if (data.id){
         const idx = list.findIndex(i=>i.id===data.id);
         if (idx>-1){ list[idx]=updatedItem; showToast(`Transazione ID ${data.id} aggiornata!`); }
-      } else { list.push(updatedItem); showToast(`"${updatedItem.description}" registrato!`); }
+      } else { list.push(updatedItem); showToast(`"${updatedItem.description||updatedItem.supplier||'Movimento'}" registrato!`); }
 
       saveData(); renderPage(currentPage);
     }
@@ -651,7 +595,8 @@
         dataType: type,
         isIncome,
         date: data.get('date'),
-        description: data.get('description'),
+        description: data.get('description'),   // cliente / descrizione
+        supplier: data.get('supplier') || '',   // NUOVO campo fornitore
         net: data.get('net'),
         vatRate: data.get('vatRate'),
         incomeType: data.get('incomeType'),
@@ -660,42 +605,29 @@
       };
 
       const isCorrisp = type==='activity' && isIncome && payload.incomeType==='Incasso/Corrispettivo';
-      if (payload.net && payload.date && (isCorrisp || (payload.description && payload.description.trim()))){
-          
-          const grossAmount = parseFloat(payload.net) * (1 + (parseFloat(payload.vatRate) / 100)) || 0;
-          
-          // Allerta di Spesa Anomala (solo nuove uscite, solo Personale)
-          if (!payload.id && !isIncome && type === 'personal') {
-              const monthlyAvg = getAverageMonthlyExpense(payload.category);
-              // Soglia di anomalia: 20% in più della media
-              if (monthlyAvg > 0 && grossAmount > monthlyAvg * 1.20) {
-                  const percentDifference = ((grossAmount / monthlyAvg) * 100).toFixed(0);
-                  showModal(
-                      '🚨 Allerta Spesa Anomala',
-                      `Questa spesa (${grossAmount.toFixed(2)}${getCurrencySymbol()}) è circa ${percentDifference}% superiore alla tua media mensile (${monthlyAvg.toFixed(2)}${getCurrencySymbol()}) per la categoria "${payload.category}". Continuare?`,
-                      true,
-                      () => {
-                          saveTransaction(isIncome, payload); // Confermato
-                          // FIX: Aggiorna etichetta dopo il salvataggio
-                          const isCurrentlyIncome = document.getElementById('isIncome').value === 'true';
-                          document.getElementById('description-label').textContent = isCurrentlyIncome ? 'Cliente / Descrizione' : 'Fornitore / Descrizione';
-                          form.reset();
-                          form.removeAttribute('data-transaction-id');
-                      },
-                      () => showToast('Registrazione annullata.','red') // Annullato
-                  );
-                  return; // Blocca l'invio normale per attendere la modal
-              }
+      if (payload.net && payload.date && (isCorrisp || (payload.description && payload.description.trim()) || (!isIncome && payload.supplier.trim()))){
+        const grossAmount = parseFloat(payload.net) * (1 + (parseFloat(payload.vatRate) / 100)) || 0;
+        // Allerta anomalia solo nuove uscite personali
+        if (!payload.id && !isIncome && type==='personal'){
+          const monthlyAvg = getAverageMonthlyExpense(payload.category);
+          if (monthlyAvg > 0 && grossAmount > monthlyAvg * 1.20) {
+            const percentDifference = ((grossAmount / monthlyAvg) * 100).toFixed(0);
+            showModal(
+              '🚨 Allerta Spesa Anomala',
+              `Questa spesa (${fmt.format(grossAmount)}${sym()}) è circa ${percentDifference}% superiore alla tua media mensile (${fmt.format(monthlyAvg)}${sym()}) per "${payload.category}". Continuare?`,
+              true,
+              () => saveTransaction(isIncome, payload),
+              () => showToast('Registrazione annullata.','red')
+            );
+            return;
           }
-          
-          saveTransaction(isIncome, payload);
-          form.reset();
-          form.removeAttribute('data-transaction-id');
-          // FIX: Aggiunto aggiornamento dell'etichetta dopo il reset (Correzione A)
-          const isCurrentlyIncome = document.getElementById('isIncome').value === 'true';
-          document.getElementById('description-label').textContent = isCurrentlyIncome ? 'Cliente / Descrizione' : 'Fornitore / Descrizione';
+        }
+        saveTransaction(isIncome, payload);
+        form.reset();
+        form.removeAttribute('data-transaction-id');
+        document.getElementById('description-label').textContent = isIncome ? 'Cliente / Descrizione' : 'Fornitore / Descrizione';
       } else {
-        showToast('Compila tutti i campi richiesti.','red');
+        showToast('Compila i campi richiesti (Data, Importo, e Cliente/Fornitore).','red');
       }
     }
 
@@ -703,87 +635,78 @@
       const list = isIncome ? appData.invoices : appData.expenses;
       const item = list.find(t=>t.id===id);
       if (!item) return showToast('Transazione non trovata.','red');
-      
-      // Re-render the correct page to ensure form elements exist
-      if (currentPage !== scope) renderPage(scope); 
-      
+      if (currentPage !== scope) renderPage(scope);
       const form = document.getElementById('transaction-form'); if(!form) return;
-      
-      // Scroll to form (anchor)
+
       document.getElementById('transaction-form-anchor')?.scrollIntoView({behavior:'smooth'});
-      
+
       form.setAttribute('data-transaction-id', item.id);
       document.getElementById('isIncome').value = isIncome ? 'true':'false';
-      document.getElementById('isIncome').dispatchEvent(new Event('change')); // Trigger listener to update UI
-      
+      document.getElementById('isIncome').dispatchEvent(new Event('change'));
+
       document.getElementById('date').value = item.date;
       document.getElementById('description').value = item.description || '';
-      // Usa toFixed(2) SOLO per pre-popolare il campo in edit mode
-      document.getElementById('net-amount').value = item.net.toFixed(2);
+      document.getElementById('supplier').value = item.supplier || ''; // NUOVO campo
+      document.getElementById('net-amount').value = (parseFloat(item.net)||0).toFixed(2);
       document.getElementById('vat-rate').value = item.vatRate;
       document.getElementById('category').value = item.category || 'Altro';
       document.getElementById('tags').value = (item.tags||[]).join(', ');
 
-      if (scope==='activity' && isIncome){ 
-        document.getElementById('incomeType').value = item.incomeType || 'Fattura (Cliente)'; 
-        document.getElementById('incomeType').dispatchEvent(new Event('change')); // Trigger listener
-      }
-      
-      // Rerun listeners/autocompletes that depend on form state
-      setupActivityIncomeTypeListeners(scope);
-      setupContactAutocomplete(scope);
-      setupCategoryAutocomplete();
-      calculateGross();
-      
-      const submitBtn = form.querySelector('button[type="submit"]');
-      submitBtn.textContent = `Salva Modifiche (ID ${item.id})`;
-      submitBtn.classList.remove('bg-emerald-500','hover:bg-emerald-600');
-      submitBtn.classList.add('bg-blue-500','hover:bg-blue-600');
-      showToast(`Modulo pronto per modificare ID ${item.id}.`);
-    }
-    
-    // NUOVA FUNZIONE: Duplica Transazione (Omessa per brevità, intatta)
-    function duplicateTransaction(isIncome, id, scope) {
-      const list = isIncome ? appData.invoices : appData.expenses;
-      const item = list.find(t => t.id === id);
-      if (!item) return showToast('Transazione non trovata.', 'red');
-
-      // Riporta alla pagina del form (Activity/Personal)
-      if (currentPage !== scope) renderPage(scope);
-
-      const form = document.getElementById('transaction-form');
-      if (!form) return;
-
-      // Scroll to form and set values
-      document.getElementById('transaction-form-anchor')?.scrollIntoView({ behavior: 'smooth' });
-      form.removeAttribute('data-transaction-id'); // Non è una modifica, ma una nuova registrazione
-      
-      document.getElementById('isIncome').value = isIncome ? 'true' : 'false';
-      document.getElementById('isIncome').dispatchEvent(new Event('change'));
-      document.getElementById('date').value = new Date().toISOString().slice(0, 10); // Nuova data
-      document.getElementById('description').value = item.description || '';
-      document.getElementById('net-amount').value = item.net.toFixed(2);
-      document.getElementById('vat-rate').value = item.vatRate;
-      document.getElementById('category').value = item.category || 'Altro';
-      document.getElementById('tags').value = (item.tags || []).join(', ');
-
-      if (scope === 'activity' && isIncome) {
+      if (scope==='activity' && isIncome){
         document.getElementById('incomeType').value = item.incomeType || 'Fattura (Cliente)';
         document.getElementById('incomeType').dispatchEvent(new Event('change'));
       }
 
       setupActivityIncomeTypeListeners(scope);
       setupContactAutocomplete(scope);
+      setupSupplierAutocomplete(scope);
+      setupCategoryAutocomplete();
+      calculateGross();
+
+      const submitBtn = form.querySelector('button[type="submit"]');
+      submitBtn.textContent = `Salva Modifiche (ID ${item.id})`;
+      submitBtn.classList.remove('bg-emerald-500','hover:bg-emerald-600');
+      submitBtn.classList.add('bg-blue-500','hover:bg-blue-600');
+      showToast(`Modulo pronto per modificare ID ${item.id}.`);
+    }
+
+    function duplicateTransaction(isIncome, id, scope){
+      const list = isIncome ? appData.invoices : appData.expenses;
+      const item = list.find(t => t.id === id);
+      if (!item) return showToast('Transazione non trovata.','red');
+      if (currentPage !== scope) renderPage(scope);
+      const form = document.getElementById('transaction-form'); if (!form) return;
+
+      document.getElementById('transaction-form-anchor')?.scrollIntoView({ behavior: 'smooth' });
+      form.removeAttribute('data-transaction-id');
+
+      document.getElementById('isIncome').value = isIncome ? 'true':'false';
+      document.getElementById('isIncome').dispatchEvent(new Event('change'));
+      document.getElementById('date').value = new Date().toISOString().slice(0,10);
+      document.getElementById('description').value = item.description || '';
+      document.getElementById('supplier').value = item.supplier || '';
+      document.getElementById('net-amount').value = (parseFloat(item.net)||0).toFixed(2);
+      document.getElementById('vat-rate').value = item.vatRate;
+      document.getElementById('category').value = item.category || 'Altro';
+      document.getElementById('tags').value = (item.tags||[]).join(', ');
+
+      if (scope==='activity' && isIncome){
+        document.getElementById('incomeType').value = item.incomeType || 'Fattura (Cliente)';
+        document.getElementById('incomeType').dispatchEvent(new Event('change'));
+      }
+
+      setupActivityIncomeTypeListeners(scope);
+      setupContactAutocomplete(scope);
+      setupSupplierAutocomplete(scope);
       setupCategoryAutocomplete();
       calculateGross();
 
       const submitBtn = form.querySelector('button[type="submit"]');
       submitBtn.textContent = `Registra Copia Movimento`;
-      submitBtn.classList.remove('bg-blue-500', 'hover:bg-blue-600');
-      submitBtn.classList.add('bg-emerald-500', 'hover:bg-emerald-600');
+      submitBtn.classList.remove('bg-blue-500','hover:bg-blue-600');
+      submitBtn.classList.add('bg-emerald-500','hover:bg-emerald-600');
       showToast(`Modulo pre-compilato (Copia ID ${item.id})!`);
     }
-
 
     function deleteTransaction(isIncome,id){
       const listName = isIncome ? 'invoices':'expenses';
@@ -795,14 +718,19 @@
       }
     }
 
-    // --- Reminders CRUD (Omessa per brevità, intatta) ---
+    /* =============================
+       REMINDERS & BIRTHDAYS (CRUD)
+       ============================= */
     function saveReminder(data){
       appData.reminders ||= [];
       if (data.id){ const i=appData.reminders.findIndex(r=>r.id===data.id); if(i>-1){ appData.reminders[i]={...appData.reminders[i],...data}; } }
       else { appData.reminders.push({ id:getNextId(), ...data, paid:false }); }
       saveData(); showToast('Promemoria salvato!'); renderPage('reminders');
     }
-    function toggleReminderPaid(id){ const r=appData.reminders.find(x=>x.id===id); if(r){ r.paid=!r.paid; saveData(); showToast(r.paid?'Pagamento registrato!':'Pagamento annullato.'); renderPage('reminders'); } }
+    function toggleReminderPaid(id){
+      const r=appData.reminders.find(x=>x.id===id);
+      if(r){ r.paid=!r.paid; saveData(); showToast(r.paid?'Pagamento registrato!':'Pagamento annullato.'); renderPage('reminders'); }
+    }
     function deleteReminder(id){
       const i=(appData.reminders||[]).findIndex(r=>r.id===id);
       if (i>-1){
@@ -814,27 +742,20 @@
     function handleReminderSubmit(){
       const f=document.getElementById('reminder-form'); const d=new FormData(f);
       const payload={ type:d.get('type'), description:d.get('description'), date:d.get('date'), amount: parseFloat(d.get('amount'))||0 };
-      if (payload.description && payload.date && payload.amount>0){ 
-        saveReminder(payload); 
-        f.reset(); 
-        document.getElementById('reminder-date').value = new Date().toISOString().slice(0,10); 
-      }
-      else showToast('Compila tutti i campi validi.','red');
+      if (payload.description && payload.date && payload.amount>0){
+        saveReminder(payload); f.reset(); document.getElementById('reminder-date').value = new Date().toISOString().slice(0,10);
+      } else showToast('Compila tutti i campi validi.','red');
     }
-    
-    // --- Compleanni CRUD (Omessa per brevità, intatta) ---
+
     function saveBirthday(data){
       appData.birthdays ||= [];
-      
       const dateStr = data.date;
-      const recurringDate = dateStr.slice(5); 
-
-      if (data.id){ 
-          const i=appData.birthdays.findIndex(r=>r.id===data.id); 
-          if(i>-1){ appData.birthdays[i]={...appData.birthdays[i],...data, recurringDate}; } 
-      }
-      else { 
-          appData.birthdays.push({ id:getNextId(), ...data, recurringDate }); 
+      const recurringDate = dateStr.slice(5);
+      if (data.id){
+        const i=appData.birthdays.findIndex(r=>r.id===data.id);
+        if(i>-1){ appData.birthdays[i]={...appData.birthdays[i],...data, recurringDate}; }
+      } else {
+        appData.birthdays.push({ id:getNextId(), ...data, recurringDate });
       }
       saveData(); showToast('Compleanno salvato!'); renderPage('reminders');
     }
@@ -847,24 +768,17 @@
       }
     }
     function handleBirthdaySubmit(){
-        const f=document.getElementById('birthday-form'); const d=new FormData(f);
-        const dateStr = d.get('date');
-        
-        const payload={ 
-            name: d.get('name').trim(), 
-            date: dateStr, 
-        };
-        
-        if (payload.name && payload.date){ 
-            saveBirthday(payload); 
-            f.reset(); 
-            document.getElementById('birthday-date').value = new Date().toISOString().slice(0,10); 
-        }
-        else showToast('Compila tutti i campi validi.','red');
+      const f=document.getElementById('birthday-form'); const d=new FormData(f);
+      const dateStr = d.get('date');
+      const payload={ name: d.get('name').trim(), date: dateStr };
+      if (payload.name && payload.date){
+        saveBirthday(payload); f.reset(); document.getElementById('birthday-date').value = new Date().toISOString().slice(0,10);
+      } else showToast('Compila tutti i campi validi.','red');
     }
 
-
-    // --- Import/Export (Omessa per brevità, intatta) ---
+    /* =============================
+       IMPORT / EXPORT (hardening in Parte 2)
+       ============================= */
     function exportDataJSON(){
       const dataStr = JSON.stringify(appData,null,2);
       const blob = new Blob([dataStr], {type:'application/json'});
@@ -872,38 +786,36 @@
       const a=document.createElement('a'); a.href=url; a.download=`finanza_backup_${new Date().toISOString().slice(0,10)}.json`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
       showToast('Backup JSON esportato!');
     }
+
+    // CSV “testo multi-sezione” (come prima — migliorie in Parte 2)
     function exportCSV(){
-      // Transactions CSV
       const tx = [...appData.invoices.map(t=>({...t,isIncome:true})), ...appData.expenses.map(t=>({...t,isIncome:false}))].sort((a,b)=> new Date(a.date)-new Date(b.date));
       const esc = (s)=> `"${String(s??'').replace(/"/g,'""')}"`;
-      // AGGIUNTA: Dati riepilogativi in testa al CSV (molto basic)
-      const summary = calculateFinancialSummary('global','all', 'all');
-      const summaryRow = ['---RIEPILOGO---', `Saldo Netto: ${summary.netBalance.toFixed(2)}${getCurrencySymbol()}`, `Entrate Totali: ${summary.totalIncomes.toFixed(2)}${getCurrencySymbol()}`, `Uscite Totali: ${summary.totalExpenses.toFixed(2)}${getCurrencySymbol()}`].map(esc).join(',');
-      
-      const headerTx = ['ID','Tipo','Scope','Data','Descrizione','Categoria','Tag','AliquotaIVA','Netto','IVA','Lordo','Entrata?','Sottotipo'].join(',');
+      const summary = calculateFinancialSummary('global','all','all');
+      const summaryRow = ['---RIEPILOGO---', `Saldo Netto: ${fmt.format(summary.netBalance)}${sym()}`, `Entrate Totali: ${fmt.format(summary.totalIncomes)}${sym()}`, `Uscite Totali: ${fmt.format(summary.totalExpenses)}${sym()}`].map(esc).join(',');
+      const headerTx = ['ID','Tipo','Scope','Data','Descrizione','Fornitore','Categoria','Tag','AliquotaIVA','Netto','IVA','Lordo','Entrata?','Sottotipo'].join(',');
       const rowsTx = tx.map(t => [
-        t.id, (t.isIncome?'Entrata':'Uscita'), t.type, t.date, t.description||'', t.category||'',
-        (t.tags||[]).join('|'), t.vatRate, t.net, t.vatAmount, t.gross, t.isIncome, t.incomeType||''
+        t.id, (t.isIncome?'Entrata':'Uscita'), t.type, t.date, t.description||'', t.supplier||'',
+        t.category||'', (t.tags||[]).join('|'), t.vatRate, t.net, t.vatAmount, t.gross, t.isIncome, t.incomeType||''
       ].map(esc).join(','));
       const csvTx = [summaryRow, headerTx, ...rowsTx].join('\n');
-      
-      // Reminders CSV
+
       const headerRm = ['ID','Tipo','Descrizione','Data','Importo','Pagato?'].join(',');
       const rowsRm = (appData.reminders||[]).map(r => [r.id,r.type,r.description,r.date,r.amount,r.paid].map(esc).join(','));
       const csvRm = [headerRm, ...rowsRm].join('\n');
-      
-      // Birthdays CSV
+
       const headerBd = ['ID','Nome','DataNascita','RicorrenzaMD'].join(',');
       const rowsBd = (appData.birthdays||[]).map(r => [r.id,r.name,r.date,r.recurringDate].map(esc).join(','));
       const csvBd = [headerBd, ...rowsBd].join('\n');
 
-      const zipContent = `### Transazioni\n${csvTx}\n\n### Promemoria\n${csvRm}\n\n### Compleanni\n${csvBd}\n`;
-      const blob = new Blob([zipContent], {type:'text/plain;charset=utf-8'});
+      const txt = `### Transazioni\n${csvTx}\n\n### Promemoria\n${csvRm}\n\n### Compleanni\n${csvBd}\n`;
+      const blob = new Blob([txt], {type:'text/plain;charset=utf-8'});
       const url = URL.createObjectURL(blob);
       const a=document.createElement('a'); a.href=url; a.download=`finanza_export_${new Date().toISOString().slice(0,10)}.txt`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
-      showToast('Export CSV pronto (testo con 3 sezioni).');
+      showToast('Export CSV pronto.');
     }
 
+    // Import con validazione migliorata (completa in Parte 2)
     function importDataFile(ev){
       const file = ev.target.files[0]; if(!file) return;
       const r = new FileReader();
@@ -916,16 +828,13 @@
               const maxId = all.length>0 ? Math.max(...all.map(x=>x.id||0)) : 0;
               appData = { ...appData, ...imported, lastId: Math.max(maxId, appData.lastId) };
               appData.categories ||= DEFAULT_CATEGORIES.slice();
-              appData.pin ||= '1234'; 
-              appData.currencySymbol ||= '€'; 
-              appData.birthdays ||= []; 
-              appData.recurringExpenses ||= []; 
-              // Assicurati che i compleanni importati abbiano recurringDate
-              appData.birthdays = appData.birthdays.map(bd => ({
-                  ...bd,
-                  recurringDate: (bd.date || bd.recurringDate).slice(5) 
-              }));
+              appData.pinMeta ||= appData.pin ? null : appData.pinMeta;
+              appData.currencySymbol ||= '€';
+              appData.birthdays ||= [];
+              appData.recurringExpenses ||= [];
               appData.monthlySavingsTarget ||= 0;
+              // Fix recurringDate
+              appData.birthdays = appData.birthdays.map(bd => ({ ...bd, recurringDate: (bd.date || bd.recurringDate).slice(5) }));
               saveData(); showToast('Dati importati!'); renderPage(currentPage);
             });
           } else { showToast('Backup JSON non valido.','red'); }
@@ -934,54 +843,28 @@
       r.readAsText(file);
     }
 
-    // --- CLEAN DATA (Corretto - FIX D) ---
-    function cleanDataByDate(monthYearStr){
-      const [yearStr, monthStr] = monthYearStr.split('-');
-      const targetYear = parseInt(yearStr);
-      const targetMonth = parseInt(monthStr);
-
-      if (isNaN(targetYear) || isNaN(targetMonth) || targetYear === 0){ 
-        showToast('Seleziona un mese/anno valido.','red'); 
-        return; 
-      }
-      
-      // Crea la data limite (es. 1° Giorno del Mese/Anno Selezionato)
-      const limitDate = new Date(targetYear, targetMonth - 1, 1);
-      
-      showModal('Conferma Pulizia Dati', `Eliminare TUTTO prima del 1° ${limitDate.toLocaleDateString('it-IT', {month:'long', year:'numeric'})}?`, true, ()=>{
-        
-        // La condizione è: la data della transazione è < della data limite
-        const before = (it)=> new Date(it.date) < limitDate;
-        
-        const i0=appData.invoices.length, e0=appData.expenses.length, r0=appData.reminders.length;
-        
-        appData.invoices = appData.invoices.filter(x=>!before(x));
-        appData.expenses = appData.expenses.filter(x=>!before(x));
-        appData.reminders = appData.reminders.filter(x=>!before(x));
-        
-        // MIGLIORAMENTO: Reset lastId se non ci sono più movimenti/promemoria
-        if (appData.invoices.length === 0 && appData.expenses.length === 0 && appData.reminders.length === 0) {
-            appData.lastId = 0;
-        }
-        
-        saveData();
-        showToast(`Pulizia ok. Rimossi ${(i0 - appData.invoices.length)+(e0 - appData.expenses.length)} movimenti e ${(r0 - appData.reminders.length)} promemoria.`);
-        renderPage('settings');
-      });
-    }
-    
-    // --- Delete contact (settings) (Omessa per brevità, intatta) ---
-    function deleteContact(id){
-      const i=appData.contacts.findIndex(c=>c.id===id);
-      if (i>-1){
-        showModal('Conferma Eliminazione Contatto','Le transazioni non verranno cancellate.',true,()=>{
-          appData.contacts.splice(i,1); saveData(); showToast('Contatto eliminato.','red'); renderPage('settings');
-        });
-      }
+    /* =============================
+       NAVBAR & ROUTER (render in Parte 2)
+       ============================= */
+    function renderNavbar(){
+      const navbar=document.getElementById('navbar');
+      const navItems=[
+        {id:'activity',label:'Attività',icon:'💼'},
+        {id:'personal',label:'Personale',icon:'🏠'},
+        {id:'report',label:'Riepilogo',icon:'📊'},
+        {id:'reminders',label:'Scadenze',icon:'🔔'},
+        {id:'settings',label:'Gestione Dati',icon:'⚙️'}
+      ];
+      navbar.innerHTML = navItems.map(it=>`
+        <button onclick="renderPage('${it.id}')" class="p-2 text-sm font-medium rounded-lg transition hover:bg-gray-100 dark:hover:bg-gray-800 ${currentPage===it.id?'tab-active':'text-gray-500'}" type="button" aria-label="${it.label}">
+          ${it.icon} <span class="hidden sm:inline">${it.label}</span>
+        </button>
+      `).join('');
     }
 
-
-    // --- UI wiring (Activity/Personal Forms) (Omessa per brevità, intatta) ---
+    /* =============================
+       AUTOCOMPLETE (clienti/fornitori/categorie) – UI wiring in Parte 2
+       ============================= */
     function setupActivityIncomeTypeListeners(scope){
       if (scope!=='activity') return;
       const incomeTypeSelect = document.getElementById('incomeType');
@@ -994,18 +877,15 @@
         if (isIncome && incomeType==='Incasso/Corrispettivo'){
           descriptionDiv.classList.add('hidden');
           const desc = document.getElementById('description');
-          // Non rendere required la descrizione
-          desc.removeAttribute('required'); 
-          // Se non è in modalità modifica, imposta il valore predefinito
+          desc.removeAttribute('required');
           if (document.getElementById('transaction-form').getAttribute('data-transaction-id')===null) {
-             desc.value = 'Corrispettivi/Incasso Giornaliero';
+            desc.value = 'Corrispettivi/Incasso Giornaliero';
           }
           document.getElementById('description-label').textContent = 'Descrizione Incasso (Opzionale)';
         } else {
           descriptionDiv.classList.remove('hidden');
           const desc = document.getElementById('description');
           desc.setAttribute('required','required');
-          // Se non è in modalità modifica, pulisci il valore
           if (document.getElementById('transaction-form').getAttribute('data-transaction-id')===null){ desc.value=''; }
           document.getElementById('description-label').textContent = isIncome ? 'Cliente / Descrizione' : 'Fornitore / Descrizione';
           setupContactAutocomplete(scope);
@@ -1014,7 +894,7 @@
 
       incomeTypeSelect?.removeEventListener('change', updateVisibility);
       incomeTypeSelect?.addEventListener('change', updateVisibility);
-      
+
       isIncomeSelect.removeEventListener('change', setupIncomeTypeControl);
       isIncomeSelect.addEventListener('change', setupIncomeTypeControl);
 
@@ -1024,8 +904,7 @@
         if (scope==='activity' && ctl){ ctl.classList.toggle('hidden', !isIncome); }
         updateVisibility();
       }
-      
-      setupIncomeTypeControl(); // Run on initial load
+      setupIncomeTypeControl();
     }
 
     function setupContactAutocomplete(scope){
@@ -1034,1288 +913,297 @@
       const input = document.getElementById('description');
       const datalist = document.getElementById('contact-list');
       if (!input || !datalist) return;
-
       if (scope==='activity' && isIncome && incomeType==='Incasso/Corrispettivo'){ datalist.innerHTML=''; return; }
       const relation = isIncome ? 'client':'supplier';
       const contacts = appData.contacts
         .filter(c=> c.scope===scope && (c.relation===relation || c.relation==='both'))
         .sort((a,b)=> a.name.localeCompare(b.name));
-      datalist.innerHTML = contacts.map(c=> `<option value="${c.name}"></option>`).join('');
+      datalist.innerHTML = contacts.map(c=> `<option value="${h(c.name)}"></option>`).join('');
       input.setAttribute('list','contact-list');
+    }
+
+    // NUOVO: autocomplete fornitori espliciti
+    function setupSupplierAutocomplete(scope){
+      const input = document.getElementById('supplier');
+      const datalist = document.getElementById('supplier-list');
+      if (!input || !datalist) return;
+      const names = getAllSuppliers(scope);
+      datalist.innerHTML = names.map(n=> `<option value="${h(n)}"></option>`).join('');
+      input.setAttribute('list','supplier-list');
     }
 
     function setupCategoryAutocomplete(){
       const dl = document.getElementById('category-list');
       if (!dl) return;
       const all = (appData.categories||DEFAULT_CATEGORIES).slice().sort((a,b)=>a.localeCompare(b));
-      dl.innerHTML = all.map(c=> `<option value="${c}"></option>`).join('');
+      dl.innerHTML = all.map(c=> `<option value="${h(c)}"></option>`).join('');
     }
-    
-    function getAllTags() {
-        const allTags = new Set();
-        [...appData.invoices, ...appData.expenses].forEach(t => {
-            (t.tags || []).forEach(tag => allTags.add(tag));
-        });
-        return Array.from(allTags).sort();
-    }
+<script>
+/* =============================
+   PARTE 2 / 2 – UI, REPORT, SETTINGS
+   ============================= */
 
-    function calculateGross(){
-      const netInput=document.getElementById('net-amount');
-      const vatSelect=document.getElementById('vat-rate');
-      const vatAmountDisplay=document.getElementById('vat-amount-display');
-      const grossAmountDisplay=document.getElementById('gross-amount-display');
-      
-      // FIX: Non formattare e riassegnare il valore qui. Prendiamo il valore per il calcolo.
-      let net = parseFloat(netInput.value)||0; 
-      const rate=parseFloat(vatSelect.value)||0;
-      
-      const vatAmt=net*rate/100; 
-      const gross=net+vatAmt;
-      
-      // I display sono solo per l'output, usiamo toFixed(2) qui.
-      vatAmountDisplay.textContent = vatAmt.toFixed(2)+' '+getCurrencySymbol();
-      grossAmountDisplay.textContent = gross.toFixed(2)+' '+getCurrencySymbol();
-    }
-    
-    // Funzione per ottenere i dati di "Focus Oggi" (Omessa per brevità, intatta)
-    function getTodayFocusData(type) {
-        const todayStr = new Date().toISOString().slice(0, 10);
-        
-        const summary = calculateFinancialSummary(type, 'day', todayStr);
-        
-        const todayDate = new Date(todayStr);
+/* ---------- RENDER GENERICO ---------- */
+function renderPage(page){
+  currentPage = page;
+  renderNavbar();
+  const area = document.getElementById('content-area');
+  area.innerHTML = '';
+  if(page==='activity'||page==='personal') renderTransactionsPage(page);
+  else if(page==='report') renderReportPage();
+  else if(page==='reminders') renderRemindersPage();
+  else if(page==='settings') renderSettingsPage();
+}
 
-        const upcomingReminders = appData.reminders.filter(r => !r.paid && r.date === todayStr);
-        const upcomingBirthdays = appData.birthdays.filter(b => {
-            const bdRecurrence = new Date(`${todayDate.getFullYear()}-${b.recurringDate}`);
-            return bdRecurrence.toISOString().slice(0, 10) === todayStr;
-        });
-        
-        return { summary, upcomingReminders, upcomingBirthdays };
-    }
-
-
-    // --- Rendering pages (Omessa per brevità, intatta) ---
-    function renderNavbar(){
-      const navbar=document.getElementById('navbar');
-      const navItems=[
-        {id:'activity',label:'Attività',icon:'💼'},
-        {id:'personal',label:'Personale',icon:'🏠'},
-        {id:'report',label:'Riepilogo',icon:'📊'},
-        {id:'reminders',label:'Scadenze',icon:'🔔'},
-        {id:'settings',label:'Gestione Dati',icon:'⚙️'}
-      ];
-      navbar.innerHTML = navItems.map(it=>`
-        <button onclick="renderPage('${it.id}')" class="p-2 text-sm font-medium rounded-lg transition hover:bg-gray-100 dark:hover:bg-gray-800 ${currentPage===it.id?'tab-active':'text-gray-500'}">
-          ${it.icon} <span class="hidden sm:inline">${it.label}</span>
-        </button>
-      `).join('');
-    }
-
-    function renderSummaryCard(summary,label){
-      const symbol = getCurrencySymbol();
-      const ivaStatus = summary.ivaBalance>=0?'IVA da Versare':'IVA a Credito';
-      const ivaColor = summary.ivaBalance>=0?'text-red-600':'text-blue-600';
-      const balanceColor = summary.netBalance>=0?'text-emerald-600':'text-red-600';
-      return `
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div class="bg-white dark:bg-gray-800 p-4 rounded-xl card text-center">
-            <p class="text-sm text-gray-500">Entrate Totali (${label})</p>
-            <p class="text-xl font-bold text-emerald-600">${summary.totalIncomes.toFixed(2)} ${symbol}</p>
-          </div>
-          <div class="bg-white dark:bg-gray-800 p-4 rounded-xl card text-center">
-            <p class="text-sm text-gray-500">Uscite Totali (${label})</p>
-            <p class="text-xl font-bold text-red-600">${summary.totalExpenses.toFixed(2)} ${symbol}</p>
-          </div>
-          <div class="bg-white dark:bg-gray-800 p-4 rounded-xl card text-center col-span-2 md:col-span-1">
-            <p class="text-sm text-gray-500">Saldo Netto (${label})</p>
-            <p class="text-2xl font-extrabold ${balanceColor}">${summary.netBalance.toFixed(2)} ${symbol}</p>
-          </div>
-          <div class="bg-white dark:bg-gray-800 p-4 rounded-xl card text-center col-span-2 md:col-span-1">
-            <p class="text-sm text-gray-500">${ivaStatus} (Attività)</p>
-            <p class="text-xl font-bold ${ivaColor}">${Math.abs(summary.ivaBalance).toFixed(2)} ${symbol}</p>
-            <p class="text-xs text-gray-400">Add: ${summary.ivaAddebito.toFixed(2)} | Cred: ${summary.ivaCredito.toFixed(2)}</p>
-          </div>
-        </div>
-      `;
-    }
-    function renderActivityOrPersonalPage(type){
-      const isActivity = type==='activity';
-      const symbol = getCurrencySymbol();
-      const title = isActivity?'Gestione Attività (Partita IVA)':'Gestione Personale (Casa)';
-      const listTitle = isActivity?`Ultime ${MAX_RECENT_TRANSACTIONS} Transazioni Attività`:`Ultime ${MAX_RECENT_TRANSACTIONS} Transazioni Personali`;
-      const year = new Date().getFullYear();
-      const summary = calculateFinancialSummary(type,'year', String(year));
-      const tx = summary.transactions.filter(t=>t.type===type).slice(0,MAX_RECENT_TRANSACTIONS);
-      
-      // Dati Focus Oggi
-      const todayData = getTodayFocusData(type);
-      const todayBalanceColor = todayData.summary.netBalance >= 0 ? 'text-emerald-500' : 'text-red-500';
-      const todaySummaryMessage = todayData.summary.netBalance.toFixed(2) + ' ' + symbol;
-
-
-      return `
-        <div class="space-y-6">
-          <h2 class="text-2xl font-semibold border-b pb-2 text-gray-700 dark:text-gray-300">${title}</h2>
-          ${renderSummaryCard(summary,year)}
-          
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="bg-white dark:bg-gray-800 p-4 rounded-xl card border-l-4 border-blue-500">
-                <h3 class="text-xl font-bold mb-2">Focus Oggi (${new Date().toLocaleDateString('it-IT')})</h3>
-                <p class="text-sm text-gray-500">Saldo Netto del Giorno:</p>
-                <p class="text-2xl font-extrabold ${todayBalanceColor} mb-2">${todaySummaryMessage}</p>
-                
-                <p class="text-xs text-gray-500">
-                    ${todayData.upcomingReminders.length > 0 ? `🔔 ${todayData.upcomingReminders.length} scadenza/e oggi. ` : ''}
-                    ${todayData.upcomingBirthdays.length > 0 ? `🎂 ${todayData.upcomingBirthdays.length} compleanno/i oggi!` : ''}
-                    ${todayData.upcomingReminders.length === 0 && todayData.upcomingBirthdays.length === 0 ? 'Nessun evento o scadenza urgente.' : ''}
-                </p>
-            </div>
-            
-            <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card" style="height: 200px;">
-                <canvas id="weeklyBalanceChart-${type}"></canvas>
-            </div>
-          </div>
-          <div id="transaction-form-anchor" class="pt-4"></div>
-
-          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card">
-            <h3 class="text-xl font-medium mb-4 text-emerald-600">Registra Nuovo Movimento</h3>
-            <form id="transaction-form" onsubmit="event.preventDefault(); handleTransactionSubmit('${type}');" class="space-y-4">
-              <input type="hidden" name="dataType" value="${type}">
-              <div class="grid grid-cols-1 ${isActivity?'md:grid-cols-2':''} gap-4">
-                <div>
-                  <label for="isIncome" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipo</label>
-                  <select id="isIncome" name="isIncome" required class="w-full p-2 border rounded-lg focus:ring-emerald-500 focus:border-emerald-500 dark:bg-gray-900 dark:border-gray-700">
-                    <option value="true">Entrata</option>
-                    <option value="false">${isActivity?'Spesa (Uscita)':'Uscita/Costo'}</option>
-                  </select>
-                </div>
-                ${isActivity?`
-                <div id="income-type-control">
-                  <label for="incomeType" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sottotipo Entrata</label>
-                  <select id="incomeType" name="incomeType" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
-                    <option value="Fattura (Cliente)">Fattura (Cliente)</option>
-                    <option value="Incasso/Corrispettivo">Incasso/Corrispettivo (POS/Contanti)</option>
-                  </select>
-                </div>`:''}
-              </div>
-
-              <div>
-                <label for="date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data</label>
-                <input type="date" id="date" name="date" value="${new Date().toISOString().slice(0,10)}" required class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
-              </div>
-
-              <div id="description-div">
-                <label id="description-label" for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cliente / Descrizione</label>
-                <input type="text" id="description" name="description" required placeholder="Seleziona o digita" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
-                <datalist id="contact-list"></datalist>
-                <p class="text-xs text-gray-500 mt-1">Suggerimento: i nomi digitati vengono salvati nei contatti.</p>
-              </div>
-
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label for="category" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Categoria</label>
-                  <input id="category" name="category" list="category-list" placeholder="Es. Affitto / Marketing" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700"/>
-                  <datalist id="category-list"></datalist>
-                </div>
-                <div>
-                  <label for="tags" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tag (separati da virgola)</label>
-                  <input id="tags" name="tags" placeholder="es. Q3, fattura-ricorrente" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700"/>
-                </div>
-              </div>
-
-              <div class="grid grid-cols-2 gap-4">
-                <div>
-                  <label for="net-amount" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Importo Netto (${symbol})</label>
-                  <input type="number" id="net-amount" name="net" step="0.01" min="0" required placeholder="100.00" 
-                         class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700" 
-                         inputmode="decimal">
-                </div>
-                <div>
-                  <label for="vat-rate" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Aliquota IVA (%)</label>
-                  <select id="vat-rate" name="vatRate" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
-                    ${IVA_RATES.map(r=>`<option value="${r}">${r}%</option>`).join('')}
-                  </select>
-                </div>
-              </div>
-
-              <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg text-sm">
-                <p class="flex justify-between"><span>IVA Calcolata:</span> <span id="vat-amount-display" class="font-bold text-blue-600">0.00 ${symbol}</span></p>
-                <p class="flex justify-between border-t mt-1 pt-1 font-bold"><span>Importo Lordo Totale:</span> <span id="gross-amount-display" class="text-lg text-emerald-600">0.00 ${symbol}</span></p>
-              </div>
-
-              <button type="submit" class="cta-button w-full bg-emerald-500 text-white p-3 rounded-lg font-bold hover:bg-emerald-600">
-                Registra Movimento
-              </button>
-            </form>
-          </div>
-
-          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card mb-20">
-            <h3 class="text-xl font-medium mb-4">${listTitle} (${year})</h3>
-            <div id="transactions-list" class="space-y-3">
-              ${tx.length? tx.map(t=>{
-                const isIncomeTx = appData.invoices.some(i=>i.id===t.id);
-                const colorClass = isIncomeTx?'bg-emerald-50 dark:bg-emerald-900/50':'bg-red-50 dark:bg-red-900/50';
-                const incomeTag = isActivity && isIncomeTx && t.incomeType==='Incasso/Corrispettivo' ? '<span class="text-xs text-orange-600 dark:text-orange-300 font-semibold">(Corrispettivo)</span>':'';
-                return `
-                  <div class="flex justify-between items-center p-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0 ${colorClass} rounded-lg">
-                    <div class="flex-grow">
-                      <p class="font-semibold text-sm">
-                        ${getCategoryIcon(t.category)} ${t.description||''} ${incomeTag}
-                      </p>
-                      <p class="text-xs text-gray-500 dark:text-gray-400">
-                        ${new Date(t.date).toLocaleDateString('it-IT')} | Cat: ${t.category||'-'} 
-                        ${(t.tags||[]).length > 0 ? '| Tag: '+(t.tags||[]).join(', ') : ''}
-                      </p>
-                    </div>
-                    <div class="text-right ml-4 flex items-center space-x-3">
-                      <div>
-                        <p class="font-bold ${isIncomeTx?'text-emerald-700 dark:text-emerald-300':'text-red-700 dark:text-red-300'}">${t.gross.toFixed(2)} ${symbol}</p>
-                        <p class="text-xs text-gray-600 dark:text-gray-400">Netto: ${t.net.toFixed(2)}</p>
-                      </div>
-                      <button onclick="duplicateTransaction(${isIncomeTx},${t.id},'${type}')" class="text-orange-500 hover:text-orange-700" title="Duplica Transazione">📋</button>
-                      <button onclick="editTransaction(${isIncomeTx},${t.id},'${type}')" class="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-200">✏️</button>
-                      <button onclick="deleteTransaction(${isIncomeTx},${t.id})" class="text-red-400 hover:text-red-600">🗑️</button>
-                    </div>
-                  </div>
-                `;
-              }).join('') : '<p class="text-gray-500 text-center">Nessuna transazione nell\'anno.</p>'}
-            </div>
-          </div>
-        </div>
-      `;
-    }
-
-    // --- Report page (KPI + Trend + Ricerca + IVA/Cash bars + Dettaglio) ---
-    function filterTransactions(query, transactions){
-      const q=(query||'').toLowerCase();
-      if (!q) return transactions;
-      return transactions.filter(t =>
-        (t.description||'').toLowerCase().includes(q) ||
-        (t.category||'').toLowerCase().includes(q) ||
-        (t.tags||[]).some(tag => tag.toLowerCase().includes(q)) ||
-        String(t.gross).includes(q)
-      );
-    }
-
-    function computeKPIs(){
-      const all = [...appData.invoices.map(t=>({...t,isIncome:true})), ...appData.expenses.map(t=>({...t,isIncome:false}))];
-      if (all.length===0) return {savingRate:0, avgExpense:0, avgIncome:0, topClients:[], topSuppliers:[], topCategories:[]};
-
-      // group by month
-      const byMonth = {};
-      all.forEach(t=>{
-        const ym=t.date?.slice(0,7)||'';
-        if (!byMonth[ym]) byMonth[ym] = {inc:0, exp:0};
-        // Ensure gross is a number
-        const gross = parseFloat(t.gross) || 0;
-        if (t.isIncome) byMonth[ym].inc += gross; else byMonth[ym].exp += gross;
-      });
-      const months = Object.keys(byMonth);
-      const sumInc = months.reduce((s,m)=>s+byMonth[m].inc,0);
-      const sumExp = months.reduce((s,m)=>s+byMonth[m].exp,0);
-      const avgIncome = months.length? sumInc/months.length : 0;
-      const avgExpense = months.length? sumExp/months.length : 0;
-      const net = sumInc - sumExp;
-      const savingRate = sumInc > 0 ? (net/sumInc*100) : (net > 0 ? 100 : (net < 0 ? -100 : 0)); // Handle zero income case robustly
-
-      // top clients/suppliers by gross
-      const sumByDesc = {};
-      all.forEach(t=>{
-        const key=(t.description||'?').trim();
-        sumByDesc[key] ||= {inc:0,exp:0};
-        const gross = parseFloat(t.gross) || 0;
-        if (t.isIncome) sumByDesc[key].inc += gross; else sumByDesc[key].exp += gross;
-      });
-      const topClients = Object.entries(sumByDesc).filter(([k,v])=>v.inc>0).sort((a,b)=>b[1].inc - a[1].inc).slice(0,3).map(([name,v])=>({name, amount:v.inc}));
-      const topSuppliers = Object.entries(sumByDesc).filter(([k,v])=>v.exp>0).sort((a,b)=>b[1].exp - a[1].exp).slice(0,3).map(([name,v])=>({name, amount:v.exp}));
-
-      // top categories (expenses)
-      const byCat = {};
-      all.forEach(t=>{
-        const cat=(t.category||'Altro').trim();
-        byCat[cat] ||= {inc:0,exp:0};
-        const gross = parseFloat(t.gross) || 0;
-        if (t.isIncome) byCat[cat].inc += gross; else byCat[cat].exp += gross;
-      });
-      const topCategories = Object.entries(byCat).sort((a,b)=>b[1].exp - a[1].exp).slice(0,3).map(([cat,v])=>({cat, amount:v.exp}));
-
-      return {savingRate, avgExpense, avgIncome, topClients, topSuppliers, topCategories};
-    }
-
-    function renderTrendChart(transactions){
-      const canvas = document.getElementById('trendChart');
-      if (!canvas) return;
-      const ctx = canvas.getContext('2d'); 
-      
-      // Cleanup previous chart instance if it exists
-      if (canvas.chart) { canvas.chart.destroy(); }
-      
-      const grouped={};
-      transactions.forEach(t=>{
-        const ym=t.date?.slice(0,7); if(!ym) return;
-        if (!grouped[ym]) grouped[ym]={income:0,expense:0};
-        const gross = parseFloat(t.gross) || 0;
-        if (t.isIncome) grouped[ym].income += gross; else grouped[ym].expense += gross;
-      });
-      const labels=Object.keys(grouped).sort();
-      const incomes=labels.map(l=>grouped[l].income);
-      const expenses=labels.map(l=>grouped[l].expense);
-      
-      canvas.chart = new Chart(ctx,{
-        type:'line',
-        data:{ labels, datasets:[
-          { label:'Entrate', data:incomes, borderColor:'#10b981', backgroundColor:'#10b981', tension: 0.1, fill:false },
-          { label:'Uscite', data:expenses, borderColor:'#ef4444', backgroundColor:'#ef4444', tension: 0.1, fill:false }
-        ]},
-        options:{ 
-          responsive:true, 
-          maintainAspectRatio:false,
-          scales: {
-            y: { beginAtZero: true }
-          },
-          plugins: {
-            legend: {
-              labels: {
-                color: document.body.classList.contains('dark') ? '#f1f5f9' : '#1e293b' // Adjust label color for dark mode
-              }
-            }
-          }
-        }
-      });
-    }
-
-    // --- Report Page Rendering (Modificato per Filtro Range - FIX C) ---
-    function renderReportPage(){
-      const symbol = getCurrencySymbol();
-      // default filters
-      const currentType = document.getElementById('report-type')?.value || 'global';
-      const filterType = document.getElementById('filter-type')?.value || 'year';
-      
-      let filterDateStr;
-      
-      // NUOVA LOGICA PER RANGE
-      if (filterType === 'range') { 
-        const start = document.getElementById('filter-date-start')?.value;
-        const end = document.getElementById('filter-date-end')?.value;
-        filterDateStr = (start && end) ? `${start}|${end}` : 'all';
-      } else {
-        // Logica esistente per Anno/Mese/Giorno
-        let filterDateInput = document.getElementById('filter-date');
-        filterDateStr = filterDateInput?.value || (filterType==='year'? String(new Date().getFullYear()) : (filterType==='month'||filterType==='quarter')? new Date().toISOString().slice(0,7) : new Date().toISOString().slice(0,10));
-        if (filterType==='all') filterDateStr='all';
-      }
-      
-      // Nuovi filtri
-      const categoryFilter = document.getElementById('filter-category')?.value || 'all';
-      const tagFilter = document.getElementById('filter-tag')?.value || 'all';
-
-      const summary = calculateFinancialSummary(currentType, filterType, filterDateStr);
-      const cashSummary = calculateFinancialSummary('global', filterType, filterDateStr);
-      const ivaSummary = calculateFinancialSummary('activity', filterType, filterDateStr);
-      
-      // Filtra le transazioni del periodo/tipo in base a Categoria e Tag
-      let transactionsList = filterTransactionsByCriteria(summary.transactions, categoryFilter === 'all' ? null : categoryFilter, tagFilter === 'all' ? null : tagFilter);
-
-      const totalCash = cashSummary.totalIncomes + cashSummary.totalExpenses;
-      const cashIncomePercent = totalCash>0 ? (cashSummary.totalIncomes/totalCash)*100 : 50;
-      const cashExpensePercent = 100 - cashIncomePercent;
-
-      const totalIva = ivaSummary.ivaAddebito + ivaSummary.ivaCredito;
-      const ivaAddebitoPercent = totalIva>0 ? (ivaSummary.ivaAddebito/totalIva)*100 : 50;
-      const ivaCreditoPercent = 100 - ivaAddebitoPercent;
-
-      // KPIs
-      const KPIs = computeKPIs();
-      
-      // Calcolo Obiettivo Risparmio
-      const averageMonthlyNet = (KPIs.avgIncome || 0) - (KPIs.avgExpense || 0);
-      const targetDelta = averageMonthlyNet - (appData.monthlySavingsTarget || 0);
-      const targetColor = targetDelta >= 0 ? 'text-emerald-600' : 'text-red-600';
-      const targetLabel = targetDelta >= 0 ? 'Obiettivo Raggiunto (Surplus)' : 'Obiettivo Mancato (Deficit)';
-
-
-      // period label
-      let periodLabel='Periodo Selezionato';
-      if (filterType==='all') periodLabel='Tutti i Dati';
-      else if (filterType==='year') periodLabel=filterDateStr;
-      else if (filterType==='month'){ const [y,m]=filterDateStr.split('-').map(Number); const d=new Date(y,m-1,1); periodLabel=d.toLocaleDateString('it-IT',{year:'numeric',month:'long'}); }
-      else if (filterType==='quarter'){ const [y,m]=filterDateStr.split('-').map(Number); periodLabel=`Trimestre Q${Math.ceil(m/3)}/${y}`; }
-      else if (filterType==='week'){ periodLabel=`Settimana di ${new Date(filterDateStr).toLocaleDateString('it-IT')}`; }
-      else if (filterType==='day') periodLabel=new Date(filterDateStr).toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'});
-      else if (filterType==='range'){
-          const [start, end] = filterDateStr.split('|');
-          if (start && end) periodLabel = `Dal ${new Date(start).toLocaleDateString('it-IT')} al ${new Date(end).toLocaleDateString('it-IT')}`;
-          else periodLabel = 'Seleziona Intervallo';
-      }
-      
-      const allCategories = appData.categories || DEFAULT_CATEGORIES.slice();
-      const allTags = getAllTags();
-
-      return `
-        <div class="space-y-6">
-          <h2 class="text-2xl font-semibold border-b pb-2 text-gray-700 dark:text-gray-300">Riepilogo Finanziario Globale</h2>
-
-          <div class="bg-white dark:bg-gray-800 p-4 rounded-xl card grid grid-cols-1 md:grid-cols-5 gap-4">
-            <div class="md:col-span-1">
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipo</label>
-              <select id="report-type" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
-                <option value="global" ${currentType==='global'?'selected':''}>Totale</option>
-                <option value="activity" ${currentType==='activity'?'selected':''}>Attività</option>
-                <option value="personal" ${currentType==='personal'?'selected':''}>Personale</option>
-              </select>
-            </div>
-            <div class="md:col-span-1">
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Periodo</label>
-              <select id="filter-type" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700" value="${filterType}">
-                <option value="day" ${filterType==='day'?'selected':''}>Giorno</option>
-                <option value="week" ${filterType==='week'?'selected':''}>Settimana</option>
-                <option value="month" ${filterType==='month'?'selected':''}>Mese</option>
-                <option value="quarter" ${filterType==='quarter'?'selected':''}>Trimestre</option>
-                <option value="year" ${filterType==='year'?'selected':''}>Anno</option>
-                <option value="range" ${filterType==='range'?'selected':''}>Intervallo Libero</option>
-                <option value="all" ${filterType==='all'?'selected':''}>Tutti</option>
-              </select>
-            </div>
-            <div class="md:col-span-1">
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data/Anno</label>
-              <input type="${filterType==='year'?'number':(filterType==='month'||filterType==='quarter')?'month':'date'}" id="filter-date" value="${filterDateStr}" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700 ${filterType==='all'||filterType==='range'?'hidden':''}">
-            </div>
-            
-            <div id="filter-range-container" class="md:col-span-2 ${filterType==='range'?'':'hidden'}">
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data Inizio</label>
-                        <input type="date" id="filter-date-start" value="${filterType==='range' && filterDateStr!=='all'?filterDateStr.split('|')[0]:''}" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data Fine</label>
-                        <input type="date" id="filter-date-end" value="${filterType==='range' && filterDateStr!=='all'?filterDateStr.split('|')[1]:''}" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
-                    </div>
-                </div>
-            </div>
-            <div class="md:col-span-1">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Categoria</label>
-                <select id="filter-category" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
-                    <option value="all">Tutte le Categorie</option>
-                    ${allCategories.map(c => `<option value="${c}" ${categoryFilter === c ? 'selected' : ''}>${getCategoryIcon(c)} ${c}</option>`).join('')}
-                </select>
-            </div>
-            <div class="md:col-span-1">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tag</label>
-                <select id="filter-tag" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
-                    <option value="all">Tutti i Tag</option>
-                    ${allTags.map(t => `<option value="${t}" ${tagFilter === t ? 'selected' : ''}>${t}</option>`).join('')}
-                </select>
-            </div>
-          </div>
-          
-          <div class="bg-white dark:bg-gray-800 p-4 rounded-xl card text-center border-l-4 border-dashed border-purple-500">
-              <p class="text-sm text-gray-500">Obiettivo Risparmio Mensile: ${appData.monthlySavingsTarget.toFixed(2)} ${symbol}</p>
-              <p class="text-xl font-bold ${targetColor}">
-                  Proiezione Media Mensile: ${targetDelta.toFixed(2)} ${symbol} 
-                  <span class="text-xs text-gray-500">(${targetLabel})</span>
-              </p>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="bg-white dark:bg-gray-800 p-4 rounded-xl card text-center">
-              <p class="text-sm text-gray-500">Tasso di Risparmio</p>
-              <p class="text-2xl font-extrabold ${KPIs.savingRate>=0?'text-emerald-600':'text-red-600'}">${(KPIs.savingRate||0).toFixed(1)}%</p>
-            </div>
-            <div class="bg-white dark:bg-gray-800 p-4 rounded-xl card text-center">
-              <p class="text-sm text-gray-500">Media Mensile Entrate</p>
-              <p class="text-2xl font-extrabold text-emerald-600">${(KPIs.avgIncome||0).toFixed(2)} ${symbol}</p>
-            </div>
-            <div class="bg-white dark:bg-gray-800 p-4 rounded-xl card text-center">
-              <p class="text-sm text-gray-500">Media Mensile Uscite</p>
-              <p class="text-2xl font-extrabold text-red-600">${(KPIs.avgExpense||0).toFixed(2)} ${symbol}</p>
-            </div>
-          </div>
-
-          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card">
-            <h3 class="text-xl font-extrabold mb-3 text-gray-800 dark:text-gray-200">Totale Globale: ${periodLabel}</h3>
-            ${renderSummaryCard(summary, periodLabel)}
-          </div>
-
-          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card" style="height: 280px;">
-            <h3 class="text-xl font-medium mb-3 text-gray-800 dark:text-gray-200">Andamento Mensile Entrate/Uscite</h3>
-            <canvas id="trendChart"></canvas>
-          </div>
-
-          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card">
-            <h3 class="text-xl font-medium mb-3 text-gray-800 dark:text-gray-200">Analisi Cash Flow (${periodLabel})</h3>
-            <p class="text-sm text-gray-600 dark:text-gray-400 mb-2 font-semibold">Distribuzione Entrate vs Uscite</p>
-            <div class="bar-container">
-              <div class="bar-income h-full" style="width:${cashIncomePercent.toFixed(1)}%"></div>
-              <div class="bar-expense h-full" style="width:${cashExpensePercent.toFixed(1)}%"></div>
-            </div>
-            <div class="flex justify-between text-xs mt-1">
-              <span class="text-emerald-700 dark:text-emerald-300">${cashIncomePercent.toFixed(1)}% Entrate</span>
-              <span class="text-red-700 dark:text-red-300">${cashExpensePercent.toFixed(1)}% Uscite</span>
-            </div>
-          </div>
-
-          ${currentType!=='personal'?`
-          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card">
-            <h3 class="text-xl font-medium mb-3 text-gray-800 dark:text-gray-200">Analisi IVA (Attività - ${periodLabel})</h3>
-            <div class="bar-container">
-              <div class="bar-addebito h-full" style="width:${ivaAddebitoPercent.toFixed(1)}%"></div>
-              <div class="bar-credito h-full" style="width:${ivaCreditoPercent.toFixed(1)}%"></div>
-            </div>
-            <div class="flex justify-between text-xs mt-1">
-              <span class="text-orange-700 dark:text-orange-300">${ivaAddebitoPercent.toFixed(1)}% Addebito</span>
-              <span class="text-indigo-700 dark:text-indigo-300">${ivaCreditoPercent.toFixed(1)}% Credito</span>
-            </div>
+/* ---------- PAGINA TRANSAZIONI ---------- */
+function renderTransactionsPage(scope){
+  const isActivity = scope==='activity';
+  const listIn = appData.invoices.filter(t=>t.type===scope);
+  const listOut = appData.expenses.filter(t=>t.type===scope);
+  const all = [...listIn.map(t=>({...t,isIncome:true})), ...listOut.map(t=>({...t,isIncome:false}))].sort((a,b)=> new Date(b.date)-new Date(a.date));
+  const area=document.getElementById('content-area');
+  area.innerHTML=`
+    <div class="mb-4">
+      <h2 class="text-2xl font-bold mb-2">${isActivity?'💼 Attività':'🏠 Personale'}</h2>
+      <p class="text-gray-500 text-sm mb-4">Registra movimenti e gestisci clienti / fornitori</p>
+      <div id="transaction-form-anchor"></div>
+      <form id="transaction-form" class="bg-white dark:bg-gray-900 p-4 rounded-xl card space-y-3" onsubmit="event.preventDefault();handleTransactionSubmit('${scope}')">
+        <div class="flex gap-2">
+          <select id="isIncome" name="isIncome" class="flex-1 border rounded-lg p-2">
+            <option value="true">Entrata</option>
+            <option value="false">Uscita</option>
+          </select>
+          ${isActivity?`
+          <div id="income-type-control" class="flex-1">
+            <select id="incomeType" name="incomeType" class="border rounded-lg p-2 w-full">
+              <option>Fattura (Cliente)</option>
+              <option>Incasso/Corrispettivo</option>
+            </select>
           </div>`:''}
-
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="bg-white dark:bg-gray-800 p-4 rounded-xl card">
-              <h4 class="font-semibold mb-2">Top 3 Clienti</h4>
-              <ul class="text-sm">${KPIs.topClients.map(c=>`<li class="flex justify-between"><span>${c.name}</span><span class="font-bold text-emerald-600 dark:text-emerald-300">${c.amount.toFixed(2)} ${symbol}</span></li>`).join('') || '<li class="text-gray-500">-</li>'}</ul>
-            </div>
-            <div class="bg-white dark:bg-gray-800 p-4 rounded-xl card">
-              <h4 class="font-semibold mb-2">Top 3 Fornitori</h4>
-              <ul class="text-sm">${KPIs.topSuppliers.map(c=>`<li class="flex justify-between"><span>${c.name}</span><span class="font-bold text-red-600 dark:text-red-300">${c.amount.toFixed(2)} ${symbol}</span></li>`).join('') || '<li class="text-gray-500">-</li>'}</ul>
-            </div>
-            <div class="bg-white dark:bg-gray-800 p-4 rounded-xl card">
-              <h4 class="font-semibold mb-2">Top 3 Categorie (Uscite)</h4>
-              <ul class="text-sm">${KPIs.topCategories.map(c=>`<li class="flex justify-between"><span>${getCategoryIcon(c.cat)} ${c.cat}</span><span class="font-bold text-red-600 dark:text-red-300">${c.amount.toFixed(2)} ${symbol}</span></li>`).join('') || '<li class="text-gray-500">-</li>'}</ul>
-            </div>
-          </div>
-
-          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card mb-20">
-            <div class="flex items-center justify-between mb-4">
-              <h3 class="text-xl font-medium text-gray-800 dark:text-gray-200">Dettaglio Movimenti (${transactionsList.length})</h3>
-              <input type="text" id="search" placeholder="🔍 Cerca (descrizione, categoria, tag, importo)" class="w-64 p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
-            </div>
-            <div id="transactions-detail" class="space-y-3">
-              ${transactionsList.map(t=>`
-                <div class="flex justify-between items-center p-3 border-l-4 ${t.isIncome?'bg-emerald-50 border-emerald-300 dark:bg-emerald-900/50 dark:border-emerald-700':'bg-red-50 border-red-300 dark:bg-red-900/50 dark:border-red-700'} rounded-lg">
-                  <div class="flex-grow">
-                    <p class="font-semibold text-sm">${getCategoryIcon(t.category)} ${new Date(t.date).toLocaleDateString('it-IT')}: ${t.description||''}</p>
-                    <p class="text-xs text-gray-500 dark:text-gray-400">
-                      ${t.type==='activity'?'Attività':'Personale'} | IVA ${t.vatRate}% | Cat: ${t.category||'-'} 
-                      ${(t.tags||[]).length > 0 ? '| Tag: '+(t.tags||[]).join(', ') : ''}
-                    </p>
-                  </div>
-                  <div class="text-right ml-4">
-                    <p class="font-bold ${t.isIncome?'text-emerald-700 dark:text-emerald-300':'text-red-700 dark:text-red-300'}">${t.gross.toFixed(2)} ${symbol}</p>
-                  </div>
-                </div>
-              `).join('') || '<p class="text-gray-500">Nessuna transazione nel periodo.</p>'}
-            </div>
-          </div>
         </div>
-      `;
-    }
-
-    function updateReportDateInput(){
-      const filterType = document.getElementById('filter-type')?.value;
-      const input = document.getElementById('filter-date');
-      if (!input) return;
-
-      let type='date', visible=true, def=new Date().toISOString().slice(0,10);
-      const rangeContainer = document.getElementById('filter-range-container'); // Prendi il nuovo container
-
-      switch(filterType){
-        case 'year': 
-          type='number'; 
-          input.min=2000; 
-          input.max=new Date().getFullYear(); 
-          def=new Date().getFullYear(); 
-          rangeContainer?.classList.add('hidden'); // Nascondi range
-          break;
-        case 'month': 
-        case 'quarter': 
-          type='month'; 
-          def=new Date().toISOString().slice(0,7); 
-          rangeContainer?.classList.add('hidden'); // Nascondi range
-          break;
-        case 'week': 
-        case 'day': 
-          type='date'; 
-          def=new Date().toISOString().slice(0,10); 
-          rangeContainer?.classList.add('hidden'); // Nascondi range
-          break;
-        case 'range': // NUOVO CASE: Mostra i campi data di inizio e fine
-          type='hidden';
-          visible=false;
-          def='all';
-          rangeContainer?.classList.remove('hidden'); // Mostra range
-          break;
-        default: 
-          type='hidden'; 
-          visible=false; 
-          def='all';
-          rangeContainer?.classList.add('hidden'); // Nascondi range
-      }
-      
-      input.type=type; 
-      input.classList.toggle('hidden',!visible);
-      
-      // Gestione della visibilità del range container
-      rangeContainer?.classList.toggle('hidden', filterType !== 'range'); 
-      
-      // Set value only if filter is not 'all' and not currently editing a specific date
-      if (visible && filterType!=='all' && !input.value) {
-          input.value=def;
-      }
-      
-      // If filter is active and the input is visible, trigger page re-render
-      if (visible || filterType === 'all' || filterType === 'range') {
-          renderPage('report');
-      }
-    }
-    
-    // Calcola la data di previsione basata sulla frequenza (Omessa per brevità, intatta)
-    function calculateNextRecurrence(lastDateStr, frequency) {
-        let nextDate = new Date(lastDateStr);
-        nextDate.setDate(nextDate.getDate() + 1); // Start checking from next day
-
-        if (frequency === 'monthly') {
-            const currentMonth = nextDate.getMonth();
-            nextDate.setMonth(currentMonth + 1);
-            if (nextDate.getMonth() !== (currentMonth + 1) % 12) {
-                // Gestione giorni mancanti (es. 31/01 -> 03/03)
-                nextDate.setDate(0); 
-            }
-        } else if (frequency === 'quarterly') {
-            nextDate.setMonth(nextDate.getMonth() + 3);
-        } else if (frequency === 'annual') {
-            nextDate.setFullYear(nextDate.getFullYear() + 1);
-        } else {
-            return null;
-        }
-
-        // Formatta a YYYY-MM-DD per la visualizzazione
-        return nextDate.toISOString().slice(0, 10);
-    }
-
-    // NUOVO: Funzione per generare Promemoria IVA Trimestrale
-    function getIvaReminders() {
-      const today = new Date();
-      const currentYear = today.getFullYear();
-      const reminders = [];
-      
-      IVA_DEADLINES_IT.forEach(item => {
-        let [day, month] = item.date.split('-').map(Number);
-        let year = currentYear;
-        
-        // Se la scadenza è Marzo (4° trimestre anno precedente), potrebbe essere l'anno prossimo se siamo già oltre
-        if (month < today.getMonth() + 1) { // Mese di scadenza passato
-            year++;
-        }
-        
-        // Caso speciale: se la scadenza è marzo, ma la data di oggi è l'anno dopo
-        if (item.date === '16-03' && today.getMonth() + 1 > 3 && year === currentYear) {
-            year++;
-        }
-        
-        let targetDate = new Date(year, month - 1, day);
-        
-        // Per evitare duplicati, controlla se esiste già un promemoria IVA molto simile
-        const exists = appData.reminders.some(r => 
-          r.type === 'IVA' && 
-          r.date === targetDate.toISOString().slice(0, 10)
-        );
-        
-        if (!exists) {
-            reminders.push({
-                type: 'IVA',
-                description: `IVA Trimestrale: ${item.desc} ${year}`,
-                date: targetDate.toISOString().slice(0, 10),
-                amount: 0 // L'importo deve essere calcolato dall'utente o inserito manualmente
-            });
-        }
-      });
-      
-      return reminders;
-    }
-
-
-    function renderRemindersPage(){
-      const symbol = getCurrencySymbol();
-      // AGGIUNTO: Promemoria IVA automatici (senza salvarli, solo mostrati in cima)
-      const ivaReminders = getIvaReminders().sort((a, b) => new Date(a.date) - new Date(b.date));
-      
-      const list = appData.reminders||[];
-      const birthdays = appData.birthdays||[];
-      const recurring = appData.recurringExpenses||[];
-      const today = new Date(); today.setHours(0,0,0,0);
-      
-      // Ordina i promemoria (scadenze finanziarie) per data
-      const sortedReminders = list.slice().sort((a,b)=> new Date(a.date)-new Date(b.date));
-      const upcomingReminders = sortedReminders.filter(r=> !r.paid && new Date(r.date)>=today);
-      const paidReminders = sortedReminders.filter(r=> r.paid);
-      const overdueReminders = sortedReminders.filter(r=> {
-        const rDate = new Date(r.date); rDate.setHours(0,0,0,0);
-        return !r.paid && rDate < today;
-      });
-      
-      // Calcola le previsioni ricorrenti (Omessa per brevità, intatta)
-      const predictedRecurrences = recurring
-          .map(r => {
-              const nextDateStr = calculateNextRecurrence(r.lastDate, r.frequency);
-              if (!nextDateStr) return null;
-              
-              const nextDate = new Date(nextDateStr);
-              const diffDays = Math.ceil((nextDate - today) / (1000 * 60 * 60 * 24));
-              
-              if (diffDays > 90 || diffDays < 0) return null; // Mostra solo i prossimi 90 giorni
-              
-              return {
-                  ...r,
-                  nextDate: nextDateStr,
-                  status: `Previsto in ${diffDays} giorni`,
-                  amount: r.lastAmount
-              };
-          })
-          .filter(r => r !== null)
-          .sort((a, b) => new Date(a.nextDate) - new Date(b.nextDate));
-      
-      const types = ['IVA','IMU','TARI','Tasse/Acconto','Assicurazione','Bollo Auto','Affitto','Altri Costi Personali','Altri Costi Attività'];
-      
-      // Funzione per calcolare l'età e la scadenza annuale dei compleanni (Omessa per brevità, intatta)
-      const getBirthdayInfo = (bd) => {
-        const bdDate = new Date(bd.date);
-        const currentYear = new Date().getFullYear();
-        
-        // Data di ricorrenza nel *prossimo* anno per l'ordinamento
-        let recurrence = new Date(`${currentYear}-${bd.recurringDate}`);
-        if (recurrence < today) {
-            recurrence = new Date(`${currentYear + 1}-${bd.recurringDate}`);
-        }
-        
-        let age = currentYear - bdDate.getFullYear();
-        if (new Date(bd.recurringDate).setFullYear(currentYear) > today) {
-            age -= 1; // Se il compleanno non è ancora passato quest'anno
-        }
-        
-        const diffDays = Math.ceil((recurrence - today) / (1000 * 60 * 60 * 24));
-        const status = diffDays === 0 ? 'Oggi!' : (diffDays > 0 && diffDays <= 7 ? `In ${diffDays} giorni` : `Mancano ${diffDays} giorni`);
-
-        return {
-            ...bd,
-            recurrenceDate: recurrence,
-            displayDate: new Date(`${bd.date}`).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' }),
-            annualDate: new Date(`${bd.date}`).toLocaleDateString('it-IT', { day: 'numeric', month: 'long' }),
-            age: age >= 0 ? age : 'N/A',
-            status: status
-        };
-      };
-
-      // Ordina compleanni per data di ricorrenza più vicina
-      const sortedBirthdays = birthdays.map(getBirthdayInfo).sort((a, b) => a.recurrenceDate - b.recurrenceDate);
-      
-      const pill = (r)=>{
-        if (r.paid) return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300';
-        const rDate = new Date(r.date); rDate.setHours(0,0,0,0);
-        const diff = (rDate-today)/(1000*60*60*24);
-        if (diff<0) return 'bg-red-100 text-red-700 font-bold dark:bg-red-900 dark:text-red-300';
-        if (diff<=30) return 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300';
-        return 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300';
-      };
-      
-      const reminderSection = (list,title, type='payment')=>`
-        <h3 class="text-xl font-medium mb-3 border-b pb-1 text-gray-700 dark:text-gray-300 mt-6">${title} (${list.length})</h3>
-        <div class="space-y-3">
-          ${list.length? list.map(r=>`
-            <div class="bg-white dark:bg-gray-800 p-4 rounded-xl card flex justify-between items-center">
-              <div class="flex-grow">
-                ${type === 'payment' ? `<span class="text-xs font-semibold px-2 py-1 rounded-full ${pill(r)}">${r.paid?'PAGATO':r.type}</span>` : type === 'recurring' ? `<span class="text-xs font-semibold px-2 py-1 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300">PREVISTO (${r.frequency.toUpperCase().slice(0,1)})</span>` : (type === 'iva' ? `<span class="text-xs font-semibold px-2 py-1 rounded-full bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300">🇮🇹 IVA</span>` : '')}
-                
-                <p class="font-bold mt-1 ${r.paid?'line-through text-gray-500':'text-gray-800 dark:text-gray-200'}">${type === 'payment' ? r.description : r.name || r.description}</p>
-                
-                ${type === 'payment' ? 
-                    `<p class="text-sm text-gray-600 dark:text-gray-400">Scadenza: ${new Date(r.date).toLocaleDateString('it-IT')} | Importo: ${r.amount.toFixed(2)} ${symbol}</p>` :
-                type === 'recurring' ?
-                    `<p class="text-sm text-gray-600 dark:text-gray-400">Previsto il: ${new Date(r.nextDate).toLocaleDateString('it-IT')} | Est: ${r.amount.toFixed(2)} ${symbol} | ${r.status}</p>` :
-                type === 'iva' ? 
-                    `<p class="text-sm text-gray-600 dark:text-gray-400 font-bold">SCADENZA: ${new Date(r.date).toLocaleDateString('it-IT')} | Stima Saldo IVA: ${ivaSummary.ivaBalance.toFixed(2)} ${symbol}</p>` :
-                    `<p class="text-sm text-gray-600 dark:text-gray-400">Ricorre il: ${r.annualDate} | Età Proiettata: ${r.age} | ${r.status}</p>`}
-              </div>
-              <div class="flex space-x-2">
-                ${type === 'payment' ? 
-                    `<button onclick="toggleReminderPaid(${r.id})" class="text-sm px-3 py-1 rounded-lg ${r.paid?'bg-orange-500 hover:bg-orange-600':'bg-emerald-500 hover:bg-emerald-600'} text-white">${r.paid?'Annulla Pag.':'Paga'}</button>` : ''}
-                <button onclick="${type === 'payment' ? `deleteReminder(${r.id})` : (type === 'birthday' ? `deleteBirthday(${r.id})` : (type === 'iva' ? `showToast('Aggiungi manualmente per eliminarlo.', 'red')` : `showToast('Non eliminabile da qui.', 'red')`))}" class="text-red-400 hover:text-red-600">🗑️</button>
-              </div>
-            </div>
-          `).join(''):'<p class="text-gray-500">Nessun promemoria in questa categoria.</p>'}
+        <input type="date" id="date" name="date" class="border rounded-lg p-2 w-full" required/>
+        <div id="description-div">
+          <label id="description-label" class="block text-sm mb-1">Cliente / Descrizione</label>
+          <input type="text" id="description" name="description" list="contact-list" class="border rounded-lg p-2 w-full" required/>
+          <datalist id="contact-list"></datalist>
         </div>
-      `;
-      
-      return `
-        <div class="space-y-6">
-          <h2 class="text-2xl font-semibold border-b pb-2 text-gray-700 dark:text-gray-300">Promemoria Scadenze & Eventi</h2>
-          
-          ${reminderSection(ivaReminders, 'Scadenze IVA (Trimestrali Automatiche)', 'iva')}
-          ${reminderSection(sortedBirthdays, 'Compleanni in Arrivo', 'birthday')}
-          
-          ${reminderSection(predictedRecurrences, 'Spese Ricorrenti Previste (90gg)', 'recurring')}
-
-          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card mt-6">
-            <h3 class="text-xl font-medium mb-4 text-pink-600">Aggiungi Compleanno 🎂</h3>
-            <form id="birthday-form" onsubmit="event.preventDefault(); handleBirthdaySubmit();" class="space-y-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome</label>
-                <input id="birthday-name" name="name" required placeholder="Es. Mario Rossi" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
-              </div>
-              <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data di Nascita (Anno opzionale)</label>
-                <input type="date" id="birthday-date" name="date" value="${new Date().toISOString().slice(0,10)}" required class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
-              </div>
-              <button type="submit" class="cta-button w-full bg-pink-500 text-white p-3 rounded-lg font-bold hover:bg-pink-600">Aggiungi Compleanno</button>
-            </form>
-          </div>
-
-          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card mt-6">
-            <h3 class="text-xl font-medium mb-4 text-emerald-600">Aggiungi Nuovo Promemoria (Pagamento)</h3>
-            <form id="reminder-form" onsubmit="event.preventDefault(); handleReminderSubmit();" class="space-y-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipo Scadenza</label>
-                <select id="reminder-type" name="type" required class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
-                  ${types.map(t=>`<option value="${t}">${t}</option>`).join('')}
-                </select>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Descrizione</label>
-                <input id="reminder-description" name="description" required placeholder="Es. TARI 2° Rata" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
-              </div>
-              <div class="grid grid-cols-2 gap-4">
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data Scadenza</label>
-                  <input type="date" id="reminder-date" name="date" value="${new Date().toISOString().slice(0,10)}" required class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
-                </div>
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Importo (${symbol})</label>
-                  <input type="number" id="reminder-amount" name="amount" step="0.01" min="0" required placeholder="500.00" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
-                </div>
-              </div>
-              <button type="submit" class="cta-button w-full bg-emerald-500 text-white p-3 rounded-lg font-bold hover:bg-emerald-600">Aggiungi Promemoria</button>
-            </form>
-          </div>
-
-          ${reminderSection(overdueReminders,'Scaduti (Urgenti)', 'payment')}
-          ${reminderSection(upcomingReminders,'In Arrivo', 'payment')}
-          ${reminderSection(paidReminders,'Pagati', 'payment')}
+        <div>
+          <label class="block text-sm mb-1">Fornitore (opzionale)</label>
+          <input type="text" id="supplier" name="supplier" list="supplier-list" class="border rounded-lg p-2 w-full"/>
+          <datalist id="supplier-list"></datalist>
         </div>
-      `;
-    }
-
-    // --- Settings Page Rendering (Modificato per Pulizia Mese/Anno - FIX D) ---
-    function renderSettingsPage(){
-      const currentYear=new Date().getFullYear();
-      // Nota: la logica di pulizia ora usa l'input type="month"
-      const allContacts = appData.contacts.slice().sort((a,b)=>a.name.localeCompare(b.name));
-      const cats = (appData.categories||DEFAULT_CATEGORIES).slice().sort((a,b)=>a.localeCompare(b));
-      const symbol = getCurrencySymbol();
-
-      return `
-        <div class="space-y-6">
-          <h2 class="text-2xl font-semibold border-b pb-2 text-gray-700 dark:text-gray-300">Gestione e Manutenzione Dati</h2>
-          
-          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card space-y-4">
-            <h3 class="text-xl font-medium text-purple-600">Pianificazione (Budgeting)</h3>
-            <div>
-              <label for="monthly-target" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Obiettivo Risparmio Mensile (${symbol})</label>
-              <input type="number" id="monthly-target" step="0.01" min="0" value="${appData.monthlySavingsTarget.toFixed(2)}"
-                     class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700" 
-                     inputmode="decimal"/>
-            </div>
-            <button onclick="saveMonthlyTarget()" class="cta-button w-full bg-purple-500 text-white p-3 rounded-lg font-bold hover:bg-purple-600">Salva Obiettivo</button>
-          </div>
-          
-          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card space-y-4">
-              <h3 class="text-xl font-medium text-blue-600">Configurazione Valuta</h3>
-              <p class="text-sm text-gray-700 dark:text-gray-300">Simbolo Valuta Attuale: <span class="font-bold text-lg">${symbol}</span></p>
-              <div>
-                  <label for="currency-symbol-input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Imposta Simbolo Valuta (es. €, $, £)</label>
-                  <input type="text" id="currency-symbol-input" maxlength="2" value="${symbol}" placeholder="€" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700"/>
-              </div>
-              <button onclick="changeCurrencySymbol()" class="cta-button w-full bg-blue-500 text-white p-3 rounded-lg font-bold hover:bg-blue-600">Salva Valuta</button>
-          </div>
-          
-          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card space-y-4">
-            <h3 class="text-xl font-medium text-emerald-600">Fornitori / Clienti Salvati (${allContacts.length})</h3>
-            <div class="max-h-60 overflow-y-auto border dark:border-gray-700 p-3 rounded-lg bg-gray-50 dark:bg-gray-900">
-              ${allContacts.length? allContacts.map(c=>`
-                <div class="flex justify-between items-center py-2 border-b dark:border-gray-700 last:border-b-0">
-                  <div class="flex-grow">
-                    <span class="font-semibold text-sm">${c.name}</span>
-                    <span class="text-xs ml-2 px-2 py-0.5 rounded-full ${c.scope==='activity'?'bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300':'bg-pink-100 text-pink-700 dark:bg-pink-900 dark:text-pink-300'}">
-                      ${c.scope==='activity'?'Attività':'Personale'}
-                    </span>
-                  </div>
-                  <button onclick="deleteContact(${c.id})" class="text-red-400 hover:text-red-600">🗑️</button>
-                </div>
-              `).join('') : '<p class="text-gray-500 text-sm">Nessun contatto salvato.</p>'}
-            </div>
-          </div>
-
-          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card space-y-3">
-            <h3 class="text-lg font-semibold">Categorie (${cats.length})</h3>
-            <div class="flex items-center space-x-2">
-              <input id="new-cat" placeholder="Nuova categoria" class="p-2 border rounded-lg flex-1 dark:bg-gray-900 dark:border-gray-700">
-              <button class="px-3 py-2 bg-emerald-500 text-white rounded-lg" onclick="(function(){const v=document.getElementById('new-cat').value.trim(); if(!v) return; ensureCategory(v); showToast('Categoria aggiunta!'); renderPage('settings');})()">Aggiungi</button>
-            </div>
-            <div class="text-sm text-gray-500">Usate nell’autocomplete del form. Icona: ${getCategoryIcon('Altro')}</div>
-            <div class="flex flex-wrap gap-2 mt-2">
-              ${cats.map(c=>`<span class="px-2 py-1 rounded-full bg-gray-100 text-gray-700 border dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">${getCategoryIcon(c)} ${c}</span>`).join('')}
-            </div>
-          </div>
-          
-          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card space-y-4">
-            <h3 class="text-xl font-medium text-purple-600">Gestione Sicurezza (PIN)</h3>
-            <p class="text-sm text-gray-700 dark:text-gray-300">PIN Attuale: <span class="font-bold">${appData.pin.replace(/./g, '•')}</span></p>
-            <div>
-              <label for="current-pin" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">PIN Attuale (Conferma)</label>
-              <input type="password" id="current-pin" maxlength="4" placeholder="Inserisci PIN Attuale" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700 mb-2"/>
-            </div>
-            <div>
-              <label for="new-pin" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Imposta Nuovo PIN (4 cifre)</label>
-              <input type="password" id="new-pin" maxlength="4" placeholder="Nuovo PIN (4 cifre)" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700"/>
-            </div>
-            <button onclick="changePin()" class="cta-button w-full bg-purple-500 text-white p-3 rounded-lg font-bold hover:bg-purple-600">Cambia PIN</button>
-          </div>
-
-          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card space-y-4">
-            <h3 class="text-xl font-medium text-indigo-600">Importa / Esporta Dati</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <button onclick="exportDataJSON()" class="cta-button w-full bg-indigo-500 text-white p-3 rounded-lg font-bold hover:bg-indigo-600">Esporta Dati (JSON)</button>
-              <button onclick="exportCSV()" class="cta-button w-full bg-blue-500 text-white p-3 rounded-lg font-bold hover:bg-blue-600">Esporta CSV (testo)</button>
-            </div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mt-2">Importa Backup (.json)</label>
-            <input type="file" id="import-file" accept=".json" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 dark:file:bg-indigo-900 dark:file:text-indigo-300 dark:hover:file:bg-indigo-800"/>
-            <p class="text-xs text-red-500 mt-1">Attenzione: sovrascrive i dati attuali.</p>
-          </div>
-
-          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card space-y-4">
-            <h3 class="text-xl font-medium text-red-600">Pulisci Dati Vecchi</h3>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Elimina i dati precedenti al mese/anno:</label>
-            <input type="month" id="clean-date-month" value="${new Date().toISOString().slice(0,7)}" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700"/>
-            <button id="clean-btn" class="cta-button w-full bg-red-500 text-white p-3 rounded-lg font-bold hover:bg-red-600">Conferma Pulizia</button>
-          </div>
+        <div class="flex gap-2">
+          <input type="number" id="net-amount" name="net" step="0.01" class="border rounded-lg p-2 flex-1" placeholder="Netto" oninput="calculateGross()"/>
+          <select id="vat-rate" name="vatRate" class="border rounded-lg p-2" onchange="calculateGross()">
+            ${IVA_RATES.map(v=>`<option value="${v}">${v}%</option>`).join('')}
+          </select>
         </div>
-      `;
-    }
-    
-    // NUOVA FUNZIONE: Salvataggio Obiettivo Risparmio (Omessa per brevità, intatta)
-    function saveMonthlyTarget() {
-        const input = document.getElementById('monthly-target');
-        const target = parseFloat(input?.value) || 0;
+        <div class="text-sm text-gray-500">IVA: <span id="vat-amount-display">0.00</span> ${sym()} — Lordo: <span id="gross-amount-display">0.00</span> ${sym()}</div>
+        <input type="text" id="category" name="category" list="category-list" placeholder="Categoria" class="border rounded-lg p-2 w-full"/>
+        <datalist id="category-list"></datalist>
+        <input type="text" id="tags" name="tags" placeholder="Tag (separati da virgola)" class="border rounded-lg p-2 w-full"/>
+        <button type="submit" class="w-full bg-emerald-500 text-white p-2 rounded-lg font-semibold hover:bg-emerald-600 transition cta-button">Registra Movimento</button>
+      </form>
+    </div>
+    <div class="mt-6">
+      <h3 class="font-semibold mb-2">Movimenti recenti</h3>
+      <ul class="divide-y divide-gray-200 dark:divide-gray-700">
+        ${all.slice(0,MAX_RECENT_TRANSACTIONS).map(t=>`
+          <li class="py-2 flex justify-between items-center">
+            <div><span class="mr-1">${getCategoryIcon(t.category)}</span>${h(t.description||t.supplier||'-')}<br><small class="text-gray-500">${h(t.category)} — ${h(t.supplier||'')}</small></div>
+            <div class="text-right">
+              <span class="${t.isIncome?'text-emerald-600':'text-red-500'} font-semibold">${t.isIncome?'+':'-'}${fmt.format(t.gross)}${sym()}</span><br>
+              <button onclick="editTransaction(${t.isIncome},${t.id},'${scope}')" class="text-xs text-blue-500">Modifica</button>
+              <button onclick="duplicateTransaction(${t.isIncome},${t.id},'${scope}')" class="text-xs text-emerald-500 ml-2">Duplica</button>
+              <button onclick="deleteTransaction(${t.isIncome},${t.id})" class="text-xs text-red-500 ml-2">Elimina</button>
+            </div>
+          </li>`).join('')}
+      </ul>
+    </div>`;
+  setupActivityIncomeTypeListeners(scope);
+  setupContactAutocomplete(scope);
+  setupSupplierAutocomplete(scope);
+  setupCategoryAutocomplete();
+  calculateGross();
+}
 
-        showModal('Conferma Obiettivo', `Impostare l'obiettivo di risparmio su: ${target.toFixed(2)} ${getCurrencySymbol()}?`, true, () => {
-            appData.monthlySavingsTarget = target;
-            saveData();
-            showToast('Obiettivo risparmio salvato!');
-            renderPage('settings');
-        });
-    }
+/* ---------- PAGINA REPORT ---------- */
+function renderReportPage(){
+  const area=document.getElementById('content-area');
+  const suppliers=getAllSuppliers('activity').concat(getAllSuppliers('personal'));
+  area.innerHTML=`
+    <h2 class="text-2xl font-bold mb-4">📊 Riepilogo</h2>
+    <div class="flex flex-wrap gap-2 mb-4">
+      <select id="scope-select" class="border p-2 rounded">
+        <option value="global">Globale</option>
+        <option value="activity">Attività</option>
+        <option value="personal">Personale</option>
+      </select>
+      <select id="filter-type" class="border p-2 rounded">
+        <option value="all">Tutto</option><option value="month">Mese</option>
+        <option value="year">Anno</option><option value="quarter">Trimestre</option>
+      </select>
+      <input type="month" id="filter-date" class="border p-2 rounded"/>
+      <select id="supplier-filter" class="border p-2 rounded">
+        <option value="">Tutti i Fornitori</option>
+        ${suppliers.map(s=>`<option>${h(s)}</option>`).join('')}
+      </select>
+      <button class="bg-emerald-500 text-white px-3 rounded" onclick="updateReport()">Aggiorna</button>
+    </div>
+    <div id="report-output"></div>
+    <canvas id="trendChart" class="mt-6"></canvas>`;
+  updateReport();
+}
+function updateReport(){
+  const scope=document.getElementById('scope-select').value;
+  const filterType=document.getElementById('filter-type').value;
+  const filterDate=document.getElementById('filter-date').value;
+  const supplier=document.getElementById('supplier-filter').value.trim();
+  let summary=calculateFinancialSummary(scope,filterType,filterDate);
+  if(supplier){
+    summary.transactions=summary.transactions.filter(t=> (t.supplier||'').toLowerCase()===supplier.toLowerCase());
+    summary.totalIncomes=summary.transactions.filter(t=>t.isIncome).reduce((s,t)=>s+t.gross,0);
+    summary.totalExpenses=summary.transactions.filter(t=>!t.isIncome).reduce((s,t)=>s+t.gross,0);
+    summary.netBalance=summary.totalIncomes-summary.totalExpenses;
+  }
+  const out=document.getElementById('report-output');
+  out.innerHTML=`
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-4 text-center">
+      <div class="p-3 bg-white dark:bg-gray-900 rounded card"><div class="text-sm text-gray-500">Entrate</div><div class="text-lg font-bold text-emerald-600">${fmt.format(summary.totalIncomes)}${sym()}</div></div>
+      <div class="p-3 bg-white dark:bg-gray-900 rounded card"><div class="text-sm text-gray-500">Uscite</div><div class="text-lg font-bold text-red-500">${fmt.format(summary.totalExpenses)}${sym()}</div></div>
+      <div class="p-3 bg-white dark:bg-gray-900 rounded card"><div class="text-sm text-gray-500">Saldo</div><div class="text-lg font-bold">${fmt.format(summary.netBalance)}${sym()}</div></div>
+    </div>
+    <h3 class="mt-4 mb-2 font-semibold">Ultime transazioni</h3>
+    <ul class="divide-y divide-gray-200 dark:divide-gray-700">
+      ${summary.transactions.slice(0,10).map(t=>`
+        <li class="py-2 flex justify-between"><span>${h(t.description||t.supplier||'-')} <small class="text-gray-500">${h(t.supplier||'')}</small></span>
+        <span class="${t.isIncome?'text-emerald-500':'text-red-500'}">${t.isIncome?'+':'-'}${fmt.format(t.gross)}${sym()}</span></li>`).join('')}
+    </ul>`;
+  const ctx=getCtx('trendChart'); if(!ctx)return;
+  const daily={}; summary.transactions.forEach(t=>{
+    const k=t.date; daily[k]=(daily[k]||0)+(t.isIncome?t.gross:-t.gross);
+  });
+  const labels=Object.keys(daily).sort(); const data=labels.map(k=>daily[k]);
+  const chart=new Chart(ctx.ctx,{type:'line',data:{labels,datasets:[{label:'Saldo Giornaliero',data,borderWidth:2}]}});
+  charts.set(ctx.id,chart);
+}
 
-    // NUOVA FUNZIONE: Cambio Simbolo Valuta (Omessa per brevità, intatta)
-    function changeCurrencySymbol() {
-        const symbolInput = document.getElementById('currency-symbol-input');
-        const newSymbol = symbolInput?.value.trim() || '€';
+/* ---------- PAGINA PROMEMORIA ---------- */
+function renderRemindersPage(){
+  const area=document.getElementById('content-area');
+  const today=new Date();
+  const rems=(appData.reminders||[]).sort((a,b)=> new Date(a.date)-new Date(b.date));
+  const bds=(appData.birthdays||[]).sort((a,b)=> a.recurringDate.localeCompare(b.recurringDate));
+  area.innerHTML=`
+    <h2 class="text-2xl font-bold mb-4">🔔 Promemoria & Compleanni</h2>
+    <form id="reminder-form" onsubmit="event.preventDefault();handleReminderSubmit()" class="bg-white dark:bg-gray-900 p-4 rounded-xl card mb-4">
+      <div class="flex gap-2 mb-2">
+        <select name="type" class="border p-2 rounded flex-1"><option>Scadenza</option><option>Pagamento</option></select>
+        <input type="date" name="date" id="reminder-date" class="border p-2 rounded flex-1" required/>
+      </div>
+      <input type="text" name="description" placeholder="Descrizione" class="border p-2 rounded w-full mb-2" required/>
+      <input type="number" name="amount" placeholder="Importo" step="0.01" class="border p-2 rounded w-full mb-2"/>
+      <button class="bg-emerald-500 text-white p-2 rounded w-full">Salva Promemoria</button>
+    </form>
+    <h3 class="font-semibold mb-2">Promemoria</h3>
+    <ul class="divide-y">${rems.map(r=>`
+      <li class="py-2 flex justify-between"><div>${h(r.description)}<br><small>${r.date}</small></div>
+      <div><span class="text-sm ${r.paid?'text-emerald-500':'text-red-500'}">${fmt.format(r.amount)}${sym()}</span><br>
+      <button onclick="toggleReminderPaid(${r.id})" class="text-xs text-blue-500">${r.paid?'Annulla':'Pagato'}</button>
+      <button onclick="deleteReminder(${r.id})" class="text-xs text-red-500 ml-2">Elimina</button></div></li>`).join('')}</ul>
+    <hr class="my-4"/>
+    <form id="birthday-form" onsubmit="event.preventDefault();handleBirthdaySubmit()" class="bg-white dark:bg-gray-900 p-4 rounded-xl card mb-4">
+      <div class="flex gap-2 mb-2"><input type="text" name="name" placeholder="Nome" class="border p-2 rounded flex-1" required/>
+      <input type="date" name="date" id="birthday-date" class="border p-2 rounded flex-1" required/></div>
+      <button class="bg-emerald-500 text-white p-2 rounded w-full">Salva Compleanno</button>
+    </form>
+    <h3 class="font-semibold mb-2">Compleanni</h3>
+    <ul class="divide-y">${bds.map(b=>`<li class="py-2 flex justify-between"><span>${h(b.name)} (${b.date})</span><button onclick="deleteBirthday(${b.id})" class="text-xs text-red-500">Elimina</button></li>`).join('')}</ul>`;
+  document.getElementById('reminder-date').value=today.toISOString().slice(0,10);
+  document.getElementById('birthday-date').value=today.toISOString().slice(0,10);
+}
 
-        if (newSymbol.length > 2) {
-            showToast('Il simbolo valuta dovrebbe essere al massimo di 2 caratteri.', 'red');
-            return;
-        }
+/* ---------- PAGINA SETTINGS ---------- */
+function renderSettingsPage(){
+  const area=document.getElementById('content-area');
+  area.innerHTML=`
+    <h2 class="text-2xl font-bold mb-4">⚙️ Gestione Dati</h2>
+    <div class="space-y-3">
+      <button onclick="exportDataJSON()" class="w-full bg-blue-500 text-white p-2 rounded">📤 Esporta JSON</button>
+      <button onclick="exportCSV()" class="w-full bg-blue-500 text-white p-2 rounded">📄 Esporta CSV</button>
+      <input type="file" id="import-file" class="w-full border p-2 rounded" accept="application/json" onchange="importDataFile(event)"/>
+      <hr/>
+      <div class="bg-white dark:bg-gray-900 p-4 rounded card">
+        <h3 class="font-semibold mb-2">Pulizia dati</h3>
+        <button onclick="clearMonth()" class="bg-yellow-500 text-white p-2 rounded w-full mb-2">🗓️ Pulisci mese corrente</button>
+        <button onclick="clearYear()" class="bg-yellow-500 text-white p-2 rounded w-full mb-2">📅 Pulisci anno corrente</button>
+        <button onclick="clearAllData()" class="bg-red-600 text-white p-2 rounded w-full">🧹 Pulisci tutto</button>
+      </div>
+      <hr/>
+      <div class="bg-white dark:bg-gray-900 p-4 rounded card">
+        <h3 class="font-semibold mb-2">Sicurezza PIN</h3>
+        <input type="password" id="current-pin" placeholder="PIN attuale" class="border p-2 rounded w-full mb-2"/>
+        <input type="password" id="new-pin" placeholder="Nuovo PIN (4 cifre)" class="border p-2 rounded w-full mb-2"/>
+        <button onclick="changePin()" class="bg-emerald-500 text-white p-2 rounded w-full">🔑 Cambia PIN</button>
+      </div>
+    </div>`;
+}
 
-        showModal('Conferma Valuta', `Impostare il simbolo valuta su: ${newSymbol}?`, true, () => {
-            appData.currencySymbol = newSymbol;
-            saveData();
-            showToast('Simbolo Valuta aggiornato!');
-            renderPage('settings');
-        });
-    }
+/* ---------- PULIZIA DATI ---------- */
+function clearMonth(){
+  const now=new Date(); const ym=now.toISOString().slice(0,7);
+  showModal('Conferma','Eliminare movimenti del mese corrente?',true,()=>{
+    appData.invoices=appData.invoices.filter(t=>!t.date.startsWith(ym));
+    appData.expenses=appData.expenses.filter(t=>!t.date.startsWith(ym));
+    saveData(); showToast('Mese corrente pulito.'); renderPage('settings');
+  });
+}
+function clearYear(){
+  const y=new Date().getFullYear();
+  showModal('Conferma','Eliminare movimenti dell\'anno corrente?',true,()=>{
+    appData.invoices=appData.invoices.filter(t=>!t.date.startsWith(y));
+    appData.expenses=appData.expenses.filter(t=>!t.date.startsWith(y));
+    saveData(); showToast('Anno corrente pulito.'); renderPage('settings');
+  });
+}
+function clearAllData(){
+  showModal('Attenzione','Eliminare tutti i dati? Operazione irreversibile.',true,()=>{
+    localStorage.removeItem(LOCAL_STORAGE_KEY);
+    location.reload();
+  });
+}
 
-    // --- PIN Management (Settings Page) (Omessa per brevità, intatta) ---
-    function changePin() {
-      const currentPinInput = document.getElementById('current-pin');
-      const newPinInput = document.getElementById('new-pin');
-      
-      const currentPin = currentPinInput?.value.trim();
-      const newPin = newPinInput?.value.trim();
-      
-      if (currentPin !== appData.pin) {
-        showToast('Il PIN attuale non è corretto.','red');
-        currentPinInput.value = '';
-        return;
-      }
+/* ---------- SERVICE WORKER (PWA) ---------- */
+async function installServiceWorker(){
+  if(!('serviceWorker'in navigator))return;
+  const code=`const CACHE='finanza-smart-v2';
+    self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(['./']))));
+    self.addEventListener('fetch',e=>e.respondWith(fetch(e.request).catch(()=>caches.match(e.request))))`;
+  const blob=new Blob([code],{type:'text/javascript'}); const url=URL.createObjectURL(blob);
+  try{await navigator.serviceWorker.register(url);}catch(e){console.warn('SW fail',e);}
+}
 
-      if (!newPin || newPin.length !== 4 || isNaN(newPin)) {
-        showToast('Il nuovo PIN deve essere esattamente di 4 cifre.','red');
-        return;
-      }
+/* ---------- INIZIALIZZAZIONE ---------- */
+window.addEventListener('DOMContentLoaded',()=>{
+  loadData();
+  applySavedTheme();
+  renderNavbar();
+  setupPinLock();
+  installServiceWorker();
+});
 
-      showModal('Conferma Cambio PIN', `Sei sicuro di voler cambiare il PIN a: ${newPin}?`, true, () => {
-        appData.pin = newPin;
-        saveData();
-        currentPinInput.value = '';
-        newPinInput.value = '';
-        showToast('PIN modificato con successo! Sarà richiesto al prossimo riavvio.');
-        renderPage('settings');
-      });
-    }
-    
-    // --- Notifications (every hour) (Omessa per brevità, intatta) ---
-    function checkReminders(){
-      const today=new Date();
-      
-      // 1. Check Payments
-      (appData.reminders||[]).forEach(r=>{
-        const diff=(new Date(r.date)-today)/(1000*60*60*24);
-        if (!r.paid && diff>=0 && diff<=3){
-          if (Notification.permission==='granted'){
-            new Notification(`🔔 Scadenza: ${r.type}`, { body:`${r.description} - Scade il ${new Date(r.date).toLocaleDateString('it-IT')}` });
-          }
-        }
-      });
-      
-      // 2. Check Birthdays
-      const currentMonthDay = today.toISOString().slice(5, 10);
-      (appData.birthdays||[]).forEach(bd => {
-        const bdMonthDay = bd.recurringDate; // MM-DD
-        const bdDate = new Date(bd.date);
-        
-        // Calcola la data di ricorrenza nell'anno corrente
-        let recurrence = new Date(`${today.getFullYear()}-${bdMonthDay}`);
-        
-        // Considera solo i compleanni passati o futuri entro 7 giorni
-        const diffDays = Math.ceil((recurrence - today) / (1000 * 60 * 60 * 24));
-        
-        if (diffDays >= 0 && diffDays <= 7) {
-            const age = today.getFullYear() - bdDate.getFullYear();
-            if (Notification.permission === 'granted') {
-                new Notification(`🎂 Compleanno di ${bd.name}`, { body: diffDays === 0 ? `Compie ${age} anni oggi!` : `Compie ${age} anni in ${diffDays} giorni.` });
-            }
-        }
-      });
-    }
+/* ---------- HOTKEYS ---------- */
+window.addEventListener('keydown',(e)=>{
+  if(e.altKey&&e.key==='1')renderPage('activity');
+  if(e.altKey&&e.key==='2')renderPage('personal');
+  if(e.altKey&&e.key==='3')renderPage('report');
+  if(e.altKey&&e.key==='4')renderPage('reminders');
+  if(e.altKey&&e.key==='5')renderPage('settings');
+  if(e.altKey&&e.key==='i')quickRegister('true');
+  if(e.altKey&&e.key==='e')quickRegister('false');
+});
+document.getElementById('theme-toggle').addEventListener('click',toggleTheme);
 
-
-    // --- Page router (Omessa per brevità, intatta) ---
-    function renderPage(pageId){
-      currentPage = pageId;
-      renderNavbar();
-      const area=document.getElementById('content-area');
-      const qa=document.getElementById('quick-actions');
-
-      if (pageId==='activity'||pageId==='personal'){ qa.classList.remove('hidden'); qa.classList.add('flex','justify-center'); }
-      else { qa.classList.add('hidden'); qa.classList.remove('flex','justify-center'); }
-
-      // Reset edit state if any
-      document.getElementById('transaction-form')?.removeAttribute('data-transaction-id');
-
-      switch(pageId){
-        case 'activity':
-        case 'personal':
-          area.innerHTML = renderActivityOrPersonalPage(pageId);
-          // Rerun necessary setup functions after rendering
-          if (pageId==='activity'){ setupActivityIncomeTypeListeners(pageId); } 
-          else { document.getElementById('isIncome')?.addEventListener('change', ()=>setupContactAutocomplete(pageId)); setupContactAutocomplete(pageId); }
-          setupCategoryAutocomplete();
-          calculateGross(); // Initialize gross/vat amounts
-          // NUOVO: Renderizza grafico saldo settimanale
-          renderWeeklyBalanceChart(pageId);
-          break;
-        case 'report':
-          area.innerHTML = renderReportPage();
-          // Rerunning updateReportDateInput ensures the initial display and filter logic runs correctly
-          updateReportDateInput(); 
-          
-          const allTx = [...appData.invoices.map(t=>({...t,isIncome:true})), ...appData.expenses.map(t=>({...t,isIncome:false}))];
-          renderTrendChart(allTx);
-          
-          // Add listeners for new filters
-          document.getElementById('filter-category')?.addEventListener('change', ()=>renderPage('report'));
-          document.getElementById('filter-tag')?.addEventListener('change', ()=>renderPage('report'));
-          
-          break;
-        case 'reminders':
-          area.innerHTML = renderRemindersPage();
-          break;
-        case 'settings':
-          area.innerHTML = renderSettingsPage();
-          document.getElementById('import-file')?.addEventListener('change', importDataFile);
-          // Aggiorna listener per la nuova funzione di pulizia (FIX D)
-          document.getElementById('clean-btn')?.addEventListener('click', ()=> cleanDataByDate(document.getElementById('clean-date-month').value));
-          break;
-      }
-    }
-
-    // --- PWA (Manifest + Service Worker all-in-one) (Omessa per brevità, intatta) ---
-    function installManifest(){
-      const manifest = {
-        name: "Finanza Smart 5.0 PRO",
-        short_name: "FinanzaPRO",
-        start_url: ".",
-        display: "standalone",
-        background_color: "#0f172a",
-        theme_color: "#10b981",
-        icons: [
-          { src:"https://fav.farm/✅", sizes:"192x192", type:"image/png" },
-          { src:"https://fav.farm/💶", sizes:"512x512", type:"image/png" }
-        ]
-      };
-      const blob = new Blob([JSON.stringify(manifest)], {type:'application/json'});
-      const url = URL.createObjectURL(blob);
-      document.getElementById('dynamic-manifest').setAttribute('href', url);
-    }
-
-    async function installServiceWorker(){
-      if (!('serviceWorker' in navigator)) return;
-      const swCode = `
-        const CACHE = 'finanza-smart-v1';
-        self.addEventListener('install', e=>{
-          e.waitUntil(caches.open(CACHE).then(c=>c.addAll(['./'])));
-          self.skipWaiting();
-        });
-        self.addEventListener('activate', e=>{
-          e.waitUntil(caches.keys().then(keys=>Promise.all(keys.map(k=> k===CACHE?null:caches.delete(k)))));
-          self.clients.claim();
-        });
-        self.addEventListener('fetch', e=>{
-          const req = e.request;
-          e.respondWith(
-            caches.match(req).then(res=> res || fetch(req).then(fr=>{
-              const copy = fr.clone();
-              caches.open(CACHE).then(c=> c.put(req, copy)).catch(()=>{});
-              return fr;
-            }).catch(()=>res))
-          );
-        });
-      `;
-      const blob = new Blob([swCode], {type:'text/javascript'});
-      const url = URL.createObjectURL(blob);
-      try{ await navigator.serviceWorker.register(url); }catch(e){ console.warn('SW register failed',e); }
-    }
-
-    // --- Init ---
-    window.onload = function(){
-      applySavedTheme();
-      document.getElementById('theme-toggle')?.addEventListener('click', toggleTheme);
-
-      loadData();
-      
-      // Security Check: Lock app if not explicitly unlocked in this session
-      setupPinLock();
-
-      // --- PERMANENT LISTENERS (Event Delegation) ---
-
-      // 1. Transaction Form Calculation
-      document.getElementById('app')?.addEventListener('input', (e)=>{
-        if (e.target && (e.target.id==='net-amount' || e.target.id==='vat-rate') && (currentPage==='activity'||currentPage==='personal')) calculateGross();
-      });
-      document.getElementById('app')?.addEventListener('change', (e)=>{
-        if (e.target && e.target.id==='vat-rate' && (currentPage==='activity'||currentPage==='personal')) calculateGross();
-      });
-
-      // 2. Report Filtering (Prevent Duplicate Listeners)
-      const appContainer = document.getElementById('app');
-      appContainer?.addEventListener('change', (e) => {
-          if (currentPage === 'report') {
-              if (e.target.id === 'report-type' || e.target.id === 'filter-type') {
-                  // Se cambi il tipo di filtro, si attiva l'aggiornamento automatico in updateReportDateInput
-                  updateReportDateInput();
-              }
-              // Report Category/Tag filter is handled by separate change listeners in renderPage('report')
-          }
-      });
-      appContainer?.addEventListener('input', (e) => {
-          if (currentPage === 'report') {
-              // NUOVI ID per il range
-              if (e.target.id === 'filter-date' 
-                  || e.target.id === 'filter-date-start' 
-                  || e.target.id === 'filter-date-end') { 
-                  renderPage('report');
-              }
-              
-              // Search Handler
-              if (e.target.id === 'search') {
-                const query = e.target.value;
-                const filterType = document.getElementById('filter-type').value;
-                let filterDate;
-                
-                if (filterType === 'range') {
-                  const start = document.getElementById('filter-date-start')?.value;
-                  const end = document.getElementById('filter-date-end')?.value;
-                  filterDate = (start && end) ? `${start}|${end}` : 'all';
-                } else {
-                  filterDate = document.getElementById('filter-date').value || 'all';
-                }
-                
-                const currentReportType = document.getElementById('report-type').value;
-                const categoryFilter = document.getElementById('filter-category').value || 'all';
-                const tagFilter = document.getElementById('filter-tag').value || 'all';
-                
-                let results = calculateFinancialSummary(currentReportType, filterType, filterDate).transactions;
-                results = filterTransactionsByCriteria(results, categoryFilter === 'all' ? null : categoryFilter, tagFilter === 'all' ? null : tagFilter);
-                results = filterTransactions(query, results);
-                
-                const symbol = getCurrencySymbol();
-                
-                document.getElementById('transactions-detail').innerHTML = results.map(t=>`
-                  <div class="flex justify-between items-center p-3 border-l-4 ${t.isIncome?'bg-emerald-50 border-emerald-300 dark:bg-emerald-900/50 dark:border-emerald-700':'bg-red-50 border-red-300 dark:bg-red-900/50 dark:border-red-700'} rounded-lg">
-                    <div class="flex-grow">
-                      <p class="font-semibold text-sm">${getCategoryIcon(t.category)} ${new Date(t.date).toLocaleDateString('it-IT')}: ${t.description||''}</p>
-                      <p class="text-xs text-gray-500 dark:text-gray-400">
-                        ${t.type==='activity'?'Attività':'Personale'} | IVA ${t.vatRate}% | Cat: ${t.category||'-'} 
-                        ${(t.tags||[]).length > 0 ? '| Tag: '+(t.tags||[]).join(', ') : ''}
-                      </p>
-                    </div>
-                    <div class="text-right ml-4">
-                      <p class="font-bold ${t.isIncome?'text-emerald-700 dark:text-emerald-300':'text-red-700 dark:text-red-300'}">${t.gross.toFixed(2)} ${symbol}</p>
-                    </div>
-                  </div>
-                `).join('') || '<p class="text-gray-500">Nessuna transazione trovata.</p>';
-              }
-          }
-      });
-      
-      // 3. Hotkeys (I=Income, E=Expense)
-      document.addEventListener('keydown', (e) => {
-          if (document.getElementById('pin-lock-modal').style.display !== 'none') return;
-          
-          if (currentPage === 'activity' || currentPage === 'personal') {
-              
-              // Submit form with ENTER
-              if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
-                  const form = document.getElementById('transaction-form');
-                  if (form && form.querySelector('button[type="submit"]')) {
-                      e.preventDefault();
-                      // We must explicitly click the submit button to trigger the form's onSubmit handler
-                      form.querySelector('button[type="submit"]').click();
-                      return;
-                  }
-              }
-              
-              // Ignore if focus is in an input field (to allow normal typing)
-              if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') {
-                  return;
-              }
-
-              if (e.key === 'i' || e.key === 'I') {
-                  e.preventDefault();
-                  quickRegister('true');
-              } else if (e.key === 'e' || e.key === 'E') {
-                  e.preventDefault();
-                  quickRegister('false');
-              }
-          }
-      });
-      
-      // Notifications
-      if (Notification.permission!=='granted') Notification.requestPermission();
-      // Only check reminders if the app is active
-      setInterval(checkReminders, 60*60*1000); 
-      
-      // PWA
-      installManifest();
-      installServiceWorker();
-    };
   </script>
 </body>
 </html>
