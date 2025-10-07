@@ -345,7 +345,7 @@
             appData.currentBankBalance = parseFloat(appData.currentBankBalance) || 0; 
             appData.dashboardLayout ||= DASHBOARD_WIDGETS.filter(w => w.default).map(w => w.id);
             
-            document.getElementById('header-subtitle').textContent = `Profilo: ${user.name}`;
+            // L'aggiornamento dell'header viene fatto in setupPinLock dopo il caricamento iniziale.
         } catch(e){ 
             console.error(e); 
             showToast('Errore nel caricamento dati utente','red'); 
@@ -373,12 +373,15 @@
     }
     function getNextId(){ appData.lastId++; saveData(); return appData.lastId; }
 
-    // --- PIN LOCK LOGIC (AGGIORNATO per Multi-Profilo) ---
+    // --- PIN LOCK LOGIC (REVISIONATO per stabilità) ---
     function setupPinLock() {
         loadGlobalState();
         const pinDigits = document.querySelectorAll('.pin-digit');
         const pinModal = document.getElementById('pin-lock-modal');
         const isUnlocked = sessionStorage.getItem(SESSION_STORAGE_PIN_KEY) === 'true';
+
+        // Aggiorna subito il sottotitolo dell'header
+        document.getElementById('header-subtitle').textContent = `Profilo: ${globalState.currentUser?.name || 'Seleziona'}`;
 
         if (!isUnlocked) {
             pinModal.style.display = 'flex';
@@ -400,6 +403,7 @@
             setTimeout(() => { document.getElementById('pin-1')?.focus(); }, 100); 
         } else {
             pinModal.style.display = 'none';
+            // Se già sbloccato, procedi al rendering
             const initialPage = appData.invoices.length>0 || appData.expenses.length>0 ? 'report':'activity';
             initializeFiscalReminders(); 
             renderPage(initialPage);
@@ -2556,7 +2560,6 @@
           <script>
             document.addEventListener('DOMContentLoaded', () => {
                 const select = document.getElementById('detail-category-select');
-                // Chiamata ritardata per assicurare che Chart.js sia pronto
                 setTimeout(() => {
                     if (select) renderCategoryDetailChart(select.value, '${type}');
                 }, 50); 
@@ -3318,6 +3321,10 @@
           return;
       }
 
+      // Aggiorna l'header con il nome utente corrente
+      document.getElementById('header-subtitle').textContent = `Profilo: ${globalState.currentUser?.name || 'Caricamento Fallito'}`;
+
+
       switch(pageId){
         case 'activity':
         case 'personal':
@@ -3419,8 +3426,10 @@
       applySavedTheme();
       document.getElementById('theme-toggle')?.addEventListener('click', toggleTheme);
 
+      // 1. Carica stato globale e dati utente
       loadData();
       
+      // 2. Setup Pin Lock (che gestisce il routing iniziale)
       setupPinLock();
 
       // --- PERMANENT LISTENERS (Event Delegation) ---
@@ -3428,29 +3437,33 @@
       document.getElementById('app')?.addEventListener('input', (e)=>{
         if (e.target && (e.target.id==='net-amount' || e.target.id==='vat-rate') && (currentPage==='activity'||currentPage==='personal')) calculateGross();
         
-        // La logica What-If è gestita dagli oninput nel codice HTML per performance
+        // Gestione simulazione What-If in tempo reale
+        if (currentPage === 'activity') {
+            if (e.target.id === 'additional-revenue') simulationState.additionalRevenue = parseFloat(e.target.value) || 0;
+            if (e.target.id === 'additional-expense') simulationState.additionalExpense = parseFloat(e.target.value) || 0;
+            if (e.target.id === 'tax-rate-override') simulationState.taxRateOverride = e.target.value ? parseFloat(e.target.value) / 100 : null;
+            if (e.target.id === 'profit-rate-override') simulationState.profitRateOverride = e.target.value ? parseFloat(e.target.value) / 100 : null;
+            if (e.target.id === 'additional-revenue' || e.target.id === 'additional-expense' || e.target.id === 'tax-rate-override' || e.target.id === 'profit-rate-override') {
+                 renderPage('activity');
+            }
+        }
       });
       document.getElementById('app')?.addEventListener('change', (e)=>{
         if (e.target && e.target.id==='vat-rate' && (currentPage==='activity'||currentPage==='personal')) calculateGross();
+        
+        // Gestione cambio override simulazione
+        if (currentPage === 'activity') {
+            if (e.target.id === 'tax-rate-override') simulationState.taxRateOverride = e.target.value ? parseFloat(e.target.value) / 100 : null;
+            if (e.target.id === 'profit-rate-override') simulationState.profitRateOverride = e.target.value ? parseFloat(e.target.value) / 100 : null;
+             renderPage('activity');
+        }
       });
 
       const appContainer = document.getElementById('app');
       appContainer?.addEventListener('change', (e) => {
           if (currentPage === 'report') {
-              if (e.target.id === 'report-type') {
-                  reportFilters.type = e.target.value;
-                  renderPage('report');
-              }
-              if (e.target.id === 'filter-category') {
-                  reportFilters.categoryFilter = e.target.value;
-                  renderPage('report');
-              }
-              if (e.target.id === 'filter-tag') {
-                  reportFilters.tagFilter = e.target.value;
-                  renderPage('report');
-              }
-              // Listener per l'ordinamento dinamico
-              if (e.target.id === 'sort-key' || e.target.id === 'sort-direction') {
+              if (e.target.id === 'report-type' || e.target.id === 'filter-category' || e.target.id === 'filter-tag' || e.target.id === 'sort-key' || e.target.id === 'sort-direction') {
+                  // Aggiorna reportFilters e renderizza (la logica di aggiornamento è nel renderPage)
                   renderPage('report');
               }
           }
@@ -3463,32 +3476,24 @@
               }
               
               if (e.target.id === 'search') {
-                const query = e.target.value;
-                const filterType = document.getElementById('filter-type').value;
-                const filterDate = document.getElementById('filter-date').value || 'all';
-                const currentReportType = document.getElementById('report-type').value;
-                const categoryFilter = document.getElementById('filter-category').value || 'all';
-                const tagFilter = document.getElementById('filter-tag').value || 'all';
-                const sortKey = document.getElementById('sort-key').value;
-                const sortDirection = document.getElementById('sort-direction').value;
+                // Aggiorna la query e rilancia la logica di ricerca nel DOM per persistenza
+                reportFilters.searchQuery = e.target.value;
                 
-                reportFilters.sortKey = sortKey;
-                reportFilters.sortDirection = sortDirection;
-                reportFilters.searchQuery = query; 
+                // Forza un render parziale solo del dettaglio per la ricerca istantanea
+                const results = calculateFinancialSummary(
+                    document.getElementById('report-type').value, 
+                    document.getElementById('filter-type').value, 
+                    document.getElementById('filter-date').value || 'all'
+                ).transactions;
                 
-                let results = calculateFinancialSummary(currentReportType, filterType, filterDate).transactions;
-                results = filterTransactionsByCriteria(results, categoryFilter === 'all' ? null : categoryFilter, tagFilter === 'all' ? null : tagFilter);
-                results = filterTransactions(query, results);
-                
-                results = sortTransactions(results); 
-                
+                let filtered = filterTransactionsByCriteria(results, document.getElementById('filter-category').value, document.getElementById('filter-tag').value);
+                filtered = filterTransactions(reportFilters.searchQuery, filtered);
+                filtered = sortTransactions(filtered); 
+
+                const searchGrouped = groupTransactionsByMonth(filtered);
                 const symbol = getCurrencySymbol();
                 
-                const searchGrouped = groupTransactionsByMonth(results);
-                
-                let searchHtml = '';
-                if (Object.keys(searchGrouped).length > 0) {
-                    searchHtml = Object.keys(searchGrouped).map(month => {
+                let searchHtml = Object.keys(searchGrouped).map(month => {
                         const monthlyTx = searchGrouped[month];
                         const totalMonth = monthlyTx.reduce((sum, t) => sum + (t.gross * (t.isIncome ? 1 : -1)), 0);
                         const monthColor = totalMonth >= 0 ? 'text-emerald-500' : 'text-red-500';
@@ -3517,10 +3522,7 @@
                                 </div>
                             </details>
                         `;
-                    }).join('');
-                } else {
-                    searchHtml = '<p class="text-gray-500">Nessuna transazione trovata.</p>';
-                }
+                    }).join('') || '<p class="text-gray-500">Nessuna transazione trovata.</p>';
                 
                 document.getElementById('transactions-detail').innerHTML = searchHtml;
               }
@@ -3564,7 +3566,7 @@
       // Gestione Shortcut PWA
       const urlParams = new URLSearchParams(window.location.search);
       const shortcut = urlParams.get('shortcut');
-      if (shortcut) {
+      if (shortcut && sessionStorage.getItem(SESSION_STORAGE_PIN_KEY) === 'true') {
           if (shortcut === 'income') quickRegister('true');
           else if (shortcut === 'expense') quickRegister('false');
           else if (shortcut === 'report') renderPage('report');
