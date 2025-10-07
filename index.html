@@ -131,12 +131,17 @@
     // --- CONFIG/GLOBAL ---
     const LOCAL_STORAGE_KEY = 'smartFinApp_v50';
     const SESSION_STORAGE_PIN_KEY = 'smartFinApp_unlocked';
-    const SESSION_STORAGE_REPORT_KEY = 'smartFinApp_report_filters'; // NUOVO: Persistenza filtri
+    const SESSION_STORAGE_REPORT_KEY = 'smartFinApp_report_filters'; 
     const IVA_RATES = [0,4,5,10,22];
     const MAX_RECENT_TRANSACTIONS = 10;
     const DEFAULT_CATEGORIES = ['Affitto','Bollette','Spesa','Marketing','Servizi','Stipendi','Carburante','Ristoranti','Abbonamenti','Altro'];
     const FISCAL_REMINDER_TYPES = ['IVA Trimestrale','IVA Saldo/Acconto','IMU','TARI','Tasse/Acconto','Assicurazione','Bollo Auto','Altri Costi Personali','Altri Costi Attività'];
     
+    // Parametri fiscali (Esempio Forfettario 78%)
+    const FISCAL_PROFIT_RATE = 0.78; // Coefficiente di redditività (es. 78% per alcuni servizi)
+    const FISCAL_TAX_RATE = 0.15; // Tassa fissa (IRPEF/Imposta Sostitutiva)
+    const INPS_RATE = 0.26; // Contributi INPS (circa)
+
     // Mappa Icone per Categorie (Usabilità)
     const CATEGORY_ICONS = {
         'Affitto': '🏠',
@@ -177,10 +182,10 @@
         pin: '1234',
         currencySymbol: '€',
         monthlySavingsTarget: 0,
-        categoryBudgets: {} // NUOVO: Budget per categoria
+        categoryBudgets: {} 
     };
     let currentPage = 'activity';
-    let reportFilters = { // NUOVO: Oggetto per persistenza filtri
+    let reportFilters = { 
         type: 'global',
         filterType: 'year',
         filterDateStr: String(new Date().getFullYear()),
@@ -248,14 +253,14 @@
           appData.pin ||= '1234';
           appData.currencySymbol ||= '€';
           appData.monthlySavingsTarget ||= 0;
-          appData.categoryBudgets ||= {}; // Inizializza budget
+          appData.categoryBudgets ||= {}; 
         }
       } catch(e){ console.error(e); showToast('Errore nel caricamento dati','red'); }
     }
     function saveData(){ try{ localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(appData)); }catch(e){ console.error(e); showToast('Errore salvataggio','red'); } }
     function getNextId(){ appData.lastId++; saveData(); return appData.lastId; }
 
-    // --- PIN LOCK LOGIC (omitted for brevity, assume working) ---
+    // --- PIN LOCK LOGIC ---
     function setupPinLock() {
       const pinDigits = document.querySelectorAll('.pin-digit');
       const pinModal = document.getElementById('pin-lock-modal');
@@ -265,7 +270,6 @@
         pinModal.style.display = 'flex';
         pinDigits.forEach((input, index) => {
           input.value = '';
-          // Rimuovi vecchi listener (previeni duplicazioni in caso di re-render)
           input.removeEventListener('input', handlePinInputListener);
           input.removeEventListener('keydown', handlePinKeyDownListener);
           
@@ -273,7 +277,6 @@
           input.addEventListener('keydown', (e) => handlePinKeyDown(e, index));
         });
         
-        // FIX: Forzare il focus dopo che il DOM è stabile
         setTimeout(() => {
           document.getElementById('pin-1')?.focus();
         }, 100); 
@@ -281,11 +284,11 @@
       } else {
         pinModal.style.display = 'none';
         const initialPage = appData.invoices.length>0 || appData.expenses.length>0 ? 'report':'activity';
+        initializeFiscalReminders(); 
         renderPage(initialPage);
       }
     }
     
-    // Funzioni wrapper per i listener PIN (necessarie per la rimozione)
     const handlePinInputListener = (e, index) => handlePinInput(e, index);
     const handlePinKeyDownListener = (e, index) => handlePinKeyDown(e, index);
 
@@ -321,7 +324,6 @@
         sessionStorage.setItem(SESSION_STORAGE_PIN_KEY, 'true');
         document.getElementById('pin-lock-modal').style.display = 'none';
         const initialPage = appData.invoices.length>0 || appData.expenses.length>0 ? 'report':'activity';
-        // NUOVO: Inizializza i promemoria fiscali qui, dopo lo sblocco
         initializeFiscalReminders(); 
         renderPage(initialPage);
         showToast('Accesso sbloccato!');
@@ -332,7 +334,7 @@
       }
     }
 
-    // --- UI helpers ---
+    // --- UI helpers (omitted for brevity) ---
     function showModal(title,message,isConfirmation,onConfirm,onCancel=null){
       const modal = document.getElementById('modal');
       const t = document.getElementById('modal-title'); const m = document.getElementById('modal-message');
@@ -355,7 +357,7 @@
       setTimeout(()=>{ toast.classList.remove('opacity-100'); toast.classList.add('opacity-0'); }, 2500);
     }
 
-    // --- QUICK register ---
+    // --- QUICK register (omitted for brevity) ---
     function quickRegister(isIncomeString) {
       const isIncome = isIncomeString === 'true';
       document.getElementById('transaction-form-anchor')?.scrollIntoView({behavior:'smooth'});
@@ -380,7 +382,7 @@
       showToast(isIncome?'Modulo pronto per Entrata!':'Modulo pronto per Uscita!','green');
     }
 
-    // --- Filters/period helpers (omitted for brevity, assume working) ---
+    // --- Filters/period helpers (omitted for brevity) ---
     function filterByPeriod(itemDateStr, filterType, filterValue){
       if (filterType==='all'||!filterValue||filterValue==='all') return true;
       const itemDate = new Date(itemDateStr); if (isNaN(itemDate)) return false;
@@ -391,28 +393,22 @@
       if (filterType==='quarter'){ const [fy,fm]=filterValue.split('-').map(Number); return y===fy && Math.ceil((m+1)/3)===Math.ceil(fm/3); }
       if (filterType==='day'){ return itemDateStr===filterValue; }
       
-      // FIX: Improved Week Filter (Starts Monday)
       if (filterType==='week'){ 
         const d = new Date(filterValue); 
         let dayOfWeek = d.getDay(); // 0=Dom, 1=Lun, ..., 6=Sab
-        
-        // Calcola la differenza per arrivare a Lunedì
         const diff = d.getDate() - ((dayOfWeek + 6) % 7);
-        
         const start = new Date(d);
         start.setDate(diff); // Imposta al Lunedì
         start.setHours(0,0,0,0); 
-        
         const end = new Date(start); 
         end.setDate(start.getDate()+6); // Imposta alla Domenica
         end.setHours(23,59,59,999); 
-        
         return itemDate>=start && itemDate<=end; 
       }
       return false;
     }
     
-    // --- Filters for Report page ---
+    // --- Filters for Report page (omitted for brevity) ---
     function filterTransactionsByCriteria(transactions, categoryFilter, tagFilter) {
         if (!categoryFilter && !tagFilter) return transactions;
         
@@ -426,7 +422,7 @@
         });
     }
 
-    // NUOVO: Calcola Saldo Netto Giornaliero per gli ultimi 7 giorni (omesso per brevità)
+    // --- Core calculations (omitted for brevity) ---
     function calculateDailyNetBalance(type) {
         const days = 7;
         const today = new Date();
@@ -445,7 +441,6 @@
         return { labels: dates.map(d => d.slice(5)), data: dailyData };
     }
 
-    // NUOVO: Renderizza Grafico Saldo Settimanale (omesso per brevità)
     function renderWeeklyBalanceChart(type) {
         const chartId = `weeklyBalanceChart-${type}`;
         const ctx = document.getElementById(chartId)?.getContext('2d');
@@ -487,7 +482,6 @@
     }
 
 
-    // --- Core calculations ---
     function calculateFinancialSummary(type, filterType, filterDateStr) {
       let totalIncomes=0, totalExpenses=0, ivaAddebito=0, ivaCredito=0;
       const types = type==='global' ? ['activity','personal'] : [type];
@@ -498,7 +492,6 @@
       const filtered = all.filter(i=>types.includes(i.type)).filter(i=>filterByPeriod(i.date,filterType,filterDateStr));
       
       filtered.forEach(i=>{
-        // Ensures gross is a number
         const gross = parseFloat(i.gross) || 0;
         const vatAmount = parseFloat(i.vatAmount) || 0;
         
@@ -526,7 +519,45 @@
       };
     }
     
-    // NUOVO: Calcola IVA trimestrale per un trimestre specifico (1=Gen-Mar, 4=Ott-Dic)
+    // NUOVO: Calcolo Simulazione Fiscale (per l'anno in corso)
+    function calculateFiscalSimulation(currentYear) {
+        const yearSummary = calculateFinancialSummary('activity', 'year', String(currentYear));
+
+        // 1. Calcolo Ricavi (Lordo totale Entrate) e Costi (Lordo totale Uscite)
+        const totalRicavi = yearSummary.totalIncomes;
+        // Solo i costi relativi all'attività (le spese personali non sono deducibili in regime forfettario)
+        const totalCosti = appData.expenses
+            .filter(e => new Date(e.date).getFullYear() === currentYear && e.type === 'activity')
+            .reduce((sum, e) => sum + (e.gross || 0), 0);
+        
+        // 2. Base imponibile Forfettaria (Ricavi * Coeff. Redditività)
+        const redditoLordo = totalRicavi - totalCosti; // Qui si usa il netto ricavi (se non forfettario puro)
+        
+        // In un regime forfettario semplificato, si calcola sul ricavo
+        const baseImponibileFiscale = totalRicavi * FISCAL_PROFIT_RATE;
+        
+        // 3. Calcolo Imposta (15% forfettario)
+        const impostaSostitutiva = baseImponibileFiscale * FISCAL_TAX_RATE;
+
+        // 4. Calcolo Contributi INPS (26% sul reddito lordo)
+        const contributiINPS = baseImponibileFiscale * INPS_RATE;
+
+        // 5. Saldo Netto Rimanente dopo Tasse/Contributi
+        const nettaRimanente = yearSummary.netBalance - impostaSostitutiva - contributiINPS;
+
+        return {
+            totalRicavi: +totalRicavi.toFixed(2),
+            totalCosti: +totalCosti.toFixed(2),
+            baseImponibile: +baseImponibileFiscale.toFixed(2),
+            impostaSostitutiva: +impostaSostitutiva.toFixed(2),
+            contributiINPS: +contributiINPS.toFixed(2),
+            totaleTasse: +(impostaSostitutiva + contributiINPS).toFixed(2),
+            nettaRimanente: +nettaRimanente.toFixed(2),
+            note: `Stima basata su Coeff. ${FISCAL_PROFIT_RATE*100}% e Tasse ${FISCAL_TAX_RATE*100}% + INPS ${INPS_RATE*100}%`
+        };
+    }
+
+
     function calculateIvaQuarterly(year, quarter) {
         // Mesi inclusi nel trimestre (0-11)
         const startMonth = (quarter - 1) * 3;
@@ -557,17 +588,15 @@
     }
 
 
-    // --- Contacts / Categories helpers ---
+    // --- Contacts / Categories helpers (omitted for brevity) ---
     function addContact(name, scope, relation){
       const clean = (name||'').trim(); if (!clean) return;
-      // Normalizzazione: Controlla il nome in minuscolo
       const exists = appData.contacts.find(c=> c.name.toLowerCase()===clean.toLowerCase() && c.scope===scope );
       if (!exists){ appData.contacts.push({ id:getNextId(), name:clean, scope, relation }); saveData(); }
     }
     
     function ensureCategory(cat){
       const c=(cat||'').trim(); if (!c) return;
-      // Normalizzazione: Controlla se la categoria esiste già in minuscolo
       if (!appData.categories.map(s=>s.toLowerCase()).includes(c.toLowerCase())) { 
         appData.categories.push(c); 
         appData.categories.sort((a,b)=>a.localeCompare(b)); 
@@ -575,43 +604,32 @@
       }
     }
     
-    // NUOVO: Trova la media storica di spesa per una categoria
     function getAverageMonthlyExpense(category) {
         const target = (category || 'Altro').toLowerCase();
-        
-        // Filtra solo le spese relative alla categoria e le raggruppa per mese
         const relevantExpenses = appData.expenses.filter(e => 
             (e.category || 'Altro').toLowerCase() === target
         );
-        
         const monthlyTotals = {};
         relevantExpenses.forEach(e => {
             const ym = e.date.slice(0, 7);
             monthlyTotals[ym] = (monthlyTotals[ym] || 0) + e.gross;
         });
-
         const totalMonths = Object.keys(monthlyTotals).length;
         if (totalMonths === 0) return 0;
-        
         const totalExpense = Object.values(monthlyTotals).reduce((sum, current) => sum + current, 0);
-        
         return totalExpense / totalMonths;
     }
 
-    // NUOVO: Logica di tracciamento spese ricorrenti
     function trackRecurringExpense(description, gross, date) {
         const desc = description.toLowerCase();
         
-        // Cerca frequenze comuni basate sulla descrizione
         const inferredFrequency = Object.keys(COMMON_FREQUENCIES).find(key => desc.includes(key)) 
                                     ? COMMON_FREQUENCIES[Object.keys(COMMON_FREQUENCIES).find(key => desc.includes(key))]
                                     : null;
 
         if (!inferredFrequency) return;
         
-        // Normalizza la chiave ricorrente (es. affitto-rossi, abbonamento-netflix)
         const recurringKey = `${inferredFrequency}:${desc.replace(/[^a-z0-9]/g, '-').slice(0, 20)}`;
-
         const existing = appData.recurringExpenses.find(r => r.key === recurringKey);
         
         const newRecord = {
@@ -630,11 +648,10 @@
     }
 
 
-    // --- Transactions CRUD (omitted for brevity, assume working) ---
+    // --- Transactions CRUD (omitted for brevity) ---
     function saveTransaction(isIncome, data){
       const list = isIncome ? appData.invoices : appData.expenses;
       
-      // Robustezza: Assicura che gli importi siano numeri validi
       const net = parseFloat(data.net)||0;
       const vatRate = parseFloat(data.vatRate)||0;
       
@@ -646,12 +663,11 @@
 
       const updatedItem = {
         id: data.id || getNextId(),
-        type: data.dataType, // 'activity' | 'personal'
+        type: data.dataType, 
         date: data.date,
         description: data.description,
         category: (data.category||'Altro').trim(),
         tags,
-        // Usa unary plus per convertire stringhe formattate (toFixed) in numeri
         net: +net.toFixed(2),
         vatRate: +vatRate,
         vatAmount: +vatAmount.toFixed(2),
@@ -659,13 +675,10 @@
         incomeType: data.incomeType || (isIncome && data.dataType==='activity' ? 'Fattura (Cliente)' : null)
       };
       
-      // NUOVO: Traccia spese ricorrenti (solo uscite)
       if (!isIncome && data.dataType === 'personal' && updatedItem.description) {
           trackRecurringExpense(updatedItem.description, updatedItem.gross, updatedItem.date);
       }
 
-
-      // FIX: Correggere la logica di salvataggio del contatto
       const isFatturaOrPersonal = (isIncome && data.dataType==='activity' && data.incomeType==='Fattura (Cliente)') || data.dataType==='personal';
       const shouldSaveContact = isFatturaOrPersonal && updatedItem.description?.trim() && updatedItem.description.trim() !== 'Corrispettivi/Incasso Giornaliero';
 
@@ -716,20 +729,18 @@
           
           const grossAmount = parseFloat(payload.net) * (1 + (parseFloat(payload.vatRate) / 100)) || 0;
           
-          // NUOVO: Allerta di Spesa Anomala (solo nuove uscite, solo Personale)
           if (!payload.id && !isIncome && type === 'personal') {
               const monthlyAvg = getAverageMonthlyExpense(payload.category);
-              // Soglia di anomalia: 20% in più della media
               if (monthlyAvg > 0 && grossAmount > monthlyAvg * 1.20) {
                   const percentDifference = ((grossAmount / monthlyAvg) * 100).toFixed(0);
                   showModal(
                       '🚨 Allerta Spesa Anomala',
                       `Questa spesa (${grossAmount.toFixed(2)}${getCurrencySymbol()}) è circa ${percentDifference}% superiore alla tua media mensile (${monthlyAvg.toFixed(2)}${getCurrencySymbol()}) per la categoria "${payload.category}". Continuare?`,
                       true,
-                      () => saveTransaction(isIncome, payload), // Confermato
-                      () => showToast('Registrazione annullata.','red') // Annullato
+                      () => saveTransaction(isIncome, payload), 
+                      () => showToast('Registrazione annullata.','red') 
                   );
-                  return; // Blocca l'invio normale per attendere la modal
+                  return; 
               }
           }
           
@@ -753,25 +764,18 @@
     }
 
 
-    // --- Fiscal Reminders (NUOVO PRO) ---
+    // --- Fiscal Reminders (omitted for brevity) ---
     function initializeFiscalReminders() {
         const currentYear = new Date().getFullYear();
         const fiscalReminders = [
-            // IVA 1° Trimestre (Gen-Mar) - Scadenza 16 Maggio
             { type: 'IVA Trimestrale', description: `IVA 1T ${currentYear} (Gen-Mar)`, month: 5, day: 16, year: currentYear, quarter: 1 },
-            // IVA 2° Trimestre (Apr-Giu) - Scadenza 20 Agosto
             { type: 'IVA Trimestrale', description: `IVA 2T ${currentYear} (Apr-Giu)`, month: 8, day: 20, year: currentYear, quarter: 2 },
-            // IVA 3° Trimestre (Lug-Set) - Scadenza 16 Novembre
             { type: 'IVA Trimestrale', description: `IVA 3T ${currentYear} (Lug-Set)`, month: 11, day: 16, year: currentYear, quarter: 3 },
-            // IVA 4° Trimestre (Ott-Dic) - Scadenza 16 Marzo Anno Successivo
             { type: 'IVA Trimestrale', description: `IVA 4T ${currentYear} (Ott-Dic)`, month: 3, day: 16, year: currentYear + 1, quarter: 4 },
-            // Saldo IVA (Anno Precedente) - Scadenza 16 Marzo
             { type: 'IVA Saldo/Acconto', description: `Saldo IVA ${currentYear - 1}`, month: 3, day: 16, year: currentYear, quarter: null },
-            // Acconto IVA (Anno Corrente) - Scadenza 27 Dicembre
             { type: 'IVA Saldo/Acconto', description: `Acconto IVA ${currentYear}`, month: 12, day: 27, year: currentYear, quarter: null }
         ];
 
-        // Rimuovi le scadenze duplicate (ad esempio se viene ricaricata la pagina)
         appData.reminders = appData.reminders.filter(r => 
             !r.type.startsWith('IVA') || new Date(r.date).getFullYear() < currentYear
         );
@@ -780,24 +784,21 @@
             const date = new Date(fr.year, fr.month - 1, fr.day);
             const dateStr = date.toISOString().slice(0, 10);
             
-            // Check if reminder already exists by description and date
             const exists = appData.reminders.some(r => r.description === fr.description && r.date === dateStr);
             
             if (!exists) {
-                // Calcola l'IVA stimata per i trimestri passati o correnti
                 let estimatedAmount = 0;
-                if (fr.quarter) {
+                if (fr.quarter && fr.year <= currentYear) {
                     const result = calculateIvaQuarterly(fr.year, fr.quarter);
-                    estimatedAmount = result.ivaBalance; // Usa il saldo IVA calcolato
+                    estimatedAmount = result.ivaBalance; 
                 }
                 
-                // Salva il promemoria con l'ID incrementato
                 appData.reminders.push({
                     id: getNextId(),
                     type: fr.type,
                     description: fr.description,
                     date: dateStr,
-                    amount: estimatedAmount, // Importo pre-calcolato
+                    amount: estimatedAmount, 
                     paid: false,
                     isFiscal: true
                 });
@@ -806,7 +807,7 @@
         saveData(); 
     }
 
-    // --- Reminders CRUD (omesso per brevità) ---
+    // --- Reminders CRUD (omitted for brevity) ---
     function saveReminder(data){
       appData.reminders ||= [];
       if (data.id){ const i=appData.reminders.findIndex(r=>r.id===data.id); if(i>-1){ appData.reminders[i]={...appData.reminders[i],...data}; } }
@@ -833,7 +834,7 @@
       else showToast('Compila tutti i campi validi.','red');
     }
     
-    // --- Compleanni CRUD (omesso per brevità) ---
+    // --- Compleanni CRUD (omitted for brevity) ---
     function saveBirthday(data){
       appData.birthdays ||= [];
       
@@ -875,7 +876,7 @@
     }
 
 
-    // --- Import/Export (omesso per brevità) ---
+    // --- Import/Export/Clean (omitted for brevity) ---
     function exportDataJSON(){
       const dataStr = JSON.stringify(appData,null,2);
       const blob = new Blob([dataStr], {type:'application/json'});
@@ -887,7 +888,6 @@
       // Transactions CSV
       const tx = [...appData.invoices.map(t=>({...t,isIncome:true})), ...appData.expenses.map(t=>({...t,isIncome:false}))].sort((a,b)=> new Date(a.date)-new Date(b.date));
       const esc = (s)=> `"${String(s??'').replace(/"/g,'""')}"`;
-      // AGGIUNTA: Dati riepilogativi in testa al CSV (molto basic)
       const summary = calculateFinancialSummary('global','all', 'all');
       const summaryRow = ['---RIEPILOGO---', `Saldo Netto: ${summary.netBalance.toFixed(2)}${getCurrencySymbol()}`, `Entrate Totali: ${summary.totalIncomes.toFixed(2)}${getCurrencySymbol()}`, `Uscite Totali: ${summary.totalExpenses.toFixed(2)}${getCurrencySymbol()}`].map(esc).join(',');
       
@@ -931,8 +931,7 @@
               appData.currencySymbol ||= '€'; 
               appData.birthdays ||= []; 
               appData.recurringExpenses ||= []; 
-              appData.categoryBudgets ||= {}; // Aggiunto per l'importazione
-              // Assicurati che i compleanni importati abbiano recurringDate
+              appData.categoryBudgets ||= {}; 
               appData.birthdays = appData.birthdays.map(bd => ({
                   ...bd,
                   recurringDate: (bd.date || bd.recurringDate).slice(5) 
@@ -956,7 +955,6 @@
         appData.expenses = appData.expenses.filter(x=>!before(x));
         appData.reminders = appData.reminders.filter(x=>!before(x));
         
-        // MIGLIORAMENTO: Reset lastId se non ci sono più movimenti/promemoria
         if (appData.invoices.length === 0 && appData.expenses.length === 0 && appData.reminders.length === 0) {
             appData.lastId = 0;
         }
@@ -967,7 +965,6 @@
       });
     }
     
-    // --- Delete contact (settings) (omesso per brevità) ---
     function deleteContact(id){
       const i=appData.contacts.findIndex(c=>c.id===id);
       if (i>-1){
@@ -976,9 +973,44 @@
         });
       }
     }
+    
+    function deleteUnusedContacts() {
+        const usedDescriptions = new Set();
+        [...appData.invoices, ...appData.expenses].forEach(t => {
+            if (t.description && t.description.trim() !== 'Corrispettivi/Incasso Giornaliero') {
+                usedDescriptions.add(t.description.trim().toLowerCase());
+            }
+        });
+
+        const initialLength = appData.contacts.length;
+        appData.contacts = appData.contacts.filter(c => usedDescriptions.has(c.name.toLowerCase()));
+        const removedCount = initialLength - appData.contacts.length;
+
+        saveData();
+        showToast(`${removedCount} contatti non usati eliminati.`);
+        renderPage('settings');
+    }
+    
+    function deleteUnusedCategories() {
+        const usedCategories = new Set(DEFAULT_CATEGORIES.map(c => c.toLowerCase()));
+        [...appData.invoices, ...appData.expenses].forEach(t => {
+            if (t.category) {
+                usedCategories.add(t.category.trim().toLowerCase());
+            }
+        });
+        
+        const initialLength = appData.categories.length;
+        appData.categories = appData.categories.filter(c => usedCategories.has(c.toLowerCase()));
+        appData.categories.sort((a,b)=>a.localeCompare(b));
+        const removedCount = initialLength - appData.categories.length;
+
+        saveData();
+        showToast(`${removedCount} categorie non usate (non di default) eliminate.`);
+        renderPage('settings');
+    }
 
 
-    // --- UI wiring (Activity/Personal Forms) (omesso per brevità) ---
+    // --- UI wiring (omitted for brevity) ---
     function setupActivityIncomeTypeListeners(scope){
       if (scope!=='activity') return;
       const incomeTypeSelect = document.getElementById('incomeType');
@@ -991,9 +1023,7 @@
         if (isIncome && incomeType==='Incasso/Corrispettivo'){
           descriptionDiv.classList.add('hidden');
           const desc = document.getElementById('description');
-          // Non rendere required la descrizione
           desc.removeAttribute('required'); 
-          // Se non è in modalità modifica, imposta il valore predefinito
           if (document.getElementById('transaction-form').getAttribute('data-transaction-id')===null) {
              desc.value = 'Corrispettivi/Incasso Giornaliero';
           }
@@ -1002,7 +1032,6 @@
           descriptionDiv.classList.remove('hidden');
           const desc = document.getElementById('description');
           desc.setAttribute('required','required');
-          // Se non è in modalità modifica, pulisci il valore
           if (document.getElementById('transaction-form').getAttribute('data-transaction-id')===null){ desc.value=''; }
           document.getElementById('description-label').textContent = isIncome ? 'Cliente / Descrizione' : 'Fornitore / Descrizione';
           setupContactAutocomplete(scope);
@@ -1022,7 +1051,7 @@
         updateVisibility();
       }
       
-      setupIncomeTypeControl(); // Run on initial load
+      setupIncomeTypeControl(); 
     }
 
     function setupContactAutocomplete(scope){
@@ -1072,7 +1101,6 @@
       grossAmountDisplay.textContent = gross.toFixed(2)+' '+getCurrencySymbol();
     }
     
-    // NUOVO: Funzione per ottenere i dati di "Focus Oggi" (omesso per brevità)
     function getTodayFocusData(type) {
         const todayStr = new Date().toISOString().slice(0, 10);
         
@@ -1090,7 +1118,7 @@
     }
 
 
-    // --- Rendering pages (Activity/Personal) (omesso per brevità) ---
+    // --- Rendering pages ---
     function renderNavbar(){
       const navbar=document.getElementById('navbar');
       const navItems=[
@@ -1144,10 +1172,38 @@
       const summary = calculateFinancialSummary(type,'year', String(year));
       const tx = summary.transactions.filter(t=>t.type===type).slice(0,MAX_RECENT_TRANSACTIONS);
       
-      // Dati Focus Oggi
       const todayData = getTodayFocusData(type);
       const todayBalanceColor = todayData.summary.netBalance >= 0 ? 'text-emerald-500' : 'text-red-500';
       const todaySummaryMessage = todayData.summary.netBalance.toFixed(2) + ' ' + symbol;
+      
+      // Calcolo Simulazione Fiscale per l'anno in corso
+      const fiscalSim = isActivity ? calculateFiscalSimulation(year) : null;
+      const fiscalSection = isActivity && fiscalSim ? `
+        <div class="bg-white dark:bg-gray-800 p-4 rounded-xl card border-l-4 border-red-500 space-y-2">
+            <h3 class="text-xl font-bold mb-2 text-red-600">Simulazione Tasse Annuali (${year})</h3>
+            <div class="flex justify-between text-sm">
+                <span>Ricavo Lordo:</span>
+                <span class="font-bold text-emerald-600">${fiscalSim.totalRicavi.toFixed(2)} ${symbol}</span>
+            </div>
+            <div class="flex justify-between text-sm">
+                <span>Base Imponibile (${FISCAL_PROFIT_RATE*100}%):</span>
+                <span class="font-bold">${fiscalSim.baseImponibile.toFixed(2)} ${symbol}</span>
+            </div>
+            <div class="flex justify-between text-sm border-t pt-2">
+                <span class="text-red-700 dark:text-red-400">Imp. Sostitutiva (${FISCAL_TAX_RATE*100}%):</span>
+                <span class="font-bold text-red-600">${fiscalSim.impostaSostitutiva.toFixed(2)} ${symbol}</span>
+            </div>
+            <div class="flex justify-between text-sm">
+                <span class="text-red-700 dark:text-red-400">Contributi INPS (${INPS_RATE*100}%):</span>
+                <span class="font-bold text-red-600">${fiscalSim.contributiINPS.toFixed(2)} ${symbol}</span>
+            </div>
+            <div class="flex justify-between text-base font-extrabold border-t border-red-300 pt-2">
+                <span>TOTALE TASSE STIMATE DA ACCANTONARE:</span>
+                <span class="text-red-600">${fiscalSim.totaleTasse.toFixed(2)} ${symbol}</span>
+            </div>
+            <p class="text-xs text-gray-500 mt-2">${fiscalSim.note}. <span class="font-bold text-blue-500">Saldo Netto Anno - Tasse: ${fiscalSim.nettaRimanente.toFixed(2)} ${symbol}</span></p>
+        </div>
+      ` : '';
 
 
       return `
@@ -1155,6 +1211,8 @@
           <h2 class="text-2xl font-semibold border-b pb-2 text-gray-700 dark:text-gray-300">${title}</h2>
           ${renderSummaryCard(summary,year)}
           
+          ${fiscalSection}
+
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="bg-white dark:bg-gray-800 p-4 rounded-xl card border-l-4 border-blue-500">
                 <h3 class="text-xl font-bold mb-2">Focus Oggi (${new Date().toLocaleDateString('it-IT')})</h3>
@@ -1303,7 +1361,6 @@
       all.forEach(t=>{
         const ym=t.date?.slice(0,7)||'';
         if (!byMonth[ym]) byMonth[ym] = {inc:0, exp:0};
-        // Ensure gross is a number
         const gross = parseFloat(t.gross) || 0;
         if (t.isIncome) byMonth[ym].inc += gross; else byMonth[ym].exp += gross;
       });
@@ -1313,7 +1370,7 @@
       const avgIncome = months.length? sumInc/months.length : 0;
       const avgExpense = months.length? sumExp/months.length : 0;
       const net = sumInc - sumExp;
-      const savingRate = sumInc > 0 ? (net/sumInc*100) : (net > 0 ? 100 : (net < 0 ? -100 : 0)); // Handle zero income case robustly
+      const savingRate = sumInc > 0 ? (net/sumInc*100) : (net > 0 ? 100 : (net < 0 ? -100 : 0)); 
 
       // top clients/suppliers by gross
       const sumByDesc = {};
@@ -1339,7 +1396,6 @@
       return {savingRate, avgExpense, avgIncome, topClients, topSuppliers, topCategories};
     }
     
-    // NUOVO: Calcolo Proiezione Cash Flow (90 giorni)
     function calculateCashFlowProjection() {
         const today = new Date();
         const futureDate = new Date();
@@ -1347,43 +1403,37 @@
         
         let netProjection = 0;
         
-        // 1. Includi il saldo attuale (lordo - assumiamo che il saldo netto sia l'attuale cassa)
         const summary = calculateFinancialSummary('global', 'all', 'all');
         netProjection += summary.netBalance;
 
-        // 2. Transazioni ricorrenti (Entrate/Uscite)
         appData.recurringExpenses.forEach(r => {
             const nextDateStr = calculateNextRecurrence(r.lastDate, r.frequency);
             if (nextDateStr) {
                 const nextDate = new Date(nextDateStr);
                 if (nextDate <= futureDate) {
-                    // Stima quanti cicli ricorrono nei prossimi 90 giorni (molto approssimativo)
                     let numCycles = 1; 
                     if (r.frequency === 'monthly') numCycles = 3;
                     if (r.frequency === 'quarterly') numCycles = 1;
-                    if (r.frequency === 'annual') numCycles = 0.25; // circa 1/4
+                    if (r.frequency === 'annual') numCycles = 0.25; 
 
-                    // Cerchiamo le entrate/uscite corrispondenti
                     const isIncome = appData.invoices.some(i => i.description === r.description);
                     
-                    if (!isIncome) { // Solo uscite ricorrenti
+                    if (!isIncome) { 
                         netProjection -= (r.lastAmount * numCycles);
                     }
                 }
             }
         });
         
-        // 3. Promemoria di pagamento in scadenza (Entrate/Uscite)
         appData.reminders.forEach(r => {
             const rDate = new Date(r.date);
             if (!r.paid && rDate >= today && rDate <= futureDate) {
-                // Sottraiamo l'importo (assumendo i promemoria siano principalmente uscite/tasse)
                 netProjection -= r.amount;
             }
         });
 
         return {
-            projection: netProjection,
+            projection: +netProjection.toFixed(2),
             days: 90
         };
     }
@@ -1393,7 +1443,6 @@
       if (!canvas) return;
       const ctx = canvas.getContext('2d'); 
       
-      // Cleanup previous chart instance if it exists
       if (canvas.chart) { canvas.chart.destroy(); }
       
       const grouped={};
@@ -1422,7 +1471,7 @@
           plugins: {
             legend: {
               labels: {
-                color: document.body.classList.contains('dark') ? '#f1f5f9' : '#1e293b' // Adjust label color for dark mode
+                color: document.body.classList.contains('dark') ? '#f1f5f9' : '#1e293b' 
               }
             }
           }
@@ -1433,22 +1482,22 @@
     function renderReportPage(){
       const symbol = getCurrencySymbol();
       
-      // NUOVO: Carica i filtri salvati
+      loadReportFilters();
+      
       const currentType = document.getElementById('report-type')?.value || reportFilters.type;
       const filterType = document.getElementById('filter-type')?.value || reportFilters.filterType;
-      const filterDateStr = document.getElementById('filter-date')?.value || reportFilters.filterDateStr;
+      const filterDateInput = document.getElementById('filter-date');
+      const filterDateStr = filterDateInput?.value || reportFilters.filterDateStr;
       const categoryFilter = document.getElementById('filter-category')?.value || reportFilters.categoryFilter;
       const tagFilter = document.getElementById('filter-tag')?.value || reportFilters.tagFilter;
       
-      // Aggiorna l'oggetto globale dei filtri
       reportFilters = { type: currentType, filterType, filterDateStr, categoryFilter, tagFilter };
-      saveReportFilters(); // Salva per la persistenza
+      saveReportFilters(); 
 
       const summary = calculateFinancialSummary(currentType, filterType, filterDateStr);
       const cashSummary = calculateFinancialSummary('global', filterType, filterDateStr);
       const ivaSummary = calculateFinancialSummary('activity', filterType, filterDateStr);
       
-      // Filtra le transazioni del periodo/tipo in base a Categoria e Tag
       let transactionsList = filterTransactionsByCriteria(summary.transactions, categoryFilter === 'all' ? null : categoryFilter, tagFilter === 'all' ? null : tagFilter);
 
       const totalCash = cashSummary.totalIncomes + cashSummary.totalExpenses;
@@ -1459,21 +1508,17 @@
       const ivaAddebitoPercent = totalIva>0 ? (ivaSummary.ivaAddebito/totalIva)*100 : 50;
       const ivaCreditoPercent = 100 - ivaAddebitoPercent;
 
-      // KPIs
       const KPIs = computeKPIs();
       
-      // Calcolo Proiezione Cash Flow
       const cashFlowProj = calculateCashFlowProjection();
       const projColor = cashFlowProj.projection >= 0 ? 'text-emerald-600' : 'text-red-600';
 
-      // Calcolo Obiettivo Risparmio
       const averageMonthlyNet = (KPIs.avgIncome || 0) - (KPIs.avgExpense || 0);
       const targetDelta = averageMonthlyNet - (appData.monthlySavingsTarget || 0);
       const targetColor = targetDelta >= 0 ? 'text-emerald-600' : 'text-red-600';
       const targetLabel = targetDelta >= 0 ? 'Obiettivo Raggiunto (Surplus)' : 'Obiettivo Mancato (Deficit)';
 
 
-      // period label
       let periodLabel='Periodo Selezionato';
       if (filterType==='all') periodLabel='Tutti i Dati';
       else if (filterType==='year') periodLabel=filterDateStr;
@@ -1485,7 +1530,6 @@
       const allCategories = appData.categories || DEFAULT_CATEGORIES.slice();
       const allTags = getAllTags();
 
-      // NUOVO: Analisi Budget per categoria del MESE CORRENTE
       const currentMonth = new Date().toISOString().slice(0, 7);
       const monthSummary = calculateFinancialSummary('personal', 'month', currentMonth);
       const categoryExpenseMap = {};
@@ -1540,7 +1584,7 @@
             </div>
             <div class="md:col-span-1">
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data/Anno</label>
-              <input type="${filterType==='year'?'number':(filterType==='month'||filterType==='quarter')?'month':'date'}" id="filter-date" value="${filterDateStr}" oninput="renderPage('report')" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700 ${filterType==='all'?'hidden':''}">
+              <input type="${filterType==='year'?'number':(filterType==='month'||filterType==='quarter')?'month':'date'}" id="filter-date" value="${filterDateStr==='all'?'':filterDateStr}" onchange="renderPage('report')" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700 ${filterType==='all'?'hidden':''}">
             </div>
             <div class="md:col-span-1">
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Categoria</label>
@@ -1560,7 +1604,7 @@
           
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div class="bg-white dark:bg-gray-800 p-4 rounded-xl card text-center border-l-4 border-dashed border-purple-500">
-                  <p class="text-sm text-gray-500">Obiettivo Risparmio Mensile: ${appData.monthlySavingsTarget.toFixed(2)} ${symbol}</p>
+                  <p class="text-sm text-gray-500">Obiettivo Saldo Netto Mensile: ${appData.monthlySavingsTarget.toFixed(2)} ${symbol}</p>
                   <p class="text-xl font-bold ${targetColor}">
                       Proiezione Media Mensile: ${targetDelta.toFixed(2)} ${symbol} 
                       <span class="text-xs text-gray-500">(${targetLabel})</span>
@@ -1717,29 +1761,23 @@
       input.type=type; 
       input.classList.toggle('hidden',!visible);
       
-      // Set value only if filter is not 'all' and not currently editing a specific date
       if (visible && filterType!=='all') {
-          // Set to default or current value from global filter object
           input.value = filterType === reportFilters.filterType ? reportFilters.filterDateStr : def;
       } else {
-          // Reset global filter date if filter is 'all'
           reportFilters.filterDateStr = 'all';
       }
       
-      // Trigger page re-render based on new filter type/date
       renderPage('report');
     }
     
-    // NUOVO: Calcola la data di previsione basata sulla frequenza (omesso per brevità)
     function calculateNextRecurrence(lastDateStr, frequency) {
         let nextDate = new Date(lastDateStr);
-        nextDate.setDate(nextDate.getDate() + 1); // Start checking from next day
+        nextDate.setDate(nextDate.getDate() + 1); 
 
         if (frequency === 'monthly') {
             const currentMonth = nextDate.getMonth();
             nextDate.setMonth(currentMonth + 1);
             if (nextDate.getMonth() !== (currentMonth + 1) % 12) {
-                // Gestione giorni mancanti (es. 31/01 -> 03/03)
                 nextDate.setDate(0); 
             }
         } else if (frequency === 'quarterly') {
@@ -1750,7 +1788,6 @@
             return null;
         }
 
-        // Formatta a YYYY-MM-DD per la visualizzazione
         return nextDate.toISOString().slice(0, 10);
     }
 
@@ -1762,7 +1799,6 @@
       const recurring = appData.recurringExpenses||[];
       const today = new Date(); today.setHours(0,0,0,0);
       
-      // Ordina i promemoria (scadenze finanziarie) per data
       const sortedReminders = list.slice().sort((a,b)=> new Date(a.date)-new Date(b.date));
       const upcomingReminders = sortedReminders.filter(r=> !r.paid && new Date(r.date)>=today);
       const paidReminders = sortedReminders.filter(r=> r.paid);
@@ -1771,7 +1807,6 @@
         return !r.paid && rDate < today;
       });
       
-      // NUOVO: Calcola le previsioni ricorrenti
       const predictedRecurrences = recurring
           .map(r => {
               const nextDateStr = calculateNextRecurrence(r.lastDate, r.frequency);
@@ -1780,7 +1815,7 @@
               const nextDate = new Date(nextDateStr);
               const diffDays = Math.ceil((nextDate - today) / (1000 * 60 * 60 * 24));
               
-              if (diffDays > 90 || diffDays < 0) return null; // Mostra solo i prossimi 90 giorni
+              if (diffDays > 90 || diffDays < 0) return null; 
               
               return {
                   ...r,
@@ -1794,12 +1829,10 @@
       
       const types = FISCAL_REMINDER_TYPES;
       
-      // Funzione per calcolare l'età e la scadenza annuale dei compleanni
       const getBirthdayInfo = (bd) => {
         const bdDate = new Date(bd.date);
         const currentYear = new Date().getFullYear();
         
-        // Data di ricorrenza nel *prossimo* anno per l'ordinamento
         let recurrence = new Date(`${currentYear}-${bd.recurringDate}`);
         if (recurrence < today) {
             recurrence = new Date(`${currentYear + 1}-${bd.recurringDate}`);
@@ -1807,7 +1840,7 @@
         
         let age = currentYear - bdDate.getFullYear();
         if (new Date(bd.recurringDate).setFullYear(currentYear) > today) {
-            age -= 1; // Se il compleanno non è ancora passato quest'anno
+            age -= 1; 
         }
         
         const diffDays = Math.ceil((recurrence - today) / (1000 * 60 * 60 * 24));
@@ -1823,7 +1856,6 @@
         };
       };
 
-      // Ordina compleanni per data di ricorrenza più vicina
       const sortedBirthdays = birthdays.map(getBirthdayInfo).sort((a, b) => a.recurrenceDate - b.recurrenceDate);
       
       const pill = (r)=>{
@@ -1920,8 +1952,7 @@
         </div>
       `;
     }
-    
-    // NUOVO: Funzione per salvare il Budget per Categoria
+
     function saveCategoryBudget(category, budget) {
         const cleanCat = category.trim();
         const numBudget = parseFloat(budget) || 0;
@@ -2056,7 +2087,6 @@
       `;
     }
     
-    // NUOVO: Salvataggio Obiettivo Risparmio
     function saveMonthlyTarget() {
         const input = document.getElementById('monthly-target');
         const target = parseFloat(input?.value) || 0;
@@ -2069,44 +2099,6 @@
         });
     }
 
-    // NUOVO: Funzione per pulire contatti non usati
-    function deleteUnusedContacts() {
-        const usedDescriptions = new Set();
-        [...appData.invoices, ...appData.expenses].forEach(t => {
-            if (t.description && t.description.trim() !== 'Corrispettivi/Incasso Giornaliero') {
-                usedDescriptions.add(t.description.trim().toLowerCase());
-            }
-        });
-
-        const initialLength = appData.contacts.length;
-        appData.contacts = appData.contacts.filter(c => usedDescriptions.has(c.name.toLowerCase()));
-        const removedCount = initialLength - appData.contacts.length;
-
-        saveData();
-        showToast(`${removedCount} contatti non usati eliminati.`);
-        renderPage('settings');
-    }
-    
-    // NUOVO: Funzione per pulire categorie non usate (tranne i default)
-    function deleteUnusedCategories() {
-        const usedCategories = new Set(DEFAULT_CATEGORIES.map(c => c.toLowerCase()));
-        [...appData.invoices, ...appData.expenses].forEach(t => {
-            if (t.category) {
-                usedCategories.add(t.category.trim().toLowerCase());
-            }
-        });
-        
-        const initialLength = appData.categories.length;
-        appData.categories = appData.categories.filter(c => usedCategories.has(c.toLowerCase()));
-        appData.categories.sort((a,b)=>a.localeCompare(b));
-        const removedCount = initialLength - appData.categories.length;
-
-        saveData();
-        showToast(`${removedCount} categorie non usate (non di default) eliminate.`);
-        renderPage('settings');
-    }
-
-    // NUOVA FUNZIONE: Cambio Simbolo Valuta (omesso per brevità)
     function changeCurrencySymbol() {
         const symbolInput = document.getElementById('currency-symbol-input');
         const newSymbol = symbolInput?.value.trim() || '€';
@@ -2124,7 +2116,6 @@
         });
     }
 
-    // --- PIN Management (Settings Page) (omesso per brevità) ---
     function changePin() {
       const currentPinInput = document.getElementById('current-pin');
       const newPinInput = document.getElementById('new-pin');
@@ -2153,7 +2144,6 @@
       });
     }
     
-    // --- Notifications (every hour) (omesso per brevità) ---
     function checkReminders(){
       const today=new Date();
       
@@ -2170,13 +2160,11 @@
       // 2. Check Birthdays
       const currentMonthDay = today.toISOString().slice(5, 10);
       (appData.birthdays||[]).forEach(bd => {
-        const bdMonthDay = bd.recurringDate; // MM-DD
+        const bdMonthDay = bd.recurringDate; 
         const bdDate = new Date(bd.date);
         
-        // Calcola la data di ricorrenza nell'anno corrente
         let recurrence = new Date(`${today.getFullYear()}-${bdMonthDay}`);
         
-        // Considera solo i compleanni passati o futuri entro 7 giorni
         const diffDays = Math.ceil((recurrence - today) / (1000 * 60 * 60 * 24));
         
         if (diffDays >= 0 && diffDays <= 7) {
@@ -2199,7 +2187,6 @@
       if (pageId==='activity'||pageId==='personal'){ qa.classList.remove('hidden'); qa.classList.add('flex','justify-center'); }
       else { qa.classList.add('hidden'); qa.classList.remove('flex','justify-center'); }
 
-      // Reset edit state if any
       document.getElementById('transaction-form')?.removeAttribute('data-transaction-id');
 
       switch(pageId){
@@ -2209,14 +2196,12 @@
           setupActivityIncomeTypeListeners(pageId);
           setupContactAutocomplete(pageId); 
           setupCategoryAutocomplete();
-          calculateGross(); // Initialize gross/vat amounts
+          calculateGross(); 
           renderWeeklyBalanceChart(pageId);
           break;
         case 'report':
-          // NUOVO: Carica i filtri prima di renderizzare
           loadReportFilters();
           area.innerHTML = renderReportPage();
-          // Rerunning updateReportDateInput ensures the initial display and filter logic runs correctly
           updateReportDateInput(); 
           
           const allTx = [...appData.invoices.map(t=>({...t,isIncome:true})), ...appData.expenses.map(t=>({...t,isIncome:false}))];
@@ -2233,7 +2218,7 @@
       }
     }
 
-    // --- PWA (Manifest + Service Worker all-in-one) (omesso per brevità) ---
+    // --- PWA (omitted for brevity) ---
     function installManifest(){
       const manifest = {
         name: "Finanza Smart PRO",
@@ -2255,7 +2240,7 @@
     async function installServiceWorker(){
       if (!('serviceWorker' in navigator)) return;
       const swCode = `
-        const CACHE = 'finanza-smart-v2-pro'; // Updated Cache version
+        const CACHE = 'finanza-smart-v2-pro'; 
         self.addEventListener('install', e=>{
           e.waitUntil(caches.open(CACHE).then(c=>c.addAll(['./'])));
           self.skipWaiting();
@@ -2287,12 +2272,10 @@
 
       loadData();
       
-      // Security Check: Lock app if not explicitly unlocked in this session
       setupPinLock();
 
       // --- PERMANENT LISTENERS (Event Delegation) ---
 
-      // 1. Transaction Form Calculation
       document.getElementById('app')?.addEventListener('input', (e)=>{
         if (e.target && (e.target.id==='net-amount' || e.target.id==='vat-rate') && (currentPage==='activity'||currentPage==='personal')) calculateGross();
       });
@@ -2300,16 +2283,32 @@
         if (e.target && e.target.id==='vat-rate' && (currentPage==='activity'||currentPage==='personal')) calculateGross();
       });
 
-      // 2. Report Filtering (Re-render on change in select/date input)
       const appContainer = document.getElementById('app');
       appContainer?.addEventListener('change', (e) => {
           if (currentPage === 'report') {
-              // I listener per report-type, filter-type, filter-category, filter-tag sono ora dichiarati direttamente nell'HTML con onchange="renderPage('report')" o onchange="updateReportDateInput()"
+              if (e.target.id === 'report-type') {
+                  // Aggiorna e renderizza
+                  reportFilters.type = e.target.value;
+                  renderPage('report');
+              }
+              if (e.target.id === 'filter-category') {
+                  reportFilters.categoryFilter = e.target.value;
+                  renderPage('report');
+              }
+              if (e.target.id === 'filter-tag') {
+                  reportFilters.tagFilter = e.target.value;
+                  renderPage('report');
+              }
           }
       });
       appContainer?.addEventListener('input', (e) => {
           if (currentPage === 'report') {
-              // Search Handler
+              if (e.target.id === 'filter-date') {
+                  reportFilters.filterDateStr = e.target.value;
+                  // Non renderizzare immediatamente, onchange in HTML gestisce l'input tipo date/month
+                  if (e.target.type === 'number') renderPage('report');
+              }
+              
               if (e.target.id === 'search') {
                 const query = e.target.value;
                 const filterType = document.getElementById('filter-type').value;
@@ -2342,16 +2341,13 @@
           }
       });
       
-      // 3. Hotkeys (I=Income, E=Expense)
       document.addEventListener('keydown', (e) => {
           if (document.getElementById('pin-lock-modal').style.display !== 'none') return;
           
           if (currentPage === 'activity' || currentPage === 'personal') {
               
-              // Submit form with ENTER
               if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
                   const form = document.getElementById('transaction-form');
-                  // Aggiunto controllo per non interferire con l'input di testo
                   if (form && form.querySelector('button[type="submit"]') && e.target.id!=='description') {
                       e.preventDefault();
                       form.querySelector('button[type="submit"]').click();
@@ -2359,7 +2355,6 @@
                   }
               }
               
-              // Ignore if focus is in an input field (to allow normal typing)
               if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') {
                   return;
               }
@@ -2374,12 +2369,9 @@
           }
       });
       
-      // Notifications
       if (Notification.permission!=='granted') Notification.requestPermission();
-      // Only check reminders if the app is active
       setInterval(checkReminders, 60*60*1000); 
       
-      // PWA
       installManifest();
       installServiceWorker();
     };
