@@ -342,7 +342,7 @@
             appData.monthlySavingsTarget ||= 0;
             appData.categoryBudgets ||= {}; 
             appData.fiscalParams = { ...DEFAULT_FISCAL_PARAMS, ...appData.fiscalParams };
-            appData.currentBankBalance ||= 0; 
+            appData.currentBankBalance = parseFloat(appData.currentBankBalance) || 0; 
             appData.dashboardLayout ||= DASHBOARD_WIDGETS.filter(w => w.default).map(w => w.id);
             
             document.getElementById('header-subtitle').textContent = `Profilo: ${user.name}`;
@@ -861,15 +861,18 @@
 
             appData.recurringExpenses.forEach(r => {
                 const nextDateStr = calculateNextRecurrence(r.lastDate, r.frequency, date);
-                if (nextDateStr && new Date(nextDateStr).getMonth() === date.getMonth() && new Date(nextDateStr).getFullYear() === date.getFullYear()) {
-                    const isIncome = appData.invoices.some(i => i.description === r.description);
-                    monthFlow += isIncome ? r.lastAmount : -r.lastAmount;
+                if (nextDateStr) {
+                    const nextDate = new Date(nextDateStr);
+                    if (nextDate >= today && nextDate.getMonth() === date.getMonth() && nextDate.getFullYear() === date.getFullYear()) {
+                        const isIncome = appData.invoices.some(i => i.description === r.description);
+                        monthFlow += isIncome ? r.lastAmount : -r.lastAmount;
+                    }
                 }
             });
 
             appData.reminders.forEach(r => {
                 const rDate = new Date(r.date);
-                if (!r.paid && rDate.getFullYear() === date.getFullYear() && rDate.getMonth() === date.getMonth()) {
+                if (!r.paid && rDate >= today && rDate.getFullYear() === date.getFullYear() && rDate.getMonth() === date.getMonth()) {
                     monthFlow -= r.amount;
                 }
             });
@@ -1512,7 +1515,7 @@
               appData.recurringExpenses ||= []; 
               appData.categoryBudgets ||= {}; 
               appData.fiscalParams = { ...DEFAULT_FISCAL_PARAMS, ...appData.fiscalParams }; 
-              appData.currentBankBalance ||= 0;
+              appData.currentBankBalance = parseFloat(imported.currentBankBalance) || 0;
 
               appData.birthdays = appData.birthdays.map(bd => ({
                   ...bd,
@@ -2172,7 +2175,7 @@
       const grouped={};
       allTransactions.forEach(t=>{
         const ym=t.date?.slice(0,7); if(!ym) return;
-        if (!grouped[ym]) grouped[ym]={income:0,expense:0};
+        if (!grouped[ym]) grouped[ym]={inc:0, exp:0};
         const gross = parseFloat(t.gross) || 0;
         if (t.isIncome) grouped[ym].inc += gross; else grouped[ym].exp += gross;
       });
@@ -2237,7 +2240,7 @@
         return sortedGrouped;
     }
     
-    // NUOVO: Grafico Dettaglio Categoria Annuale
+    // Grafico Dettaglio Categoria Annuale
     function renderCategoryDetailChart(categoryName, type) {
         const chartId = `categoryDetailChart`;
         const ctx = document.getElementById(chartId)?.getContext('2d');
@@ -2266,7 +2269,7 @@
             const date = new Date(t.date);
             const monthLabel = date.toLocaleDateString('it-IT', { month: 'short' });
             const amount = t.gross * (t.isIncome ? 1 : -1);
-            if (monthlyTotals.hasOwnProperty(monthLabel)) { // Previeni errori se il nome del mese non è valido
+            if (monthlyTotals.hasOwnProperty(monthLabel)) { 
                 monthlyTotals[monthLabel] += amount;
             }
         });
@@ -3162,7 +3165,7 @@
 
           <div class="bg-red-50 dark:bg-red-900/50 p-5 rounded-xl card space-y-4 border-l-4 border-red-600">
             <h3 class="text-xl font-medium text-red-600">Gestione Profilo Corrente</h3>
-            <p class="text-sm text-red-700 dark:text-red-300">ATTENZIONE: Questa azione eliminerà permanentemente l'intero profilo "${globalState.currentUser.name}" e i suoi dati dal dispositivo.</p>
+            <p class="text-sm text-red-700 dark:text-gray-300">ATTENZIONE: Questa azione eliminerà permanentemente l'intero profilo "${globalState.currentUser.name}" e i suoi dati dal dispositivo.</p>
             <button onclick="deleteCurrentUserProfile()" class="cta-button w-full bg-red-500 text-white p-3 rounded-lg font-bold hover:bg-red-600">Elimina Profilo "${globalState.currentUser.name}"</button>
           </div>
         </div>
