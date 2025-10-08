@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Gestione Finanziaria Unificata Smart PRO</title>
+  <title>Gestione Finanziaria Unificata Smart PRO++</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -76,7 +76,7 @@
   <div id="app" class="max-w-4xl mx-auto p-4 md:p-6">
     <header class="mb-6 flex items-center justify-between">
       <div class="flex-1 text-center">
-        <h1 class="text-3xl font-bold text-gray-800">Finanza Smart PRO 🚀</h1>
+        <h1 class="text-3xl font-bold text-gray-800">Finanza Smart PRO++ 🚀</h1>
         <p class="text-center text-sm text-gray-500" id="header-subtitle">Caricamento...</p>
       </div>
       <button id="theme-toggle"
@@ -125,7 +125,7 @@
   </div>
   
   <div id="pin-lock-modal">
-    <h2 class="text-3xl font-bold mb-3">Finanza Smart PRO</h2>
+    <h2 class="text-3xl font-bold mb-3">Finanza Smart PRO++</h2>
     <div id="login-form-wrapper">
         <p class="text-lg mb-4 text-gray-400">Seleziona o crea il tuo Profilo</p>
         
@@ -157,10 +157,7 @@
     const MAX_FORFETTARIO_REVENUE = 85000;
     
     const DEFAULT_FISCAL_PARAMS = {
-        regime: 'forfettario',
-        profitRate: 0.40, 
-        taxRate: 0.15,    
-        inpsRate: 0.26    
+        regime: 'forfettario', profitRate: 0.40, taxRate: 0.15, inpsRate: 0.26    
     };
     
     const CATEGORY_ICONS = {
@@ -194,7 +191,8 @@
         recurringExpenses: [], lastId:0, categories: DEFAULT_CATEGORIES.slice(), 
         pinHash: '', currencySymbol: '€', monthlySavingsTarget: 0, categoryBudgets: {},
         fiscalParams: DEFAULT_FISCAL_PARAMS, currentBankBalance: 0, 
-        taxCashReserve: 0, dashboardLayout: DASHBOARD_WIDGETS.filter(w => w.default).map(w => w.id)
+        taxCashReserve: 0, dashboardLayout: DASHBOARD_WIDGETS.filter(w => w.default).map(w => w.id),
+        dataChecksum: '' // Checksum per l'auto-riparazione
     };
     let currentPage = 'activity';
     let reportFilters = { 
@@ -202,9 +200,9 @@
         categoryFilter: 'all', tagFilter: 'all', sortKey: 'date', sortDirection: 'desc', searchQuery: ''
     };
     
-    // *** MIGLIORAMENTO 1: Variabili per Memoization KPI & Summary ***
+    // Variabili per Memoization KPI & Summary (Ottimizzazione Performance)
     let calculatedResultsCache = {};
-    const CACHE_DURATION = 60000; // 60 secondi
+    const CACHE_DURATION = 60000;
     let lastCacheUpdateTime = 0;
 
 
@@ -215,16 +213,29 @@
 
     // --- UTILITY ---
     
+    // *** RESILIENZA: Calcolo Checksum CRC Semplice ***
+    function calculateDataChecksum(dataToHash) {
+        // Usa una funzione hash non crittografica ma veloce per rilevare alterazioni
+        const jsonStr = JSON.stringify({
+            invoices: dataToHash.invoices, expenses: dataToHash.expenses,
+            reminders: dataToHash.reminders, birthdays: dataToHash.birthdays,
+            recurringExpenses: dataToHash.recurringExpenses, lastId: dataToHash.lastId
+        });
+        let hash = 0;
+        for (let i = 0; i < jsonStr.length; i++) {
+            const char = jsonStr.charCodeAt(i);
+            hash = (hash << 5) - hash + char;
+            hash |= 0;
+        }
+        return hash.toString();
+    }
+    
     let simulationTimer = null;
     const SIMULATION_DELAY = 500; 
 
     function debounceSimulationUpdate() {
-        if (simulationTimer) {
-            clearTimeout(simulationTimer);
-        }
-        simulationTimer = setTimeout(() => {
-            updateFiscalSimulationUI();
-        }, SIMULATION_DELAY);
+        if (simulationTimer) { clearTimeout(simulationTimer); }
+        simulationTimer = setTimeout(() => { updateFiscalSimulationUI(); }, SIMULATION_DELAY);
     }
     
     function updateFiscalSimulationUI() {
@@ -234,6 +245,7 @@
         const reverseSim = calculateReverseFiscalProjection();
         const symbol = getCurrencySymbol();
         
+        // ... (UI Update Logics) ...
         const simCard = document.querySelector('.fiscal-simulation-card');
         if (simCard) {
             simCard.classList.remove('border-red-500', 'border-indigo-500');
@@ -248,7 +260,6 @@
             }
         }
 
-        // 2. Aggiorna i valori calcolati
         const elementsToUpdate = {
             'sim-ricavi': fiscalSim.totalRicavi.toFixed(2), 'sim-costi': fiscalSim.totalCosti.toFixed(2),
             'sim-base-imponibile': fiscalSim.baseImponibile.toFixed(2), 'sim-imposta': fiscalSim.impostaSostitutiva.toFixed(2),
@@ -373,14 +384,26 @@
 
         try {
             const raw = localStorage.getItem(user.dataKey);
+            const savedChecksum = localStorage.getItem(`${user.dataKey}_checksum`);
+            
             if (raw) {
                 const parsed = JSON.parse(raw);
+                
+                // *** RESILIENZA: Verifica Checksum ***
+                const calculated = calculateDataChecksum(parsed);
+
+                if (savedChecksum && savedChecksum !== calculated) {
+                    showModal('🚨 Dati Corrotti Rilevati!', 'Il backup locale non è congruo. Si prega di esportare i dati IMMEDIATAMENTE e pulire la cache (Settings > Pulizia Dati). Ricaricando, l\'app potrebbe caricare solo un set di dati parziale/danneggiato.', false);
+                }
+                
                 appData = { ...appData, ...parsed };
             }
+            
             // Inizializza o correggi la struttura di appData
             appData.invoices ||= []; appData.expenses ||= []; appData.reminders ||= []; 
             appData.contacts ||= []; appData.birthdays ||= []; appData.recurringExpenses ||= []; 
-            appData.categories ||= DEFAULT_CATEGORIES.slice(); appData.lastId ||= 0;
+            appData.categories ||= DEFAULT_CATEGORIES.slice(); 
+            appData.lastId = parseInt(appData.lastId) || 0;
             appData.pinHash = user.pinHash; appData.currencySymbol ||= '€'; appData.monthlySavingsTarget ||= 0;
             appData.categoryBudgets ||= {}; 
             appData.fiscalParams = { ...DEFAULT_FISCAL_PARAMS, ...appData.fiscalParams };
@@ -388,9 +411,17 @@
             appData.taxCashReserve ||= 0; appData.currentBankBalance ||= 0; 
             appData.dashboardLayout ||= DASHBOARD_WIDGETS.filter(w => w.default).map(w => w.id);
             
+            // *** RESILIENZA: Check ID di Congruità ***
+            const maxIdInRecords = [...appData.invoices, ...appData.expenses, ...appData.reminders, ...appData.contacts, ...appData.birthdays].reduce((max, item) => Math.max(max, item.id || 0), 0);
+            if (appData.lastId < maxIdInRecords) {
+                console.warn(`Last ID (${appData.lastId}) non congruo. Auto-correzione a ${maxIdInRecords}.`);
+                appData.lastId = maxIdInRecords;
+                saveData(); // Forza un salvataggio con il nuovo ID
+            }
+            
             document.getElementById('header-subtitle').textContent = `Profilo: ${user.name}`;
             
-            // *** MIGLIORAMENTO: Svuota la cache ad ogni ricaricamento completo dei dati ***
+            // Svuota la cache ad ogni ricaricamento completo dei dati
             calculatedResultsCache = {};
             lastCacheUpdateTime = 0;
             
@@ -415,15 +446,25 @@
             
             const dataToSave = { ...appData };
             delete dataToSave.pinHash; 
+            
+            // *** RESILIENZA: Calcola e salva il nuovo checksum ***
+            dataToSave.dataChecksum = calculateDataChecksum(dataToSave);
+            localStorage.setItem(`${user.dataKey}_checksum`, dataToSave.dataChecksum);
+            
             localStorage.setItem(user.dataKey, JSON.stringify(dataToSave)); 
             
-            // *** MIGLIORAMENTO PERFORMANCE: Svuota la cache ad ogni salvataggio dati ***
+            // Svuota la cache ad ogni salvataggio dati
             calculatedResultsCache = {};
             lastCacheUpdateTime = 0;
             
         }catch(e){ 
             console.error('Errore salvataggio', e); 
-            showToast('Errore salvataggio','red'); 
+            // *** RESILIENZA: Gestione specifica per problemi di I/O / Quota Exceeded (tipico iOS) ***
+            if (e.name === 'QuotaExceededError' || e.name === 'SecurityError') {
+                 showModal('🚨 ERRORE CRITICO DI SALVATAGGIO', 'Spazio di archiviazione esaurito o accesso negato dal browser. I dati NON sono stati salvati. Esegui subito un Export (JSON) e pulisci i dati vecchi.', false);
+            } else {
+                 showToast('Errore salvataggio','red'); 
+            }
         } 
     }
     function getNextId(){ appData.lastId++; saveData(); return appData.lastId; }
@@ -509,7 +550,8 @@
             recurringExpenses: [], lastId:0, categories: DEFAULT_CATEGORIES.slice(), 
             pinHash: newPinHash, currencySymbol: '€', monthlySavingsTarget: 0,
             categoryBudgets: {}, fiscalParams: DEFAULT_FISCAL_PARAMS, currentBankBalance: 0,
-            taxCashReserve: 0, dashboardLayout: DASHBOARD_WIDGETS.filter(w => w.default).map(w => w.id)
+            taxCashReserve: 0, dashboardLayout: DASHBOARD_WIDGETS.filter(w => w.default).map(w => w.id),
+            dataChecksum: ''
         }};
         saveData(); 
         saveGlobalState(); 
@@ -948,7 +990,7 @@
             fiscalParamsUsed: params
         };
     }
-    
+
     // Simulatore a Ritroso (Obiettivo Netto)
     function calculateReverseFiscalProjection() {
         const targetNet = simulationState.targetNetIncome;
@@ -1138,7 +1180,7 @@
         const avgMonthlyExpense = kpis.avgExpense; 
         
         const summarySinceStart = calculateFinancialSummary('global', 'all', 'all');
-        const currentLiquidita = (parseFloat(appData.currentBankBalance) || 0) + summarySinceStart.netBalance;
+        let currentLiquidita = (parseFloat(appData.currentBankBalance) || 0) + summarySinceStart.netBalance;
         
         if (avgMonthlyExpense <= 0) return 99; 
         
@@ -1616,7 +1658,6 @@
     // --- Compleanni CRUD ---
     function saveBirthday(data){
       appData.birthdays ||= [];
-      
       const dateStr = data.date;
       const recurringDate = dateStr.slice(5); 
 
@@ -1642,7 +1683,8 @@
         const dateStr = d.get('date');
         
         const payload={ 
-            name: d.get('name').trim(), date: dateStr, 
+            name: d.get('name').trim(), 
+            date: dateStr, 
         };
         
         if (payload.name && payload.date){ 
@@ -1663,45 +1705,62 @@
       showToast('Backup JSON esportato!');
     }
 
-    function exportCSV(typeFilter = 'all'){
-      const tx = [...appData.invoices.map(t=>({...t,isIncome:true})), ...appData.expenses.map(t=>({...t,isIncome:false}))].sort((a,b)=> new Date(a.date)-new Date(b.date));
+    // *** NUOVA VERSIONE: Export CSV con filtro avanzato e per categoria (per Corrispettivi Ottobre, ecc.) ***
+    function exportCSV(typeFilter = 'all', categoryFilter = 'all', filterType = 'all', filterDateStr = 'all'){
+      // 1. Filtra le transazioni base
+      let tx = [...appData.invoices.map(t=>({...t,isIncome:true})), ...appData.expenses.map(t=>({...t,isIncome:false}))].sort((a,b)=> new Date(a.date)-new Date(b.date));
       
-      const filteredTx = tx.filter(t => {
+      let filteredTx = tx.filter(t => {
           if (typeFilter === 'income') return t.isIncome;
           if (typeFilter === 'expense') return !t.isIncome;
           return true;
       });
       
+      // 2. Applica filtro temporale e categoria
+      filteredTx = filteredTx.filter(i=>filterByPeriod(i.date,filterType,filterDateStr));
+      if (categoryFilter !== 'all') {
+          filteredTx = filteredTx.filter(t => t.category === categoryFilter);
+      }
+      
       const esc = (s)=> `"${String(s??'').replace(/"/g,'""')}"`;
       
+      // 3. Calcola Riepilogo Filtrato
       const sumInc = filteredTx.filter(t => t.isIncome).reduce((s,t)=>s+t.gross,0);
       const sumExp = filteredTx.filter(t => !t.isIncome).reduce((s,t)=>s+t.gross,0);
       const netBalance = sumInc - sumExp;
+      
       const filterLabel = typeFilter === 'income' ? 'SOLO ENTRATE' : (typeFilter === 'expense' ? 'SOLO USCITE' : 'ENTRATE & USCITE');
+      const periodLabel = filterDateStr === 'all' ? 'Completo' : filterDateStr;
+      const catLabel = categoryFilter === 'all' ? 'Tutte Cat.' : categoryFilter;
       
-      const summaryRow = ['---RIEPILOGO TRANS.---', `Filtro: ${filterLabel}`, `Saldo Netto: ${netBalance.toFixed(2)}${getCurrencySymbol()}`, `Entrate Totali: ${sumInc.toFixed(2)}${getCurrencySymbol()}`, `Uscite Totali: ${sumExp.toFixed(2)}${getCurrencySymbol()}`].map(esc).join(',');
+      // La riga riepilogativa deve riflettere il filtro
+      const summaryRow = ['---RIEPILOGO TRANS.---', `Filtro: ${filterLabel} | Periodo: ${periodLabel} | Cat: ${catLabel}`, `Saldo Netto: ${netBalance.toFixed(2)}${getCurrencySymbol()}`, `Entrate Totali: ${sumInc.toFixed(2)}${getCurrencySymbol()}`, `Uscite Totali: ${sumExp.toFixed(2)}${getCurrencySymbol()}`].map(esc).join(',');
       
+      // Transazioni CSV
       const headerTx = ['ID','Tipo','Scope','Data','Descrizione','Categoria','Tag','AliquotaIVA','Netto','IVA','Lordo','Entrata?','Sottotipo'].join(',');
       const rowsTx = filteredTx.map(t => [
         t.id, (t.isIncome?'Entrata':'Uscita'), t.type, t.date, t.description||'', t.category||'',
         (t.tags||[]).join('|'), t.vatRate, t.net, t.vatAmount, t.gross, t.isIncome, t.incomeType||''
       ].map(esc).join(','));
-      const csvTx = `\n[TRANSAZIONI - ${filterLabel}]\n${summaryRow}\n${headerTx}\n${rowsTx.join('\n')}`;
+      const csvTx = `\n[TRANSAZIONI - FILTRATE]\n${summaryRow}\n${headerTx}\n${rowsTx.join('\n')}`;
       
+      // Reminders CSV (sempre completi)
       const headerRm = ['ID','Tipo','Descrizione','Data','Importo','Pagato?'].join(',');
       const rowsRm = (appData.reminders||[]).map(r => [r.id,r.type,r.description,r.date,r.amount,r.paid].map(esc).join(','));
       const csvRm = `\n\n[PROMEMORIA SCADENZE]\n${headerRm}\n${rowsRm.join('\n')}`;
       
+      // Birthdays CSV (sempre completi)
       const headerBd = ['ID','Nome','DataNascita','RicorrenzaMD'].join(',');
       const rowsBd = (appData.birthdays||[]).map(r => [r.id,r.name,r.date,r.recurringDate].map(esc).join(','));
       const csvBd = `\n\n[COMPLEANNI]\n${headerBd}\n${rowsBd.join('\n')}`;
 
-      const zipContent = `${csvTx}${csvRm}${csvBd}\n\n### Creato con Finanza Smart PRO`;
+      const zipContent = `${csvTx}${csvRm}${csvBd}\n\n### Creato con Finanza Smart PRO++`;
       const blob = new Blob([zipContent], {type:'text/plain;charset=utf-8'});
       const url = URL.createObjectURL(blob);
-      const a=document.createElement('a'); a.href=url; a.download=`finanza_export_${typeFilter}_${new Date().toISOString().slice(0,10)}.txt`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
-      showToast('Export CSV pronto (testo con 3 sezioni).');
+      const a=document.createElement('a'); a.href=url; a.download=`finanza_export_FILTERED_${new Date().toISOString().slice(0,10)}.txt`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+      showToast('Export CSV avanzato pronto.');
     }
+
 
     function importDataFile(ev){
       const file = ev.target.files[0]; if(!file) return;
@@ -1803,9 +1862,7 @@
         showToast(`${removedCount} categorie non usate (non di default) eliminate.`);
         renderPage('settings');
     }
-    // --- Import/Export/Clean (END) ---
-
-
+    
     // --- UI wiring (MODULO TRANSAZIONE) ---
     function renderTransactionForm(isIncome, type) {
         const isActivity = type === 'activity';
@@ -1916,7 +1973,17 @@
       incomeTypeSelect?.removeEventListener('change', updateVisibility);
       incomeTypeSelect?.addEventListener('change', updateVisibility);
       
-      updateVisibility();
+      isIncomeSelect.removeEventListener('change', setupIncomeTypeControl);
+      isIncomeSelect.addEventListener('change', setupIncomeTypeControl);
+
+      function setupIncomeTypeControl() {
+        const isIncome=isIncomeSelect.value==='true';
+        const ctl=document.getElementById('income-type-control');
+        if (scope==='activity' && ctl){ ctl.classList.toggle('hidden', !isIncome); }
+        updateVisibility();
+      }
+      
+      setupIncomeTypeControl();
     }
 
     function setupContactAutocomplete(scope){
@@ -1967,16 +2034,160 @@
       const vatAmountDisplay=document.getElementById('vat-amount-display');
       const grossAmountDisplay=document.getElementById('gross-amount-display');
       
-      let net = parseFloat(netInput?.value)||0; 
-      const rate=parseFloat(vatSelect?.value)||0;
+      let net = parseFloat(netInput.value)||0; 
+      const rate=parseFloat(vatSelect.value)||0;
       
       const vatAmt=net*rate/100; 
       const gross=net+vatAmt;
       
-      if (vatAmountDisplay) vatAmountDisplay.textContent = vatAmt.toFixed(2)+' '+getCurrencySymbol();
-      if (grossAmountDisplay) grossAmountDisplay.textContent = gross.toFixed(2)+' '+getCurrencySymbol();
+      vatAmountDisplay.textContent = vatAmt.toFixed(2)+' '+getCurrencySymbol();
+      grossAmountDisplay.textContent = gross.toFixed(2)+' '+getCurrencySymbol();
+    }
+
+    function computeKPIs(){
+      const cacheKey = 'global_kpis';
+      const now = Date.now();
+      if (calculatedResultsCache[cacheKey] && (now - lastCacheUpdateTime < CACHE_DURATION)) {
+          return calculatedResultsCache[cacheKey];
+      }
+        
+      const all = [...appData.invoices.map(t=>({...t,isIncome:true})), ...appData.expenses.map(t=>({...t,isIncome:false}))];
+      if (all.length===0) return {savingRate:0, avgExpense:0, avgIncome:0, topClients:[], topSuppliers:[], topCategories:[]};
+
+      const byMonth = {};
+      all.forEach(t=>{
+        const ym=t.date?.slice(0,7)||'';
+        if (!byMonth[ym]) byMonth[ym] = {inc:0, exp:0};
+        const gross = parseFloat(t.gross) || 0;
+        if (t.isIncome) byMonth[ym].inc += gross; else byMonth[ym].exp += gross;
+      });
+      const months = Object.keys(byMonth);
+      const sumInc = months.reduce((s,m)=>s+byMonth[m].inc,0);
+      const sumExp = months.reduce((s,m)=>s+byMonth[m].exp,0);
+      const avgIncome = months.length? sumInc/months.length : 0;
+      const avgExpense = months.length? sumExp/months.length : 0;
+      const net = sumInc - sumExp;
+      const savingRate = sumInc > 0 ? (net/sumInc*100) : (net > 0 ? 100 : (net < 0 ? -100 : 0)); 
+
+      const sumByDesc = {};
+      all.forEach(t=>{
+        const key=(t.description||'?').trim();
+        sumByDesc[key] ||= {inc:0,exp:0};
+        const gross = parseFloat(t.gross) || 0;
+        if (t.isIncome) sumByDesc[key].inc += gross; else sumByDesc[key].exp += gross;
+      });
+      const topClients = Object.entries(sumByDesc).filter(([k,v])=>v.inc>0).sort((a,b)=>b[1].inc - a[1].inc).slice(0,3).map(([name,v])=>({name, amount:v.inc}));
+      const topSuppliers = Object.entries(sumByDesc).filter(([k,v])=>v.exp>0).sort((a,b)=>b[1].exp - a[1].exp).slice(0,3).map(([name,v])=>({name, amount:v.exp}));
+
+      const byCat = {};
+      all.forEach(t=>{
+        const cat=(t.category||'Altro').trim();
+        byCat[cat] ||= {inc:0,exp:0};
+        const gross = parseFloat(t.gross) || 0;
+        if (t.isIncome) byCat[cat].inc += gross; else byCat[cat].exp += gross;
+      });
+      const topCategories = Object.entries(byCat).sort((a,b)=>b[1].exp - a[1].exp).slice(0,3).map(([cat,v])=>({cat, amount:v.exp}));
+
+      const result = {savingRate, avgExpense, avgIncome, topClients, topSuppliers, topCategories};
+      calculatedResultsCache[cacheKey] = result;
+      return result;
     }
     
+    function calculateCashFlowProjection() {
+        const today = new Date();
+        const futureDate = new Date();
+        futureDate.setDate(today.getDate() + 90);
+        
+        const summarySinceStart = calculateFinancialSummary('global', 'all', 'all');
+        let netProjection = (parseFloat(appData.currentBankBalance) || 0) + summarySinceStart.netBalance;
+
+        appData.recurringExpenses.forEach(r => {
+            const nextDateStr = calculateNextRecurrence(r.lastDate, r.frequency);
+            if (nextDateStr) {
+                const nextDate = new Date(nextDateStr);
+                if (nextDate >= today && nextDate <= futureDate) {
+                    const isIncome = appData.invoices.some(i => i.description === r.description);
+                    netProjection += r.lastAmount;
+                }
+            }
+        });
+        
+        appData.reminders.forEach(r => {
+            const rDate = new Date(r.date);
+            if (!r.paid && rDate >= today && rDate <= futureDate) {
+                netProjection -= r.amount;
+            }
+        });
+
+        return {
+            projection: +netProjection.toFixed(2), days: 90
+        };
+    }
+
+    function renderTrendChart(transactions){
+      const canvas = document.getElementById('trendChart');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d'); 
+      
+      if (canvas.chart) { canvas.chart.destroy(); }
+      
+      const grouped={};
+      transactions.forEach(t=>{
+        const ym=t.date?.slice(0,7); if(!ym) return;
+        if (!grouped[ym]) grouped[ym]={income:0,expense:0};
+        const gross = parseFloat(t.gross) || 0;
+        if (t.isIncome) grouped[ym].income += gross; else grouped[ym].expense += gross;
+      });
+      const labels=Object.keys(grouped).sort();
+      const incomes=labels.map(l=>grouped[l].income);
+      const expenses=labels.map(l=>grouped[l].expense);
+      
+      canvas.chart = new Chart(ctx,{
+        type:'line',
+        data:{ labels, datasets:[
+          { label:'Entrate', data:incomes, borderColor:'#10b981', backgroundColor:'#10b981', tension: 0.1, fill:false },
+          { label:'Uscite', data:expenses, borderColor:'#ef4444', backgroundColor:'#ef4444', tension: 0.1, fill:false }
+        ]},
+        options:{ 
+          responsive:true, 
+          maintainAspectRatio:false,
+          scales: {
+            y: { beginAtZero: true }
+          },
+          plugins: {
+            legend: {
+              labels: {
+                color: document.body.classList.contains('dark') ? '#f1f5f9' : '#1e293b' 
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function groupTransactionsByMonth(transactions) {
+        const grouped = {};
+        transactions.forEach(t => {
+            const date = new Date(t.date);
+            const monthYear = date.toLocaleDateString('it-IT', { year: 'numeric', month: 'long' });
+            grouped[monthYear] = grouped[monthYear] || [];
+            grouped[monthYear].push(t);
+        });
+        
+        const sortedKeys = Object.keys(grouped).sort((a, b) => {
+            const dateA = new Date(a.replace(/[^0-9]/g, '-').slice(0, 7) + '-01');
+            const dateB = new Date(b.replace(/[^0-9]/g, '-').slice(0, 7) + '-01');
+            return dateB.getTime() - dateA.getTime();
+        });
+        
+        const sortedGrouped = {};
+        sortedKeys.forEach(key => {
+            sortedGrouped[key] = grouped[key];
+        });
+        
+        return sortedGrouped;
+    }
+// OK per la PARTE 2 - Blocco B (Parte I)
     function getTodayFocusData(type) {
         const todayStr = new Date().toISOString().slice(0, 10);
         
@@ -2017,10 +2228,10 @@
       const symbol = getCurrencySymbol();
       const ivaStatus = summary.ivaBalance>=0?'IVA da Versare':'IVA a Credito';
       const ivaColor = summary.ivaBalance>=0?'text-red-600':'text-blue-600';
+      const balanceColor = summary.netBalance>=0?'text-emerald-600':'text-red-600';
       
       const summarySinceStart = calculateFinancialSummary('global', 'all', 'all');
       const totalBalance = (parseFloat(appData.currentBankBalance) || 0) + summarySinceStart.netBalance;
-      
       const freeBalance = totalBalance - (appData.taxCashReserve || 0);
 
       return `
@@ -2045,15 +2256,6 @@
           </div>
         </div>
       `;
-    }
-
-    // NUOVO: Funzione per resettare lo stato della simulazione
-    function resetSimulationState() {
-        simulationState = {
-            additionalRevenue: 0, additionalExpense: 0, taxRateOverride: null,
-            profitRateOverride: null, targetNetIncome: null
-        };
-        renderPage('activity'); 
     }
 
     function renderActivityOrPersonalPage(type){
@@ -2339,215 +2541,6 @@
       );
     }
 
-    function computeKPIs(){
-      const cacheKey = 'global_kpis';
-      const now = Date.now();
-      if (calculatedResultsCache[cacheKey] && (now - lastCacheUpdateTime < CACHE_DURATION)) {
-          return calculatedResultsCache[cacheKey];
-      }
-        
-      const all = [...appData.invoices.map(t=>({...t,isIncome:true})), ...appData.expenses.map(t=>({...t,isIncome:false}))];
-      if (all.length===0) return {savingRate:0, avgExpense:0, avgIncome:0, topClients:[], topSuppliers:[], topCategories:[]};
-
-      const byMonth = {};
-      all.forEach(t=>{
-        const ym=t.date?.slice(0,7)||'';
-        if (!byMonth[ym]) byMonth[ym] = {inc:0, exp:0};
-        const gross = parseFloat(t.gross) || 0;
-        if (t.isIncome) byMonth[ym].inc += gross; else byMonth[ym].exp += gross;
-      });
-      const months = Object.keys(byMonth);
-      const sumInc = months.reduce((s,m)=>s+byMonth[m].inc,0);
-      const sumExp = months.reduce((s,m)=>s+byMonth[m].exp,0);
-      const avgIncome = months.length? sumInc/months.length : 0;
-      const avgExpense = months.length? sumExp/months.length : 0;
-      const net = sumInc - sumExp;
-      const savingRate = sumInc > 0 ? (net/sumInc*100) : (net > 0 ? 100 : (net < 0 ? -100 : 0)); 
-
-      const sumByDesc = {};
-      all.forEach(t=>{
-        const key=(t.description||'?').trim();
-        sumByDesc[key] ||= {inc:0,exp:0};
-        const gross = parseFloat(t.gross) || 0;
-        if (t.isIncome) sumByDesc[key].inc += gross; else sumByDesc[key].exp += gross;
-      });
-      const topClients = Object.entries(sumByDesc).filter(([k,v])=>v.inc>0).sort((a,b)=>b[1].inc - a[1].inc).slice(0,3).map(([name,v])=>({name, amount:v.inc}));
-      const topSuppliers = Object.entries(sumByDesc).filter(([k,v])=>v.exp>0).sort((a,b)=>b[1].exp - a[1].exp).slice(0,3).map(([name,v])=>({name, amount:v.exp}));
-
-      const byCat = {};
-      all.forEach(t=>{
-        const cat=(t.category||'Altro').trim();
-        byCat[cat] ||= {inc:0,exp:0};
-        const gross = parseFloat(t.gross) || 0;
-        if (t.isIncome) byCat[cat].inc += gross; else byCat[cat].exp += gross;
-      });
-      const topCategories = Object.entries(byCat).sort((a,b)=>b[1].exp - a[1].exp).slice(0,3).map(([cat,v])=>({cat, amount:v.exp}));
-
-      const result = {savingRate, avgExpense, avgIncome, topClients, topSuppliers, topCategories};
-      calculatedResultsCache[cacheKey] = result;
-      return result;
-    }
-    
-    function calculateCashFlowProjection() {
-        const today = new Date();
-        const futureDate = new Date();
-        futureDate.setDate(today.getDate() + 90);
-        
-        const summarySinceStart = calculateFinancialSummary('global', 'all', 'all');
-        let netProjection = (parseFloat(appData.currentBankBalance) || 0) + summarySinceStart.netBalance;
-
-        appData.recurringExpenses.forEach(r => {
-            const nextDateStr = calculateNextRecurrence(r.lastDate, r.frequency);
-            if (nextDateStr) {
-                const nextDate = new Date(nextDateStr);
-                if (nextDate >= today && nextDate <= futureDate) {
-                    const isIncome = appData.invoices.some(i => i.description === r.description);
-                    netProjection += isIncome ? r.lastAmount : -r.lastAmount;
-                }
-            }
-        });
-        
-        appData.reminders.forEach(r => {
-            const rDate = new Date(r.date);
-            if (!r.paid && rDate >= today && rDate <= futureDate) {
-                netProjection -= r.amount;
-            }
-        });
-
-        return {
-            projection: +netProjection.toFixed(2), days: 90
-        };
-    }
-
-    function renderTrendChart(){
-      const canvas = document.getElementById('trendChart');
-      if (!canvas) return;
-      const ctx = canvas.getContext('2d'); 
-      
-      if (canvas.chart) { canvas.chart.destroy(); }
-      
-      const allTransactions = [
-        ...appData.invoices.map(t=>({...t,isIncome:true})), 
-        ...appData.expenses.map(t=>({...t,isIncome:false}))
-      ];
-
-      const grouped={};
-      allTransactions.forEach(t=>{
-        const ym=t.date?.slice(0,7); if(!ym) return;
-        if (!grouped[ym]) grouped[ym]={income:0,expense:0};
-        const gross = parseFloat(t.gross) || 0;
-        if (t.isIncome) grouped[ym].income += gross; else grouped[ym].expense += gross;
-      });
-      const labels=Object.keys(grouped).sort();
-      const incomes=labels.map(l=>grouped[l].income);
-      const expenses=labels.map(l=>grouped[l].expense);
-      
-      canvas.chart = new Chart(ctx,{
-        type:'line',
-        data:{ labels, datasets:[
-          { label:'Entrate', data:incomes, borderColor:'#10b981', backgroundColor:'#10b981', tension: 0.1, fill:false },
-          { label:'Uscite', data:expenses, borderColor:'#ef4444', backgroundColor:'#ef4444', tension: 0.1, fill:false }
-        ]},
-        options:{ 
-          responsive:true, 
-          maintainAspectRatio:false,
-          scales: {
-            y: { beginAtZero: true }
-          },
-          plugins: {
-            legend: {
-              labels: {
-                color: document.body.classList.contains('dark') ? '#f1f5f9' : '#1e293b' 
-              }
-            }
-          }
-        }
-      });
-    }
-    
-    // Raggruppamento per Mese
-    function groupTransactionsByMonth(transactions) {
-        const grouped = {};
-        transactions.forEach(t => {
-            const date = new Date(t.date);
-            const monthYear = date.toLocaleDateString('it-IT', { year: 'numeric', month: 'long' });
-            grouped[monthYear] = grouped[monthYear] || [];
-            grouped[monthYear].push(t);
-        });
-        
-        const sortedKeys = Object.keys(grouped).sort((a, b) => {
-            const dateA = new Date(a.replace(/[^0-9]/g, '-').slice(0, 7) + '-01');
-            const dateB = new Date(b.replace(/[^0-9]/g, '-').slice(0, 7) + '-01');
-            return dateB.getTime() - dateA.getTime();
-        });
-        
-        const sortedGrouped = {};
-        sortedKeys.forEach(key => {
-            sortedGrouped[key] = grouped[key];
-        });
-        
-        return sortedGrouped;
-    }
-    
-    // *** NUOVA FUNZIONE: Aggiorna solo il dettaglio transazioni del report ***
-    function updateReportDetail(query) {
-        const filterType = document.getElementById('filter-type').value;
-        const filterDate = document.getElementById('filter-date').value || 'all';
-        const currentReportType = document.getElementById('report-type').value;
-        const categoryFilter = document.getElementById('filter-category').value || 'all';
-        const tagFilter = document.getElementById('filter-tag').value || 'all';
-        const sortKey = document.getElementById('sort-key').value;
-        const sortDirection = document.getElementById('sort-direction').value;
-        
-        // Usa la summary che beneficia della cache
-        let results = calculateFinancialSummary(currentReportType, filterType, filterDate).transactions.slice(); 
-        
-        results = filterTransactionsByCriteria(results, categoryFilter === 'all' ? null : categoryFilter, tagFilter === 'all' ? null : tagFilter);
-        results = filterTransactions(query, results); 
-        results = sortTransactions(results); 
-        
-        const symbol = getCurrencySymbol();
-        const searchGrouped = groupTransactionsByMonth(results);
-        
-        let searchHtml = '';
-        if (Object.keys(searchGrouped).length > 0) {
-            searchHtml = Object.keys(searchGrouped).map(month => {
-                const monthlyTx = searchGrouped[month];
-                const totalMonth = monthlyTx.reduce((sum, t) => sum + (t.gross * (t.isIncome ? 1 : -1)), 0);
-                const monthColor = totalMonth >= 0 ? 'text-emerald-500' : 'text-red-500';
-                
-                return `
-                    <details class="bg-gray-50 dark:bg-gray-900 rounded-lg shadow-sm" open>
-                        <summary class="p-3 font-bold group-header flex justify-between items-center bg-gray-100 dark:bg-gray-700 rounded-lg">
-                            <span>${month} (${monthlyTx.length} movimenti)</span>
-                            <span class="${monthColor}">${totalMonth.toFixed(2)} ${symbol}</span>
-                        </summary>
-                        <div class="space-y-3 p-3">
-                            ${monthlyTx.map(t=>`
-                                <div class="flex justify-between items-center p-3 border-l-4 ${t.isIncome?'bg-emerald-50 border-emerald-300 dark:bg-emerald-900/50 dark:border-emerald-700':'bg-red-50 border-red-300 dark:bg-red-900/50 dark:border-red-700'} rounded-lg">
-                                  <div class="flex-grow">
-                                    <p class="font-semibold text-sm">${getCategoryIcon(t.category)} ${new Date(t.date).toLocaleDateString('it-IT')}: ${t.description||''}</p>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400">
-                                      ${t.type==='activity'?'Attività':'Personale'} | IVA ${t.vatRate}% | Cat: ${t.category||'-'} 
-                                      ${(t.tags||[]).length > 0 ? '| Tag: '+(t.tags||[]).join(', ') : ''}
-                                    </p>
-                                  </div>
-                                  <div class="text-right ml-4">
-                                    <p class="font-bold ${t.isIncome?'text-emerald-700 dark:text-emerald-300':'text-red-700 dark:text-red-300'}">${t.gross.toFixed(2)} ${symbol}</p>
-                                  </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </details>
-                `;
-            }).join('');
-        } else {
-            searchHtml = '<p class="text-gray-500">Nessuna transazione trovata.</p>';
-        }
-        
-        document.getElementById('transactions-detail').innerHTML = searchHtml;
-      }
-    
     function renderReportPage(){
       const symbol = getCurrencySymbol();
       
@@ -2561,7 +2554,7 @@
       const tagFilter = document.getElementById('filter-tag')?.value || reportFilters.tagFilter;
       const sortKey = document.getElementById('sort-key')?.value || reportFilters.sortKey;
       const sortDirection = document.getElementById('sort-direction')?.value || reportFilters.sortDirection;
-      const searchQuery = reportFilters.searchQuery; // Usiamo lo stato salvato per il rendering iniziale
+      const searchQuery = reportFilters.searchQuery;
       
       reportFilters = { type: currentType, filterType, filterDateStr, categoryFilter, tagFilter, sortKey, sortDirection, searchQuery };
       saveReportFilters(); 
@@ -2588,7 +2581,6 @@
       const ivaAddebitoPercent = totalIva>0 ? (ivaSummary.ivaAddebito/totalIva)*100 : 50;
       const ivaCreditoPercent = 100 - ivaAddebitoPercent;
 
-      // KPI usano la cache
       const KPIs = computeKPIs();
       
       const sixMonthProjection = calculateSixMonthBalanceProjection();
@@ -2614,31 +2606,22 @@
       
       const allCategories = appData.categories || DEFAULT_CATEGORIES.slice();
       const allTags = getAllTags();
-
-      const currentMonth = new Date().toISOString().slice(0, 7);
-      const monthSummary = calculateFinancialSummary('personal', 'month', currentMonth);
-      const categoryExpenseMap = {};
-      monthSummary.transactions.filter(t => !t.isIncome && t.type === 'personal').forEach(t => {
-          const cat = t.category || 'Altro';
-          categoryExpenseMap[cat] = (categoryExpenseMap[cat] || 0) + t.gross;
-      });
-
-      const budgetAnalysis = allCategories
-          .filter(cat => appData.categoryBudgets[cat] > 0 || categoryExpenseMap[cat] > 0)
-          .map(cat => {
-              const budget = appData.categoryBudgets[cat] || 0;
-              const spent = categoryExpenseMap[cat] || 0;
-              const remaining = budget - spent;
-              let colorClass = '';
-              if (budget === 0) { colorClass = spent > 0 ? 'budget-yellow' : ''; } 
-              else if (remaining < 0) { colorClass = 'budget-red'; } 
-              else if (remaining < budget * 0.20) { colorClass = 'budget-yellow'; } 
-              else { colorClass = 'budget-green'; }
-              return { cat, budget, spent, remaining, colorClass };
-          }).sort((a, b) => b.spent - a.spent);
-          
-      const fhs = calculateFinancialHealthScore();
-      const FHSColor = fhs.score > 80 ? 'text-emerald-600' : (fhs.score > 60 ? 'text-orange-600' : 'text-red-600');
+      
+      // Funzione per attivare l'export avanzato in base al filtro corrente del report
+      const getExportFunctionCall = (exportType) => {
+        // Estrae i filtri attuali dal report (Tipo, Categoria, Periodo)
+        const currentReportType = document.getElementById('report-type')?.value || 'global';
+        const currentCategoryFilter = document.getElementById('filter-category')?.value || 'all';
+        const currentFilterType = document.getElementById('filter-type')?.value || 'year';
+        const currentFilterDateStr = document.getElementById('filter-date')?.value || new Date().toISOString().slice(0, 10);
+        
+        let txFilter = 'all'; // Default
+        if (exportType === 'income') txFilter = 'income';
+        if (exportType === 'expense') txFilter = 'expense';
+        
+        // Passa i filtri direttamente a exportCSV
+        return `exportCSV('${txFilter}', '${currentCategoryFilter}', '${currentFilterType}', '${currentFilterDateStr}')`;
+      };
 
 
       return `
@@ -2667,7 +2650,7 @@
             </div>
             <div class="md:col-span-1">
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data/Anno</label>
-              <input type="${filterType==='year'?'number':(filterType==='month'||filterType==='quarter')?'month':'date'}" id="filter-date" value="${filterDateStr==='all'?'':filterDateStr}" onchange="renderPage('report')" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700 ${filterType==='all'?'hidden':''}">
+              <input type="${filterType==='year'?'number':(filterType==='month'||filterType==='quarter')?'month':'date'}" id="filter-date" value="${filterDateStr}" onchange="renderPage('report')" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700 ${filterType==='all'?'hidden':''}">
             </div>
             <div class="md:col-span-1">
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Categoria</label>
@@ -2688,7 +2671,7 @@
           <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div class="bg-white dark:bg-gray-800 p-4 rounded-xl card text-center border-l-4 border-indigo-500">
                   <p class="text-sm text-gray-500">Punteggio Salute Finanziaria</p>
-                  <p class="text-xl font-bold ${FHSColor}">${fhs.score}/${fhs.max}</p>
+                  <p class="text-xl font-bold ${fhs.score > 80 ? 'text-emerald-600' : (fhs.score > 60 ? 'text-orange-600' : 'text-red-600')}">${fhs.score}/${fhs.max}</p>
               </div>
               <div class="bg-white dark:bg-gray-800 p-4 rounded-xl card text-center border-l-4 border-dashed border-purple-500">
                   <p class="text-sm text-gray-500">Obiettivo Saldo Netto Mensile: ${appData.monthlySavingsTarget.toFixed(2)} ${symbol}</p>
@@ -2729,24 +2712,6 @@
             <h3 class="text-xl font-extrabold mb-3 text-gray-800 dark:text-gray-200">Totale Globale: ${periodLabel}</h3>
             ${renderSummaryCard(summary, periodLabel)}
           </div>
-
-          ${currentType!=='personal'?`
-          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card space-y-3">
-              <h3 class="text-xl font-medium mb-3 text-gray-800 dark:text-gray-200">Analisi Budget (Personale - ${currentMonth})</h3>
-              <p class="text-xs text-gray-500 dark:text-gray-400">Verifica i limiti di spesa impostati in Gestione Dati. Se Budget è 0, monitora solo le spese.</p>
-              <div class="space-y-2">
-                  ${budgetAnalysis.map(b => `
-                      <div class="p-3 rounded-lg border-l-4 ${b.colorClass} flex justify-between items-center text-sm">
-                          <span class="font-semibold">${getCategoryIcon(b.cat)} ${b.cat}</span>
-                          <div class="text-right">
-                              ${b.budget > 0 ? `<p class="text-xs text-gray-600 dark:text-gray-300">Budget: ${b.budget.toFixed(2)} ${symbol}</p>` : ''}
-                              <p class="font-bold">Speso: ${b.spent.toFixed(2)} ${symbol}</p>
-                              ${b.budget > 0 ? `<p class="${b.remaining < 0 ? 'text-red-700 dark:text-red-300' : 'text-emerald-700 dark:text-emerald-300'} text-xs">Rimanente: ${b.remaining.toFixed(2)} ${symbol}</p>` : ''}
-                          </div>
-                      </div>
-                  `).join('') || '<p class="text-gray-500 text-center">Nessun budget definito o spesa nel mese.</p>'}
-              </div>
-          </div>`:''}
 
           <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card" style="height: 280px;">
             <h3 class="text-xl font-medium mb-3 text-gray-800 dark:text-gray-200">Andamento Mensile Entrate/Uscite</h3>
@@ -2793,6 +2758,17 @@
               <ul class="text-sm">${KPIs.topCategories.map(c=>`<li class="flex justify-between"><span>${getCategoryIcon(c.cat)} ${c.cat}</span><span class="font-bold text-red-600 dark:text-red-300">${c.amount.toFixed(2)} ${symbol}</span></li>`).join('') || '<li class="text-gray-500">-</li>'}</ul>
             </div>
           </div>
+          
+          <div class="bg-gray-50 dark:bg-gray-800 p-5 rounded-xl card mb-2">
+            <h3 class="text-xl font-medium mb-3 text-indigo-600">Export Avanzato (CSV per Commercialista)</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">Esporta i dati filtrati per il periodo e la categoria selezionati sopra. Utile per resoconti specifici (es. Corrispettivi Ottobre).</p>
+            <div class="grid grid-cols-3 gap-3">
+              <button onclick="${getExportFunctionCall('income')}" class="cta-button w-full bg-emerald-500 text-white p-3 rounded-lg font-bold hover:bg-emerald-600">Export Entrate</button>
+              <button onclick="${getExportFunctionCall('expense')}" class="cta-button w-full bg-red-500 text-white p-3 rounded-lg font-bold hover:bg-red-600">Export Uscite</button>
+              <button onclick="${getExportFunctionCall('all')}" class="cta-button w-full bg-blue-500 text-white p-3 rounded-lg font-bold hover:bg-blue-600">Export Totale</button>
+            </div>
+          </div>
+
 
           <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card mb-20">
             <div class="flex items-center justify-between mb-4">
@@ -2881,7 +2857,13 @@
       input.classList.toggle('hidden',!visible);
       
       if (visible && filterType!=='all') {
-          input.value = filterType === reportFilters.filterType ? reportFilters.filterDateStr : def;
+          // Mantieni il valore salvato nei filtri di report se congruo, altrimenti usa il valore di default.
+          const savedDate = reportFilters.filterDateStr;
+          if (savedDate && savedDate !== 'all' && savedDate.startsWith(def.toString().slice(0, filterType.length===4?4:7))) {
+               input.value = savedDate;
+          } else {
+               input.value = def;
+          }
       } else {
           reportFilters.filterDateStr = 'all';
       }
@@ -2931,7 +2913,6 @@
       const symbol = getCurrencySymbol();
       const list = appData.reminders||[];
       const birthdays = appData.birthdays||[];
-      const recurring = appData.recurringExpenses||[];
       const today = new Date(); today.setHours(0,0,0,0);
       
       const sortedReminders = list.slice().sort((a,b)=> new Date(a.date)-new Date(b.date));
@@ -2941,23 +2922,6 @@
         const rDate = new Date(r.date); rDate.setHours(0,0,0,0);
         return !r.paid && rDate < today;
       });
-      
-      const predictedRecurrences = recurring
-          .map(r => {
-              const nextDateStr = calculateNextRecurrence(r.lastDate, r.frequency);
-              if (!nextDateStr) return null;
-              
-              const nextDate = new Date(nextDateStr);
-              const diffDays = Math.ceil((nextDate - today) / (1000 * 60 * 60 * 24));
-              
-              if (diffDays > 90 || diffDays < 0) return null; 
-              
-              return {
-                  ...r, nextDate: nextDateStr, status: `Previsto in ${diffDays} giorni`, amount: r.lastAmount
-              };
-          })
-          .filter(r => r !== null)
-          .sort((a, b) => new Date(a.nextDate) - new Date(b.nextDate));
       
       const types = FISCAL_REMINDER_TYPES;
       
@@ -3003,22 +2967,18 @@
           ${list.length? list.map(r=>`
             <div class="bg-white dark:bg-gray-800 p-4 rounded-xl card flex justify-between items-center">
               <div class="flex-grow">
-                ${type === 'payment' ? `<span class="text-xs font-semibold px-2 py-1 rounded-full ${pill(r)}">${r.paid?'PAGATO':r.type}</span>` : type === 'recurring' ? `<span class="text-xs font-semibold px-2 py-1 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300">PREVISTO (${r.frequency.toUpperCase().slice(0,1)})</span>` : ''}
+                ${type === 'payment' ? `<span class="text-xs font-semibold px-2 py-1 rounded-full ${pill(r)}">${r.paid?'PAGATO':r.type}</span>` : ''}
                 
-                <p class="font-bold mt-1 ${r.paid?'line-through text-gray-500':'text-gray-800 dark:text-gray-200'}">${type === 'payment' ? r.description : r.name || r.description}</p>
+                <p class="font-bold mt-1 ${r.paid?'line-through text-gray-500':'text-gray-800 dark:text-gray-200'}">${type === 'payment' ? r.description : r.name}</p>
                 
                 ${type === 'payment' ? 
                     `<p class="text-sm text-gray-600 dark:text-gray-400">Scadenza: ${new Date(r.date).toLocaleDateString('it-IT')} | Importo: ${r.amount.toFixed(2)} ${symbol}</p>` :
-                type === 'recurring' ?
-                    `<p class="text-sm text-gray-600 dark:text-gray-400">Previsto il: ${new Date(r.nextDate).toLocaleDateString('it-IT')} | Est: ${r.amount.toFixed(2)} ${symbol} | ${r.status}</p>` :
-                    `<p class="text-sm text-gray-600 dark:text-gray-400">Ricorre il: ${r.annualDate} | Età Proiettata: ${r.age} | ${r.status}</p>`}
+                    `<p class="text-sm text-gray-600 dark:text-gray-400">Data: ${r.annualDate} | Età: ${r.age} | ${r.status}</p>`}
               </div>
               <div class="flex space-x-2">
-                ${r.isFiscal && !r.paid && r.type.startsWith('IVA') && appData.fiscalParams.regime === 'forfettario' ? 
-                    `<button onclick="markTaxPaid(${r.id}, ${Math.abs(r.amount)})" class="text-sm px-3 py-1 rounded-lg bg-red-600 hover:bg-red-700 text-white">Paga (Accant.)</button>` : 
-                    (type === 'payment' && !r.isFiscal ? 
-                    `<button onclick="toggleReminderPaid(${r.id})" class="text-sm px-3 py-1 rounded-lg ${r.paid?'bg-orange-500 hover:bg-orange-600':'bg-emerald-500 hover:bg-emerald-600'} text-white">${r.paid?'Annulla Pag.':'Paga'}</button>` : '')}
-                <button onclick="${type === 'payment' ? `deleteReminder(${r.id})` : (type === 'birthday' ? `deleteBirthday(${r.id})` : `showToast('Non eliminabile da qui.', 'red')`)}" class="text-red-400 hover:text-red-600">🗑️</button>
+                ${type === 'payment' ? 
+                    `<button onclick="toggleReminderPaid(${r.id})" class="text-sm px-3 py-1 rounded-lg ${r.paid?'bg-orange-500 hover:bg-orange-600':'bg-emerald-500 hover:bg-emerald-600'} text-white">${r.paid?'Annulla Pag.':'Paga'}</button>` : ''}
+                <button onclick="${type === 'payment' ? `deleteReminder(${r.id})` : `deleteBirthday(${r.id})`}" class="text-red-400 hover:text-red-600">🗑️</button>
               </div>
             </div>
           `).join(''):'<p class="text-gray-500">Nessun promemoria in questa categoria.</p>'}
@@ -3029,54 +2989,49 @@
         <div class="space-y-6">
           <h2 class="text-2xl font-semibold border-b pb-2 text-gray-700 dark:text-gray-300">Promemoria Scadenze & Eventi</h2>
           
-          ${reminderSection(sortedBirthdays, 'Compleanni in Arrivo 🎂', 'birthday')}
-          
-          ${reminderSection(predictedRecurrences, 'Spese Ricorrenti Previste (90gg) 🔮', 'recurring')}
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card mt-6">
-              <h3 class="text-xl font-medium mb-4 text-pink-600">Aggiungi Compleanno 🎂</h3>
-              <form id="birthday-form" onsubmit="event.preventDefault(); handleBirthdaySubmit();" class="space-y-4">
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome</label>
-                  <input id="birthday-name" name="name" required placeholder="Es. Mario Rossi" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
-                </div>
-                <div class="mb-4">
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data di Nascita (Anno opzionale)</label>
-                  <input type="date" id="birthday-date" name="date" value="${new Date().toISOString().slice(0,10)}" required class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
-                </div>
-                <button type="submit" class="cta-button w-full bg-pink-500 text-white p-3 rounded-lg font-bold hover:bg-pink-600">Aggiungi Compleanno</button>
-              </form>
-            </div>
-
-            <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card mt-6">
-              <h3 class="text-xl font-medium mb-4 text-emerald-600">Aggiungi Nuovo Promemoria (Pagamento)</h3>
-              <form id="reminder-form" onsubmit="event.preventDefault(); handleReminderSubmit();" class="space-y-4">
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipo Scadenza</label>
-                  <select id="reminder-type" name="type" required class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
-                    ${types.map(t=>`<option value="${t}">${t}</option>`).join('')}
-                  </select>
-                </div>
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Descrizione</label>
-                  <input id="reminder-description" name="description" required placeholder="Es. TARI 2° Rata" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data Scadenza</label>
-                    <input type="date" id="reminder-date" name="date" value="${new Date().toISOString().slice(0,10)}" required class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
-                  </div>
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Importo (${symbol})</label>
-                    <input type="number" id="reminder-amount" name="amount" step="0.01" min="0" required placeholder="500.00" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
-                  </div>
-                </div>
-                <button type="submit" class="cta-button w-full bg-emerald-500 text-white p-3 rounded-lg font-bold hover:bg-emerald-600">Aggiungi Promemoria</button>
-              </form>
-            </div>
+          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card mt-6">
+            <h3 class="text-xl font-medium mb-4 text-pink-600">Aggiungi Compleanno 🎂</h3>
+            <form id="birthday-form" onsubmit="event.preventDefault(); handleBirthdaySubmit();" class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome</label>
+                <input id="birthday-name" name="name" required placeholder="Es. Mario Rossi" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data di Nascita (Anno opzionale)</label>
+                <input type="date" id="birthday-date" name="date" value="${new Date().toISOString().slice(0,10)}" required class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
+              </div>
+              <button type="submit" class="cta-button w-full bg-pink-500 text-white p-3 rounded-lg font-bold hover:bg-pink-600">Aggiungi Compleanno</button>
+            </form>
           </div>
 
+          ${reminderSection(sortedBirthdays, 'Compleanni in Arrivo 🎂', 'birthday')}
+
+          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card mt-6">
+            <h3 class="text-xl font-medium mb-4 text-emerald-600">Aggiungi Nuovo Promemoria (Pagamento)</h3>
+            <form id="reminder-form" onsubmit="event.preventDefault(); handleReminderSubmit();" class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipo Scadenza</label>
+                <select id="reminder-type" name="type" required class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
+                  ${types.map(t=>`<option value="${t}">${t}</option>`).join('')}
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Descrizione</label>
+                <input id="reminder-description" name="description" required placeholder="Es. TARI 2° Rata" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data Scadenza</label>
+                  <input type="date" id="reminder-date" name="date" value="${new Date().toISOString().slice(0,10)}" required class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Importo (${symbol})</label>
+                  <input type="number" id="reminder-amount" name="amount" step="0.01" min="0" required placeholder="500.00" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
+                </div>
+              </div>
+              <button type="submit" class="cta-button w-full bg-emerald-500 text-white p-3 rounded-lg font-bold hover:bg-emerald-600">Aggiungi Promemoria</button>
+            </form>
+          </div>
 
           ${reminderSection(overdueReminders,'Scaduti (Urgenti) 🚨', 'payment')}
           ${reminderSection(upcomingReminders,'In Arrivo 📅', 'payment')}
@@ -3085,104 +3040,14 @@
       `;
     }
 
-    function saveCategoryBudget(category, budget) {
-        const cleanCat = category.trim();
-        const numBudget = parseFloat(budget) || 0;
-        
-        if (cleanCat && numBudget >= 0) {
-            appData.categoryBudgets[cleanCat] = numBudget;
-            saveData();
-            showToast(`Budget ${numBudget.toFixed(2)} ${getCurrencySymbol()} salvato per ${cleanCat}!`);
-            renderPage('settings');
-        } else {
-            showToast('Inserisci un importo valido non negativo.', 'red');
+    function getLocalStorageSize() {
+        let total = 0;
+        for(let i=0; i<localStorage.length; i++) {
+            const key = localStorage.key(i);
+            const value = localStorage.getItem(key);
+            total += key.length + value.length;
         }
-    }
-    
-    // Funzione per salvare il Saldo Iniziale
-    function saveBankBalance() {
-        const input = document.getElementById('current-bank-balance');
-        const newBalance = parseFloat(input?.value) || 0;
-
-        showModal('Aggiorna Saldo Iniziale', 
-            `Impostare il Saldo Conto Base su: ${newBalance.toFixed(2)} ${getCurrencySymbol()}? (Il saldo totale sarà ricalcolato)`, 
-            true, 
-            () => {
-                appData.currentBankBalance = newBalance;
-                saveData();
-                showToast('Saldo iniziale aggiornato!');
-                renderPage('settings');
-            }
-        );
-    }
-    
-    // Funzione per salvare i parametri fiscali (AGGIORNATA)
-    function saveFiscalParams() {
-        const regimeSelect = document.getElementById('fiscal-regime');
-        const profitRateInput = document.getElementById('fiscal-profit-rate');
-        const taxRateInput = document.getElementById('fiscal-tax-rate');
-        const inpsRateInput = document.getElementById('fiscal-inps-rate');
-
-        const regime = regimeSelect.value;
-        const profitRate = parseFloat(profitRateInput.value) / 100 || 0;
-        const taxRate = parseFloat(taxRateInput.value) / 100 || 0;
-        const inpsRate = parseFloat(inpsRateInput.value) / 100 || 0;
-        
-        if (regime === 'forfettario' && profitRate <= 0) { 
-            showToast('Per il Forfettario, il Coeff. Redditività deve essere positivo.', 'red');
-            return;
-        }
-
-        if (regime === 'ordinario' && (taxRate < 0 || inpsRate < 0)) {
-             showToast('I tassi non possono essere negativi.', 'red');
-             return;
-        }
-        
-        if (regime === 'forfettario' && (taxRate < 0 || inpsRate < 0)) {
-            showToast('I tassi non possono essere negativi.', 'red');
-            return;
-        }
-
-        showModal('Conferma Parametri Fiscali', 
-            `Salvare i parametri: Regime ${regime.toUpperCase()}, Redditività ${(profitRate * 100).toFixed(0)}%, Tasse ${(taxRate * 100).toFixed(1)}%, INPS ${(inpsRate * 100).toFixed(1)}%?`, 
-            true, 
-            () => {
-                appData.fiscalParams = { regime, profitRate, taxRate, inpsRate };
-                saveData();
-                showToast('Parametri fiscali aggiornati!');
-                renderPage('settings');
-            }
-        );
-    }
-    
-    // Funzione per eliminare il profilo utente
-    function deleteCurrentUserProfile() {
-        const currentName = globalState.currentUser.name;
-        showModal('ELIMINA PROFILO UTENTE', 
-            `Sei sicuro di voler ELIMINARE PERMANENTEMENTE il profilo "${currentName}" e tutti i suoi dati?`, 
-            true, 
-            () => {
-                const userKey = globalState.currentUser.dataKey;
-                
-                localStorage.removeItem(userKey);
-                
-                globalState.users = globalState.users.filter(u => u.dataKey !== userKey);
-                
-                if (globalState.users.length > 0) {
-                    globalState.currentUser = globalState.users[0];
-                    sessionStorage.removeItem(SESSION_STORAGE_PIN_KEY); 
-                    saveGlobalState();
-                    loadData();
-                    setupPinLock();
-                    showToast(`Profilo "${currentName}" eliminato. Accedi come ${globalState.currentUser.name}.`, 'red');
-                } else {
-                    localStorage.removeItem(GLOBAL_KEY);
-                    sessionStorage.removeItem(SESSION_STORAGE_PIN_KEY); 
-                    window.location.reload();
-                }
-            },
-            () => showToast('Eliminazione profilo annullata.')
-        );
+        return (total / (1024 * 1024)).toFixed(2);
     }
 
 
@@ -3194,11 +3059,27 @@
       const symbol = getCurrencySymbol();
       const currentFiscal = appData.fiscalParams;
       const currentBankBalance = appData.currentBankBalance || 0;
+      
+      // Diagnostica
+      const storageSize = getLocalStorageSize();
+      const storageColor = storageSize > 4 ? 'text-red-500' : (storageSize > 2 ? 'text-orange-500' : 'text-emerald-500');
+      const dataChecksumStatus = localStorage.getItem(`${globalState.currentUser.dataKey}_checksum`) === appData.dataChecksum ? '✅ Congruo' : '⚠️ Non Congruo (Rischio)';
 
 
       return `
         <div class="space-y-6">
           <h2 class="text-2xl font-semibold border-b pb-2 text-gray-700 dark:text-gray-300">Gestione e Manutenzione Dati (${globalState.currentUser.name})</h2>
+          
+          <div class="bg-yellow-50 dark:bg-yellow-900/50 p-5 rounded-xl card space-y-3 border-l-4 border-yellow-600">
+            <h3 class="text-xl font-medium text-yellow-700 dark:text-yellow-300">Diagnostica Dati (Stabilità)</h3>
+            <p class="text-sm text-gray-700 dark:text-gray-300">
+                **Archiviazione Locale:** <span class="${storageColor}">${storageSize} MB</span>. (Limite iOS/Browser ~5-10MB. >4MB = Rischio)
+            </p>
+            <p class="text-sm text-gray-700 dark:text-gray-300">
+                **Integrità Dati (Checksum):** <span class="font-bold">${dataChecksumStatus}</span>
+            </p>
+            <p class="text-xs text-gray-500">Se il valore di Archiviazione è in rosso, esegui subito un backup JSON e la pulizia dei dati vecchi.</p>
+          </div>
           
           <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card space-y-4">
             <h3 class="text-xl font-medium text-orange-600">Parametri Fiscali (Simulazione)</h3>
@@ -3361,35 +3242,6 @@
         </div>
       `;
     }
-    
-    function saveMonthlyTarget() {
-        const input = document.getElementById('monthly-target');
-        const target = parseFloat(input?.value) || 0;
-
-        showModal('Conferma Obiettivo', `Impostare l'obiettivo di risparmio su: ${target.toFixed(2)} ${getCurrencySymbol()}?`, true, () => {
-            appData.monthlySavingsTarget = target;
-            saveData();
-            showToast('Obiettivo risparmio salvato!');
-            renderPage('settings');
-        });
-    }
-
-    function changeCurrencySymbol() {
-        const symbolInput = document.getElementById('currency-symbol-input');
-        const newSymbol = symbolInput?.value.trim() || '€';
-
-        if (newSymbol.length > 2) {
-            showToast('Il simbolo valuta dovrebbe essere al massimo di 2 caratteri.', 'red');
-            return;
-        }
-
-        showModal('Conferma Valuta', `Impostare il simbolo valuta su: ${newSymbol}?`, true, () => {
-            appData.currencySymbol = newSymbol;
-            saveData();
-            renderPage('settings');
-            showToast('Simbolo Valuta aggiornato!');
-        });
-    }
 
     function changePin() {
       const currentPinInput = document.getElementById('current-pin');
@@ -3452,6 +3304,10 @@
             }
         }
       });
+      
+      if (appData.taxCashReserve < 0) {
+           showToast(`ATTENZIONE: Cassa Tasse/INPS è in deficit di ${Math.abs(appData.taxCashReserve).toFixed(2)} ${getCurrencySymbol()}. Rivedi gli accantonamenti fiscali!`, 'red');
+      }
     }
 
 
@@ -3462,14 +3318,8 @@
       const area=document.getElementById('content-area');
       const qa=document.getElementById('quick-actions');
 
-      if (pageId==='activity'||pageId==='personal'){ 
-        qa.classList.remove('hidden'); 
-        qa.classList.add('flex','justify-center'); 
-      }
-      else { 
-        qa.classList.add('hidden'); 
-        qa.classList.remove('flex','justify-center'); 
-      }
+      if (pageId==='activity'||pageId==='personal'){ qa.classList.remove('hidden'); qa.classList.add('flex','justify-center'); }
+      else { qa.classList.add('hidden'); qa.classList.remove('flex','justify-center'); }
 
       document.getElementById('transaction-form')?.removeAttribute('data-transaction-id');
       
@@ -3490,15 +3340,15 @@
           clearTimeout(simulationTimer);
           break;
         case 'report':
-          loadReportFilters();
           area.innerHTML = renderReportPage();
           updateReportDateInput(); 
           
-          renderTrendChart();
+          const allTx = [...appData.invoices.map(t=>({...t,isIncome:true})), ...appData.expenses.map(t=>({...t,isIncome:false}))];
+          renderTrendChart(allTx);
+          
           // Correzione Filtro Ricerca
           const searchInput = document.getElementById('search');
           if (searchInput) searchInput.value = reportFilters.searchQuery;
-          // *** IMPORTANTE: Aggiungiamo l'ascoltatore di input qui ***
           searchInput?.removeEventListener('input', handleReportSearchInput);
           searchInput?.addEventListener('input', handleReportSearchInput);
           break;
@@ -3509,6 +3359,7 @@
           area.innerHTML = renderSettingsPage();
           document.getElementById('import-file')?.addEventListener('change', importDataFile);
           document.getElementById('clean-btn')?.addEventListener('click', ()=> cleanDataByYear(document.getElementById('clean-year').value));
+          document.getElementById('currency-symbol-input')?.addEventListener('input', changeCurrencySymbol);
           break;
       }
     }
@@ -3518,14 +3369,14 @@
         const query = e.target.value;
         reportFilters.searchQuery = query; 
         
-        // Invece di chiamare renderPage (che è pesante), aggiorniamo solo il Dettaglio
+        // Aggiorniamo solo il Dettaglio
         updateReportDetail(query);
     }
     
     // --- PWA ---
     function installManifest(){
       const manifest = {
-        name: "Finanza Smart PRO",
+        name: "Finanza Smart PRO++",
         short_name: "FinanzaPRO",
         start_url: ".",
         display: "standalone",
@@ -3534,20 +3385,6 @@
         icons: [
           { src:"https://fav.farm/✅", sizes:"192x192", type:"image/png" },
           { src:"https://fav.farm/💶", sizes:"512x512", type:"image/png" }
-        ],
-        shortcuts: [
-            {
-                name: "Registra Entrata", short_name: "Entrata",
-                description: "Apri il modulo rapido per registrare un'entrata.", url: "/?shortcut=income"
-            },
-            {
-                name: "Registra Uscita", short_name: "Uscita",
-                description: "Apri il modulo rapido per registrare un'uscita.", url: "/?shortcut=expense"
-            },
-            {
-                name: "Riepilogo", short_name: "Riepilogo",
-                description: "Visualizza il report finanziario.", url: "/?shortcut=report"
-            }
         ]
       };
       const blob = new Blob([JSON.stringify(manifest)], {type:'application/json'});
@@ -3558,7 +3395,7 @@
     async function installServiceWorker(){
       if (!('serviceWorker' in navigator)) return;
       const swCode = `
-        const CACHE = 'finanza-smart-v6-super-pro'; 
+        const CACHE = 'finanza-smart-v7-pro'; 
         self.addEventListener('install', e=>{
           e.waitUntil(caches.open(CACHE).then(c=>c.addAll(['./'])));
           self.skipWaiting();
@@ -3606,11 +3443,9 @@
       appContainer?.addEventListener('change', (e) => {
           if (currentPage === 'report') {
               if (e.target.id === 'report-type' || e.target.id === 'filter-category' || e.target.id === 'filter-tag' || e.target.id === 'sort-key' || e.target.id === 'sort-direction') {
-                  // Salviamo la ricerca corrente per non perderla
                   const searchInput = document.getElementById('search');
                   if (searchInput) reportFilters.searchQuery = searchInput.value;
                   
-                  // Ricarichiamo la pagina per applicare i filtri principali (meno frequenti)
                   renderPage('report');
               }
           }
@@ -3619,9 +3454,8 @@
           if (currentPage === 'report') {
               if (e.target.id === 'filter-date') {
                   reportFilters.filterDateStr = e.target.value;
-                  if (e.target.type === 'number') renderPage('report');
+                  if (e.target.type === 'number' || e.target.type === 'month') renderPage('report');
               }
-              // La logica di ricerca è gestita da handleReportSearchInput, non serve qui.
           }
       });
       
