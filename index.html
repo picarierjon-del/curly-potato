@@ -3,9 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Gestione Finanziaria Unificata Smart PRO++</title>
+  <title>Gestione Finanziaria Unificata Smart PRO</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
@@ -68,6 +72,23 @@
     
     /* Stili Raggruppamento (Nuovo) */
     .group-header { cursor: pointer; }
+    
+    /* Stili solo per la stampa PDF, nasconde elementi non necessari */
+    @media print {
+        #navbar, #quick-actions, #transaction-form-modal, #modal, #toast, #pin-lock-modal, 
+        .cta-button, #search, #filter-category, #filter-tag, #sort-key, #sort-direction,
+        .flex-row-reverse, #report-type, #filter-type, #filter-date,
+        .md\\:col-span-1, .md\\:col-span-3,
+        #transactions-detail .flex-grow + div {
+            display: none !important;
+        }
+        
+        /* Forza la visualizzazione di alcuni dettagli nella stampa */
+        #transactions-detail {
+            display: block !important;
+            page-break-inside: avoid;
+        }
+    }
   </style>
   <link id="dynamic-manifest" rel="manifest">
 </head>
@@ -76,7 +97,7 @@
   <div id="app" class="max-w-4xl mx-auto p-4 md:p-6">
     <header class="mb-6 flex items-center justify-between">
       <div class="flex-1 text-center">
-        <h1 class="text-3xl font-bold text-gray-800">Finanza Smart PRO++ 🚀</h1>
+        <h1 class="text-3xl font-bold text-gray-800">Finanza Smart PRO 🚀</h1>
         <p class="text-center text-sm text-gray-500" id="header-subtitle">Caricamento...</p>
       </div>
       <button id="theme-toggle"
@@ -125,7 +146,7 @@
   </div>
   
   <div id="pin-lock-modal">
-    <h2 class="text-3xl font-bold mb-3">Finanza Smart PRO++</h2>
+    <h2 class="text-3xl font-bold mb-3">Finanza Smart PRO</h2>
     <div id="login-form-wrapper">
         <p class="text-lg mb-4 text-gray-400">Seleziona o crea il tuo Profilo</p>
         
@@ -157,7 +178,10 @@
     const MAX_FORFETTARIO_REVENUE = 85000;
     
     const DEFAULT_FISCAL_PARAMS = {
-        regime: 'forfettario', profitRate: 0.40, taxRate: 0.15, inpsRate: 0.26    
+        regime: 'forfettario',
+        profitRate: 0.40, 
+        taxRate: 0.15,    
+        inpsRate: 0.26    
     };
     
     const CATEGORY_ICONS = {
@@ -192,7 +216,8 @@
         pinHash: '', currencySymbol: '€', monthlySavingsTarget: 0, categoryBudgets: {},
         fiscalParams: DEFAULT_FISCAL_PARAMS, currentBankBalance: 0, 
         taxCashReserve: 0, dashboardLayout: DASHBOARD_WIDGETS.filter(w => w.default).map(w => w.id),
-        dataChecksum: '' // Checksum per l'auto-riparazione
+        // *** RESILIENZA: Checksum per l'auto-riparazione ***
+        dataChecksum: ''
     };
     let currentPage = 'activity';
     let reportFilters = { 
@@ -200,7 +225,7 @@
         categoryFilter: 'all', tagFilter: 'all', sortKey: 'date', sortDirection: 'desc', searchQuery: ''
     };
     
-    // Variabili per Memoization KPI & Summary (Ottimizzazione Performance)
+    // Variabili per Memoization KPI & Summary
     let calculatedResultsCache = {};
     const CACHE_DURATION = 60000;
     let lastCacheUpdateTime = 0;
@@ -217,15 +242,16 @@
     function calculateDataChecksum(dataToHash) {
         // Usa una funzione hash non crittografica ma veloce per rilevare alterazioni
         const jsonStr = JSON.stringify({
-            invoices: dataToHash.invoices, expenses: dataToHash.expenses,
-            reminders: dataToHash.reminders, birthdays: dataToHash.birthdays,
-            recurringExpenses: dataToHash.recurringExpenses, lastId: dataToHash.lastId
+            invoices: dataToHash.invoices,
+            expenses: dataToHash.expenses,
+            reminders: dataToHash.reminders,
+            lastId: dataToHash.lastId 
         });
         let hash = 0;
         for (let i = 0; i < jsonStr.length; i++) {
             const char = jsonStr.charCodeAt(i);
             hash = (hash << 5) - hash + char;
-            hash |= 0;
+            hash |= 0; // Convert to 32bit integer
         }
         return hash.toString();
     }
@@ -234,18 +260,21 @@
     const SIMULATION_DELAY = 500; 
 
     function debounceSimulationUpdate() {
-        if (simulationTimer) { clearTimeout(simulationTimer); }
-        simulationTimer = setTimeout(() => { updateFiscalSimulationUI(); }, SIMULATION_DELAY);
+        if (simulationTimer) {
+            clearTimeout(simulationTimer);
+        }
+        simulationTimer = setTimeout(() => {
+            updateFiscalSimulationUI();
+        }, SIMULATION_DELAY);
     }
     
     function updateFiscalSimulationUI() {
         if (currentPage !== 'activity') return;
-
+        // ... (Logica UI Simulatore - omessa per brevità) ...
         const fiscalSim = calculateFiscalSimulation(new Date().getFullYear());
         const reverseSim = calculateReverseFiscalProjection();
         const symbol = getCurrencySymbol();
         
-        // ... (UI Update Logics) ...
         const simCard = document.querySelector('.fiscal-simulation-card');
         if (simCard) {
             simCard.classList.remove('border-red-500', 'border-indigo-500');
@@ -393,6 +422,7 @@
                 const calculated = calculateDataChecksum(parsed);
 
                 if (savedChecksum && savedChecksum !== calculated) {
+                    // Segnala corruzione critica
                     showModal('🚨 Dati Corrotti Rilevati!', 'Il backup locale non è congruo. Si prega di esportare i dati IMMEDIATAMENTE e pulire la cache (Settings > Pulizia Dati). Ricaricando, l\'app potrebbe caricare solo un set di dati parziale/danneggiato.', false);
                 }
                 
@@ -403,7 +433,7 @@
             appData.invoices ||= []; appData.expenses ||= []; appData.reminders ||= []; 
             appData.contacts ||= []; appData.birthdays ||= []; appData.recurringExpenses ||= []; 
             appData.categories ||= DEFAULT_CATEGORIES.slice(); 
-            appData.lastId = parseInt(appData.lastId) || 0;
+            appData.lastId = parseInt(appData.lastId) || 0; // Garantisce che sia un numero
             appData.pinHash = user.pinHash; appData.currencySymbol ||= '€'; appData.monthlySavingsTarget ||= 0;
             appData.categoryBudgets ||= {}; 
             appData.fiscalParams = { ...DEFAULT_FISCAL_PARAMS, ...appData.fiscalParams };
@@ -431,15 +461,13 @@
             saveData();
         }
     }
-
-// OK per la PARTE 2
-
     function saveData(){ 
         const user = globalState.currentUser;
         if (!user) return;
         try{ 
             const userIndex = globalState.users.findIndex(u => u.dataKey === user.dataKey);
             if (userIndex > -1) {
+                // *** SICUREZZA: Aggiorna l'hash PIN nel Global State prima del salvataggio. ***
                 globalState.users[userIndex].pinHash = appData.pinHash;
                 saveGlobalState();
             }
@@ -689,7 +717,17 @@
       
       if (filterType==='year'){ return y===parseInt(filterValue); }
       if (filterType==='month'){ const [fy,fm]=filterValue.split('-').map(Number); return y===fy && m===(fm-1); }
-      if (filterType==='quarter'){ const [fy,fm]=filterValue.split('-').map(Number); return y===fy && Math.ceil((m+1)/3)===Math.ceil(fm/3); }
+      if (filterType==='quarter'){ 
+        // Quarter value is in YYYY-MM format, e.g., '2025-01' for Q1, '2025-04' for Q2
+        const year = parseInt(filterValue.substring(0, 4));
+        const monthStart = parseInt(filterValue.substring(5, 7));
+        if (y !== year) return false;
+        
+        const itemQuarter = Math.ceil((m + 1) / 3);
+        const filterQuarter = Math.ceil(monthStart / 3);
+        
+        return itemQuarter === filterQuarter;
+      }
       if (filterType==='day'){ return itemDateStr===filterValue; }
       
       if (filterType==='week'){ 
@@ -813,6 +851,7 @@
       const cacheKey = `${type}:${filterType}:${filterDateStr}`;
       const now = Date.now();
       
+      // Controlla la cache solo se il periodo di validità è ancora attivo
       if (calculatedResultsCache[cacheKey] && (now - lastCacheUpdateTime < CACHE_DURATION)) {
         return calculatedResultsCache[cacheKey];
       }
@@ -823,8 +862,11 @@
         ...appData.invoices.map(t=>({...t,isIncome:true,key:'inv'})),
         ...appData.expenses.map(t=>({...t,isIncome:false,key:'exp'}))
       ];
+      
+      // Filtra una sola volta per tipo e periodo
       const filtered = all.filter(i=>types.includes(i.type)).filter(i=>filterByPeriod(i.date,filterType,filterDateStr));
       
+      // Calcolo ottimizzato: itera sulla lista filtrata
       filtered.forEach(i=>{
         const gross = parseFloat(i.gross) || 0;
         const vatAmount = parseFloat(i.vatAmount) || 0;
@@ -849,12 +891,13 @@
         ivaAddebito,
         ivaCredito,
         ivaBalance, 
-        // Ordina la lista transazioni (sarà riordinata nel Report per performance)
-        transactions: filtered.sort((a,b)=> new Date(b.date)-new Date(a.date)) 
+        // La lista transazioni è solo filtrata (non ordinata), sarà ordinata nel Report per performance
+        transactions: filtered.slice() 
       };
       
       // Salva nella cache solo se il ricalcolo è avvenuto
       calculatedResultsCache[cacheKey] = result;
+      // Aggiorna il timestamp della cache
       lastCacheUpdateTime = now; 
 
       return result;
@@ -865,19 +908,27 @@
         const today = new Date();
         const currentYear = today.getFullYear();
         const monthsPassed = today.getMonth() + 1;
-        const monthsRemaining = 12 - monthsPassed;
-
+        
         // Usa la summary che beneficia della cache
         const yearSummary = calculateFinancialSummary('activity', 'year', String(currentYear));
+        
+        // Calcola i mesi in cui ci sono state transazioni (più preciso del semplice `monthsPassed`)
         const historicalMonths = Object.keys(yearSummary.transactions.reduce((acc, t) => {
             acc[t.date.slice(0, 7)] = true;
             return acc;
         }, {})).length || 1; 
 
-        const projectedRevenue = yearSummary.totalIncomes + (yearSummary.totalIncomes / historicalMonths * monthsRemaining);
-        const projectedExpenses = yearSummary.totalExpenses + (yearSummary.totalExpenses / historicalMonths * monthsRemaining);
+        const monthsRemaining = 12 - monthsPassed;
 
-        return { projectedRevenue, projectedExpenses };
+        // Proiezione su 12 mesi
+        const projectedRevenue = yearSummary.totalIncomes / historicalMonths * 12;
+        const projectedExpenses = yearSummary.totalExpenses / historicalMonths * 12;
+        
+        // Se non ci sono ricavi nel database, la proiezione è zero
+        const totalRicavi = historicalMonths === 0 ? 0 : projectedRevenue;
+        const totalCosti = historicalMonths === 0 ? 0 : projectedExpenses;
+
+        return { projectedRevenue: totalRicavi, projectedExpenses: totalCosti };
     }
 
     // --- Calcolo IRPEF a Scaglioni (Per Regime Ordinario) ---
@@ -922,6 +973,7 @@
         
         const params = { 
             regime: appData.fiscalParams.regime,
+            // Priorità: Override Simulazione > Parametri Salvati
             profitRate: simulationState.profitRateOverride !== null ? simulationState.profitRateOverride : appData.fiscalParams.profitRate,
             taxRate: simulationState.taxRateOverride !== null ? simulationState.taxRateOverride : appData.fiscalParams.taxRate,
             inpsRate: appData.fiscalParams.inpsRate 
@@ -990,7 +1042,7 @@
             fiscalParamsUsed: params
         };
     }
-
+    
     // Simulatore a Ritroso (Obiettivo Netto)
     function calculateReverseFiscalProjection() {
         const targetNet = simulationState.targetNetIncome;
@@ -1000,6 +1052,7 @@
         
         const currentYear = new Date().getFullYear();
         const projection = calculateAnnualFiscalProjection();
+        // Calcola la simulazione con gli override attuali
         const currentSim = calculateFiscalSimulation(currentYear);
         
         const params = currentSim.fiscalParamsUsed;
@@ -1013,6 +1066,7 @@
 
         if (params.regime === 'forfettario') {
             
+            // Formula Forfettario: Netto = Ricavo * (1 - (ProfitRate * TaxRate) - (ProfitRate * InpsRate))
             const totalTaxRateOnRevenue = (params.profitRate * params.taxRate) + (params.profitRate * params.inpsRate);
             const netRetentionRate = 1 - totalTaxRateOnRevenue;
             
@@ -1031,7 +1085,12 @@
             else if (currentImponibile <= 50000) marginalTaxRate = 0.35;
             else marginalTaxRate = 0.43;
 
-            const netRetentionRateSimple = 1 - marginalTaxRate - params.inpsRate;
+            // In Ordinario: Netto = Ricavo - Costi - INPS(deducibile) - IRPEF(su Netto-INPS)
+            // Semplificando per un incremento marginale di Ricavo (dR), l'aumento netto è:
+            // dR - (dR * INPS) - (dR * (1-INPS) * AliquotaMarginale)
+            
+            const effectiveMarginalTax = marginalTaxRate * (1 - params.inpsRate);
+            const netRetentionRateSimple = 1 - params.inpsRate - effectiveMarginalTax;
 
             if (netRetentionRateSimple <= 0) {
                  return { ricavoAggiuntivoNecessario: Infinity, obiettivoRaggiunto: false };
@@ -1074,7 +1133,7 @@
         const ivaBalance = ivaAddebito - ivaCredito;
         return { ivaAddebito, ivaCredito, ivaBalance: +ivaBalance.toFixed(2) };
     }
-// OK per la PARTE 2 - Blocco B
+    
     // Calcolo Proiezione Saldo Conto a 6 Mesi
     function calculateSixMonthBalanceProjection() {
         // Usa KPI dalla cache
@@ -1084,12 +1143,14 @@
         const today = new Date();
         const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
         
+        // Calcola il saldo corrente (Saldo Base + Netto transazioni dall'inizio)
         const summarySinceStart = calculateFinancialSummary('global', 'all', 'all');
         let currentBalance = (parseFloat(appData.currentBankBalance) || 0) + summarySinceStart.netBalance;
         
         const monthlyProjection = [];
 
-        const avgMonthlyNet = kpis.avgIncome - kpis.avgExpense;
+        // Usa la media mobile mensile (meno volatile)
+        const avgMonthlyNet = (kpis.avgIncome || 0) - (kpis.avgExpense || 0);
         
         for (let m = 0; m < monthsToProject; m++) {
             const date = new Date(startOfMonth.getFullYear(), startOfMonth.getMonth() + m, 1);
@@ -1097,17 +1158,19 @@
             
             let monthFlow = avgMonthlyNet; 
 
+            // Aggiungi ricorrenze previste
             appData.recurringExpenses.forEach(r => {
                 const nextDateStr = calculateNextRecurrence(r.lastDate, r.frequency, date);
                 if (nextDateStr && new Date(nextDateStr).getMonth() === date.getMonth() && new Date(nextDateStr).getFullYear() === date.getFullYear()) {
-                    const isIncome = appData.invoices.some(i => i.description === r.description);
+                    const isIncome = r.isIncome || appData.invoices.some(i => i.description === r.description);
                     monthFlow += isIncome ? r.lastAmount : -r.lastAmount;
                 }
             });
 
+            // Sottrai promemoria di spesa (pagamento)
             appData.reminders.forEach(r => {
                 const rDate = new Date(r.date);
-                if (!r.paid && rDate.getFullYear() === date.getFullYear() && rDate.getMonth() === date.getMonth()) {
+                if (!r.paid && rDate.getFullYear() === date.getFullYear() && rDate.getMonth() === date.getMonth() && r.amount > 0) {
                     monthFlow -= r.amount;
                 }
             });
@@ -1139,29 +1202,38 @@
         let score = 0;
         let maxScore = 100;
         
-        const savingsRateScore = Math.min(kpis.savingRate, 30); 
-        score += savingsRateScore;
+        // 1. Tasso di Risparmio (Max 30 punti)
+        const savingRateScore = Math.min(Math.max(kpis.savingRate, 0), 30); 
+        score += savingRateScore;
         
+        // 2. Buffer di Liquidità (Max 30 punti)
         let liquidityScore = 0;
         if (monthsAutonomy >= 6) liquidityScore = 30;
         else if (monthsAutonomy >= 3) liquidityScore = 20;
         else if (monthsAutonomy >= 1) liquidityScore = 10;
         score += liquidityScore;
         
+        // 3. Rispetto del Budget (Max 20 punti)
         let budgetScore = 20;
         const currentMonth = new Date().toISOString().slice(0, 7);
         const monthSummary = calculateFinancialSummary('personal', 'month', currentMonth);
         const budgetItems = Object.keys(appData.categoryBudgets);
         
+        let budgetAlerts = 0;
         budgetItems.forEach(cat => {
             const budget = appData.categoryBudgets[cat] || 0;
             const spent = monthSummary.transactions.filter(t => !t.isIncome && t.type === 'personal' && t.category === cat).reduce((s, t) => s + t.gross, 0);
             if (budget > 0 && spent > budget) {
-                budgetScore -= 5; 
+                budgetAlerts++;
             }
         });
+        if (budgetItems.length > 0) {
+            const deductionPerAlert = 20 / budgetItems.length;
+            budgetScore -= budgetAlerts * deductionPerAlert;
+        }
         score += Math.max(0, budgetScore);
         
+        // 4. Proiezione Saldo a 6 mesi (Max 20 punti)
         const sixMonthProj = calculateSixMonthBalanceProjection().projection;
         let projScore = 0;
         if (sixMonthProj >= 1000) projScore = 20;
@@ -1221,6 +1293,7 @@
 
             const avgMobile3M = sumPastExpenses / pastMonths.length;
             
+            // Allerta se spesa > 25% rispetto alla media mobile degli ultimi 3 mesi
             if (avgMobile3M > 0 && currentSpent > avgMobile3M * 1.25) {
                 const diff = (currentSpent - avgMobile3M).toFixed(2);
                 alerts.push({
@@ -1355,7 +1428,8 @@
         let lastDate = new Date(rec.lastDate);
         let nextDate = calculateNextRecurrence(rec.lastDate, rec.frequency);
         
-        appData.reminders = appData.reminders.filter(r => !r.recurringKey || r.recurringKey !== rec.key);
+        // Rimuovi vecchi promemoria ricorrenti per questo record (per evitare duplicati)
+        appData.reminders = appData.reminders.filter(r => !r.recurringKey || r.recurringKey !== rec.key || new Date(r.date) < today);
 
         for (let i = 0; i < 12; i++) {
             if (!nextDate) break;
@@ -1373,6 +1447,7 @@
                 appData.reminders.push({
                     id: getNextId(), type: rec.isIncome ? 'Entrata Ricorrente' : 'Uscita Ricorrente',
                     description: rec.description, date: nextDate,
+                    // Promemoria spesa ha un importo positivo. Promemoria entrata negativo (perché riduce il saldo totale dei promemoria)
                     amount: rec.isIncome ? -rec.lastAmount : rec.lastAmount,
                     paid: false, isFiscal: false, recurringKey: rec.key
                 });
@@ -1409,9 +1484,11 @@
         incomeType: data.incomeType || (isIncome && data.dataType==='activity' ? 'Fattura (Cliente)' : null)
       };
       
+      // *** LOGICA DI ACCANTONAMENTO FISCALE (Forfettario) ***
       if (updatedItem.type === 'activity' && updatedItem.isIncome && appData.fiscalParams.regime === 'forfettario') {
           const params = appData.fiscalParams;
-          const taxableAmount = updatedItem.gross * params.profitRate;
+          // Calcola l'accantonamento solo sul netto (i forfettari non hanno IVA)
+          const taxableAmount = updatedItem.net * params.profitRate; 
           const taxesToAccrue = taxableAmount * (params.taxRate + params.inpsRate);
           
           appData.taxCashReserve += taxesToAccrue;
@@ -1593,38 +1670,47 @@
     // --- Fiscal Reminders ---
     function initializeFiscalReminders() {
         const currentYear = new Date().getFullYear();
-        const fiscalReminders = [
-            { type: 'IVA Trimestrale', description: `IVA 1T ${currentYear} (Gen-Mar)`, month: 5, day: 16, year: currentYear, quarter: 1 },
-            { type: 'IVA Trimestrale', description: `IVA 2T ${currentYear} (Apr-Giu)`, month: 8, day: 20, year: currentYear, quarter: 2 },
-            { type: 'IVA Trimestrale', description: `IVA 3T ${currentYear} (Lug-Set)`, month: 11, day: 16, year: currentYear, quarter: 3 },
-            { type: 'IVA Trimestrale', description: `IVA 4T ${currentYear} (Ott-Dic)`, month: 3, day: 16, year: currentYear + 1, quarter: 4 },
-            { type: 'IVA Saldo/Acconto', description: `Saldo IVA ${currentYear - 1}`, month: 3, day: 16, year: currentYear, quarter: null },
-            { type: 'IVA Saldo/Acconto', description: `Acconto IVA ${currentYear}`, month: 12, day: 27, year: currentYear, quarter: null }
-        ];
+        // Genera i promemoria fiscali per l'anno corrente e il prossimo
+        const yearsToGenerate = [currentYear, currentYear + 1];
+        
+        yearsToGenerate.forEach(year => {
+            const fiscalReminders = [
+                { type: 'IVA Trimestrale', description: `IVA 1T ${year} (Gen-Mar)`, month: 5, day: 16, year: year, quarter: 1 },
+                { type: 'IVA Trimestrale', description: `IVA 2T ${year} (Apr-Giu)`, month: 8, day: 20, year: year, quarter: 2 },
+                { type: 'IVA Trimestrale', description: `IVA 3T ${year} (Lug-Set)`, month: 11, day: 16, year: year, quarter: 3 },
+                // IVA 4T viene pagata l'anno successivo
+                { type: 'IVA Trimestrale', description: `IVA 4T ${year} (Ott-Dic)`, month: 3, day: 16, year: year + 1, quarter: 4 }, 
+                { type: 'IVA Saldo/Acconto', description: `Saldo IVA ${year - 1}`, month: 3, day: 16, year: year, quarter: null },
+                { type: 'IVA Saldo/Acconto', description: `Acconto IVA ${year}`, month: 12, day: 27, year: year, quarter: null }
+            ].filter(fr => fr.year >= currentYear); // Filtra promemoria passati
 
-        appData.reminders = appData.reminders.filter(r => 
-            !r.type.startsWith('IVA') || new Date(r.date).getFullYear() < currentYear
-        );
+            // Rimuovi i promemoria IVA non pagati solo per l'anno in corso (lascia i passati pagati)
+            appData.reminders = appData.reminders.filter(r => 
+                !r.type.startsWith('IVA') || new Date(r.date).getFullYear() < currentYear || r.paid 
+            );
 
-        fiscalReminders.forEach(fr => {
-            const date = new Date(fr.year, fr.month - 1, fr.day);
-            const dateStr = date.toISOString().slice(0, 10);
-            
-            const exists = appData.reminders.some(r => r.description === fr.description && r.date === dateStr);
-            
-            if (!exists) {
-                let estimatedAmount = 0;
-                if (fr.quarter && fr.year <= currentYear) {
-                    const result = calculateIvaQuarterly(fr.year, fr.quarter);
-                    estimatedAmount = result.ivaBalance; 
-                }
+            fiscalReminders.forEach(fr => {
+                const date = new Date(fr.year, fr.month - 1, fr.day);
+                const dateStr = date.toISOString().slice(0, 10);
                 
-                appData.reminders.push({
-                    id: getNextId(), type: fr.type, description: fr.description, date: dateStr,
-                    amount: estimatedAmount, paid: false, isFiscal: true
-                });
-            }
+                const exists = appData.reminders.some(r => r.description === fr.description && r.date === dateStr);
+                
+                if (!exists) {
+                    let estimatedAmount = 0;
+                    if (fr.quarter && fr.year <= currentYear) {
+                        const result = calculateIvaQuarterly(fr.year, fr.quarter);
+                        estimatedAmount = result.ivaBalance; 
+                    }
+                    
+                    appData.reminders.push({
+                        id: getNextId(), type: fr.type, description: fr.description, date: dateStr,
+                        // Per i promemoria di versamento, l'importo deve essere positivo
+                        amount: Math.max(0, estimatedAmount), paid: false, isFiscal: true
+                    });
+                }
+            });
         });
+
         saveData(); 
     }
 
@@ -1647,7 +1733,7 @@
     function handleReminderSubmit(){
       const f=document.getElementById('reminder-form'); const d=new FormData(f);
       const payload={ type:d.get('type'), description:d.get('description'), date:d.get('date'), amount: parseFloat(d.get('amount'))||0 };
-      if (payload.description && payload.date && payload.amount>0){ 
+      if (payload.description && payload.date && payload.amount!==0){ 
         saveReminder(payload); 
         f.reset(); 
         document.getElementById('reminder-date').value = new Date().toISOString().slice(0,10); 
@@ -1658,6 +1744,7 @@
     // --- Compleanni CRUD ---
     function saveBirthday(data){
       appData.birthdays ||= [];
+      
       const dateStr = data.date;
       const recurringDate = dateStr.slice(5); 
 
@@ -1683,8 +1770,7 @@
         const dateStr = d.get('date');
         
         const payload={ 
-            name: d.get('name').trim(), 
-            date: dateStr, 
+            name: d.get('name').trim(), date: dateStr, 
         };
         
         if (payload.name && payload.date){ 
@@ -1705,60 +1791,180 @@
       showToast('Backup JSON esportato!');
     }
 
-    // *** NUOVA VERSIONE: Export CSV con filtro avanzato e per categoria (per Corrispettivi Ottobre, ecc.) ***
-    function exportCSV(typeFilter = 'all', categoryFilter = 'all', filterType = 'all', filterDateStr = 'all'){
-      // 1. Filtra le transazioni base
-      let tx = [...appData.invoices.map(t=>({...t,isIncome:true})), ...appData.expenses.map(t=>({...t,isIncome:false}))].sort((a,b)=> new Date(a.date)-new Date(b.date));
+    function exportCSV(typeFilter = 'all'){
+      const tx = [...appData.invoices.map(t=>({...t,isIncome:true})), ...appData.expenses.map(t=>({...t,isIncome:false}))].sort((a,b)=> new Date(a.date)-new Date(b.date));
       
-      let filteredTx = tx.filter(t => {
+      const filteredTx = tx.filter(t => {
           if (typeFilter === 'income') return t.isIncome;
           if (typeFilter === 'expense') return !t.isIncome;
           return true;
       });
       
-      // 2. Applica filtro temporale e categoria
-      filteredTx = filteredTx.filter(i=>filterByPeriod(i.date,filterType,filterDateStr));
-      if (categoryFilter !== 'all') {
-          filteredTx = filteredTx.filter(t => t.category === categoryFilter);
-      }
-      
       const esc = (s)=> `"${String(s??'').replace(/"/g,'""')}"`;
       
-      // 3. Calcola Riepilogo Filtrato
       const sumInc = filteredTx.filter(t => t.isIncome).reduce((s,t)=>s+t.gross,0);
       const sumExp = filteredTx.filter(t => !t.isIncome).reduce((s,t)=>s+t.gross,0);
       const netBalance = sumInc - sumExp;
-      
       const filterLabel = typeFilter === 'income' ? 'SOLO ENTRATE' : (typeFilter === 'expense' ? 'SOLO USCITE' : 'ENTRATE & USCITE');
-      const periodLabel = filterDateStr === 'all' ? 'Completo' : filterDateStr;
-      const catLabel = categoryFilter === 'all' ? 'Tutte Cat.' : categoryFilter;
       
-      // La riga riepilogativa deve riflettere il filtro
-      const summaryRow = ['---RIEPILOGO TRANS.---', `Filtro: ${filterLabel} | Periodo: ${periodLabel} | Cat: ${catLabel}`, `Saldo Netto: ${netBalance.toFixed(2)}${getCurrencySymbol()}`, `Entrate Totali: ${sumInc.toFixed(2)}${getCurrencySymbol()}`, `Uscite Totali: ${sumExp.toFixed(2)}${getCurrencySymbol()}`].map(esc).join(',');
+      const summaryRow = ['---RIEPILOGO TRANS.---', `Filtro: ${filterLabel}`, `Saldo Netto: ${netBalance.toFixed(2)}${getCurrencySymbol()}`, `Entrate Totali: ${sumInc.toFixed(2)}${getCurrencySymbol()}`, `Uscite Totali: ${sumExp.toFixed(2)}${getCurrencySymbol()}`].map(esc).join(',');
       
-      // Transazioni CSV
       const headerTx = ['ID','Tipo','Scope','Data','Descrizione','Categoria','Tag','AliquotaIVA','Netto','IVA','Lordo','Entrata?','Sottotipo'].join(',');
       const rowsTx = filteredTx.map(t => [
         t.id, (t.isIncome?'Entrata':'Uscita'), t.type, t.date, t.description||'', t.category||'',
         (t.tags||[]).join('|'), t.vatRate, t.net, t.vatAmount, t.gross, t.isIncome, t.incomeType||''
       ].map(esc).join(','));
-      const csvTx = `\n[TRANSAZIONI - FILTRATE]\n${summaryRow}\n${headerTx}\n${rowsTx.join('\n')}`;
+      const csvTx = `\n[TRANSAZIONI - ${filterLabel}]\n${summaryRow}\n${headerTx}\n${rowsTx.join('\n')}`;
       
-      // Reminders CSV (sempre completi)
       const headerRm = ['ID','Tipo','Descrizione','Data','Importo','Pagato?'].join(',');
       const rowsRm = (appData.reminders||[]).map(r => [r.id,r.type,r.description,r.date,r.amount,r.paid].map(esc).join(','));
       const csvRm = `\n\n[PROMEMORIA SCADENZE]\n${headerRm}\n${rowsRm.join('\n')}`;
       
-      // Birthdays CSV (sempre completi)
       const headerBd = ['ID','Nome','DataNascita','RicorrenzaMD'].join(',');
       const rowsBd = (appData.birthdays||[]).map(r => [r.id,r.name,r.date,r.recurringDate].map(esc).join(','));
       const csvBd = `\n\n[COMPLEANNI]\n${headerBd}\n${rowsBd.join('\n')}`;
 
-      const zipContent = `${csvTx}${csvRm}${csvBd}\n\n### Creato con Finanza Smart PRO++`;
+      const zipContent = `${csvTx}${csvRm}${csvBd}\n\n### Creato con Finanza Smart PRO`;
       const blob = new Blob([zipContent], {type:'text/plain;charset=utf-8'});
       const url = URL.createObjectURL(blob);
-      const a=document.createElement('a'); a.href=url; a.download=`finanza_export_FILTERED_${new Date().toISOString().slice(0,10)}.txt`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
-      showToast('Export CSV avanzato pronto.');
+      const a=document.createElement('a'); a.href=url; a.download=`finanza_export_${typeFilter}_${new Date().toISOString().slice(0,10)}.txt`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+      showToast('Export CSV pronto (testo con 3 sezioni).');
+    }
+
+    // *** NUOVA FUNZIONE: Esportazione PDF Avanzata (Logica implementata nel PDFGenerator) ***
+    function exportPDF() {
+        // Usa i filtri correnti salvati in reportFilters
+        const currentType = reportFilters.type;
+        const filterType = reportFilters.filterType;
+        const filterDateStr = reportFilters.filterDateStr;
+        const categoryFilter = reportFilters.categoryFilter;
+        const tagFilter = reportFilters.tagFilter;
+        const searchQuery = reportFilters.searchQuery;
+
+        // 1. Prepara la transazione da esportare (usa la logica di filtro esistente)
+        let transactionsToExport = calculateFinancialSummary(currentType, filterType, filterDateStr).transactions.slice();
+        transactionsToExport = filterTransactionsByCriteria(transactionsToExport, categoryFilter === 'all' ? null : categoryFilter, tagFilter === 'all' ? null : tagFilter);
+        transactionsToExport = filterTransactions(searchQuery, transactionsToExport);
+        transactionsToExport = sortTransactions(transactionsToExport);
+
+        if (transactionsToExport.length === 0) {
+            showToast('Nessuna transazione da esportare con i filtri attuali.', 'red');
+            return;
+        }
+
+        const doc = new window.jspdf.jsPDF();
+        let y = 10;
+        const margin = 10;
+        const pageHeight = doc.internal.pageSize.height;
+        const lineHeight = 6; // Ridotto per far stare più righe
+        const symbol = getCurrencySymbol();
+
+        // --- Intestazioni ---
+        doc.setFontSize(16);
+        doc.setFont(undefined, 'bold');
+        doc.text(`Report Finanziario - ${globalState.currentUser.name}`, margin, y);
+        y += lineHeight * 1.5;
+        
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'normal');
+        let title = `TIPO: ${currentType.toUpperCase()} | PERIODO: ${filterType.toUpperCase()} (${filterDateStr})`;
+        title += ` | CAT: ${categoryFilter} | TAG: ${tagFilter}`;
+        doc.text(title, margin, y);
+        y += lineHeight;
+        doc.text(`Query Ricerca: ${searchQuery || 'Nessuna'} | Data Export: ${new Date().toLocaleDateString('it-IT')}`, margin, y);
+        y += lineHeight * 1.5;
+
+        // --- Riepilogo Aggregato (KPI) ---
+        const summary = calculateFinancialSummary(currentType, filterType, filterDateStr);
+        const kpiText = [
+            `Entrate Totali: ${summary.totalIncomes.toFixed(2)} ${symbol}`,
+            `Uscite Totali: ${summary.totalExpenses.toFixed(2)} ${symbol}`,
+            `Saldo Netto: ${summary.netBalance.toFixed(2)} ${symbol}`
+        ].join(' | ');
+
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'bold');
+        doc.text('RIEPILOGO AGGREGATO DEL PERIODO', margin, y);
+        y += lineHeight;
+        doc.setFont(undefined, 'normal');
+        doc.text(kpiText, margin, y);
+        y += lineHeight * 1.5;
+
+        doc.setLineWidth(0.3);
+        doc.line(margin, y, doc.internal.pageSize.width - margin, y);
+        y += lineHeight;
+
+
+        // --- Dati Dettagliati (Tabella) ---
+        const headers = ["Data", "Tipo", "Categoria", "Descrizione", "Netto", "IVA", "Lordo"];
+        const colWidths = [20, 15, 20, 50, 20, 15, 20];
+        let x = margin;
+        
+        doc.setFontSize(9);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(50, 50, 50);
+
+        headers.forEach((header, index) => {
+            doc.text(header, x, y);
+            x += colWidths[index];
+        });
+        y += 1;
+        doc.setLineWidth(0.1);
+        doc.line(margin, y, doc.internal.pageSize.width - margin, y);
+        y += 3;
+
+        doc.setFontSize(8);
+        doc.setFont(undefined, 'normal');
+        
+        // --- Loop Dati ---
+        transactionsToExport.forEach(t => {
+            if (y > pageHeight - margin * 2) {
+                doc.addPage();
+                y = margin;
+                doc.setFontSize(9);
+                doc.setFont(undefined, 'bold');
+                doc.text('Dettaglio Movimenti (continua)', margin, y);
+                y += lineHeight;
+                
+                x = margin;
+                headers.forEach((header, index) => {
+                    doc.text(header, x, y);
+                    x += colWidths[index];
+                });
+                y += 1;
+                doc.setLineWidth(0.1);
+                doc.line(margin, y, doc.internal.pageSize.width - margin, y);
+                y += 3;
+                doc.setFontSize(8);
+                doc.setFont(undefined, 'normal');
+            }
+
+            const type = t.isIncome ? 'E' : 'U';
+            const description = t.description ? (t.description.length > 28 ? t.description.substring(0, 25) + '...' : t.description) : 'N/A';
+            const cat = t.category || 'Altro';
+            
+            // Colore testo
+            const color = t.isIncome ? [16, 185, 129] : [239, 68, 68];
+            doc.setTextColor(color[0], color[1], color[2]);
+
+            x = margin;
+            doc.text(new Date(t.date).toLocaleDateString('it-IT'), x, y); x += colWidths[0];
+            doc.text(type, x, y); x += colWidths[1];
+            doc.text(cat, x, y); x += colWidths[2];
+            doc.text(description, x, y); x += colWidths[3];
+            
+            // Importi allineati a destra
+            doc.text(t.net.toFixed(2), x + colWidths[4] - 1, y, { align: "right" }); x += colWidths[4];
+            doc.text(t.vatAmount.toFixed(2), x + colWidths[5] - 1, y, { align: "right" }); x += colWidths[5];
+            doc.text(t.gross.toFixed(2) + symbol, x + colWidths[6] - 1, y, { align: "right" }); x += colWidths[6];
+            
+            y += lineHeight;
+        });
+
+        // --- Pie di pagina e Salvataggio ---
+        const filename = `Report_FinanzaPRO_${currentType}_${filterDateStr}_${new Date().toISOString().slice(0, 10)}.pdf`;
+        doc.save(filename);
+        showToast('Report PDF (categoria/mese) generato e scaricato!');
     }
 
 
@@ -1862,7 +2068,9 @@
         showToast(`${removedCount} categorie non usate (non di default) eliminate.`);
         renderPage('settings');
     }
-    
+    // --- Import/Export/Clean (END) ---
+
+
     // --- UI wiring (MODULO TRANSAZIONE) ---
     function renderTransactionForm(isIncome, type) {
         const isActivity = type === 'activity';
@@ -1973,17 +2181,7 @@
       incomeTypeSelect?.removeEventListener('change', updateVisibility);
       incomeTypeSelect?.addEventListener('change', updateVisibility);
       
-      isIncomeSelect.removeEventListener('change', setupIncomeTypeControl);
-      isIncomeSelect.addEventListener('change', setupIncomeTypeControl);
-
-      function setupIncomeTypeControl() {
-        const isIncome=isIncomeSelect.value==='true';
-        const ctl=document.getElementById('income-type-control');
-        if (scope==='activity' && ctl){ ctl.classList.toggle('hidden', !isIncome); }
-        updateVisibility();
-      }
-      
-      setupIncomeTypeControl();
+      updateVisibility();
     }
 
     function setupContactAutocomplete(scope){
@@ -2034,160 +2232,16 @@
       const vatAmountDisplay=document.getElementById('vat-amount-display');
       const grossAmountDisplay=document.getElementById('gross-amount-display');
       
-      let net = parseFloat(netInput.value)||0; 
-      const rate=parseFloat(vatSelect.value)||0;
+      let net = parseFloat(netInput?.value)||0; 
+      const rate=parseFloat(vatSelect?.value)||0;
       
       const vatAmt=net*rate/100; 
       const gross=net+vatAmt;
       
-      vatAmountDisplay.textContent = vatAmt.toFixed(2)+' '+getCurrencySymbol();
-      grossAmountDisplay.textContent = gross.toFixed(2)+' '+getCurrencySymbol();
-    }
-
-    function computeKPIs(){
-      const cacheKey = 'global_kpis';
-      const now = Date.now();
-      if (calculatedResultsCache[cacheKey] && (now - lastCacheUpdateTime < CACHE_DURATION)) {
-          return calculatedResultsCache[cacheKey];
-      }
-        
-      const all = [...appData.invoices.map(t=>({...t,isIncome:true})), ...appData.expenses.map(t=>({...t,isIncome:false}))];
-      if (all.length===0) return {savingRate:0, avgExpense:0, avgIncome:0, topClients:[], topSuppliers:[], topCategories:[]};
-
-      const byMonth = {};
-      all.forEach(t=>{
-        const ym=t.date?.slice(0,7)||'';
-        if (!byMonth[ym]) byMonth[ym] = {inc:0, exp:0};
-        const gross = parseFloat(t.gross) || 0;
-        if (t.isIncome) byMonth[ym].inc += gross; else byMonth[ym].exp += gross;
-      });
-      const months = Object.keys(byMonth);
-      const sumInc = months.reduce((s,m)=>s+byMonth[m].inc,0);
-      const sumExp = months.reduce((s,m)=>s+byMonth[m].exp,0);
-      const avgIncome = months.length? sumInc/months.length : 0;
-      const avgExpense = months.length? sumExp/months.length : 0;
-      const net = sumInc - sumExp;
-      const savingRate = sumInc > 0 ? (net/sumInc*100) : (net > 0 ? 100 : (net < 0 ? -100 : 0)); 
-
-      const sumByDesc = {};
-      all.forEach(t=>{
-        const key=(t.description||'?').trim();
-        sumByDesc[key] ||= {inc:0,exp:0};
-        const gross = parseFloat(t.gross) || 0;
-        if (t.isIncome) sumByDesc[key].inc += gross; else sumByDesc[key].exp += gross;
-      });
-      const topClients = Object.entries(sumByDesc).filter(([k,v])=>v.inc>0).sort((a,b)=>b[1].inc - a[1].inc).slice(0,3).map(([name,v])=>({name, amount:v.inc}));
-      const topSuppliers = Object.entries(sumByDesc).filter(([k,v])=>v.exp>0).sort((a,b)=>b[1].exp - a[1].exp).slice(0,3).map(([name,v])=>({name, amount:v.exp}));
-
-      const byCat = {};
-      all.forEach(t=>{
-        const cat=(t.category||'Altro').trim();
-        byCat[cat] ||= {inc:0,exp:0};
-        const gross = parseFloat(t.gross) || 0;
-        if (t.isIncome) byCat[cat].inc += gross; else byCat[cat].exp += gross;
-      });
-      const topCategories = Object.entries(byCat).sort((a,b)=>b[1].exp - a[1].exp).slice(0,3).map(([cat,v])=>({cat, amount:v.exp}));
-
-      const result = {savingRate, avgExpense, avgIncome, topClients, topSuppliers, topCategories};
-      calculatedResultsCache[cacheKey] = result;
-      return result;
+      if (vatAmountDisplay) vatAmountDisplay.textContent = vatAmt.toFixed(2)+' '+getCurrencySymbol();
+      if (grossAmountDisplay) grossAmountDisplay.textContent = gross.toFixed(2)+' '+getCurrencySymbol();
     }
     
-    function calculateCashFlowProjection() {
-        const today = new Date();
-        const futureDate = new Date();
-        futureDate.setDate(today.getDate() + 90);
-        
-        const summarySinceStart = calculateFinancialSummary('global', 'all', 'all');
-        let netProjection = (parseFloat(appData.currentBankBalance) || 0) + summarySinceStart.netBalance;
-
-        appData.recurringExpenses.forEach(r => {
-            const nextDateStr = calculateNextRecurrence(r.lastDate, r.frequency);
-            if (nextDateStr) {
-                const nextDate = new Date(nextDateStr);
-                if (nextDate >= today && nextDate <= futureDate) {
-                    const isIncome = appData.invoices.some(i => i.description === r.description);
-                    netProjection += r.lastAmount;
-                }
-            }
-        });
-        
-        appData.reminders.forEach(r => {
-            const rDate = new Date(r.date);
-            if (!r.paid && rDate >= today && rDate <= futureDate) {
-                netProjection -= r.amount;
-            }
-        });
-
-        return {
-            projection: +netProjection.toFixed(2), days: 90
-        };
-    }
-
-    function renderTrendChart(transactions){
-      const canvas = document.getElementById('trendChart');
-      if (!canvas) return;
-      const ctx = canvas.getContext('2d'); 
-      
-      if (canvas.chart) { canvas.chart.destroy(); }
-      
-      const grouped={};
-      transactions.forEach(t=>{
-        const ym=t.date?.slice(0,7); if(!ym) return;
-        if (!grouped[ym]) grouped[ym]={income:0,expense:0};
-        const gross = parseFloat(t.gross) || 0;
-        if (t.isIncome) grouped[ym].income += gross; else grouped[ym].expense += gross;
-      });
-      const labels=Object.keys(grouped).sort();
-      const incomes=labels.map(l=>grouped[l].income);
-      const expenses=labels.map(l=>grouped[l].expense);
-      
-      canvas.chart = new Chart(ctx,{
-        type:'line',
-        data:{ labels, datasets:[
-          { label:'Entrate', data:incomes, borderColor:'#10b981', backgroundColor:'#10b981', tension: 0.1, fill:false },
-          { label:'Uscite', data:expenses, borderColor:'#ef4444', backgroundColor:'#ef4444', tension: 0.1, fill:false }
-        ]},
-        options:{ 
-          responsive:true, 
-          maintainAspectRatio:false,
-          scales: {
-            y: { beginAtZero: true }
-          },
-          plugins: {
-            legend: {
-              labels: {
-                color: document.body.classList.contains('dark') ? '#f1f5f9' : '#1e293b' 
-              }
-            }
-          }
-        }
-      });
-    }
-
-    function groupTransactionsByMonth(transactions) {
-        const grouped = {};
-        transactions.forEach(t => {
-            const date = new Date(t.date);
-            const monthYear = date.toLocaleDateString('it-IT', { year: 'numeric', month: 'long' });
-            grouped[monthYear] = grouped[monthYear] || [];
-            grouped[monthYear].push(t);
-        });
-        
-        const sortedKeys = Object.keys(grouped).sort((a, b) => {
-            const dateA = new Date(a.replace(/[^0-9]/g, '-').slice(0, 7) + '-01');
-            const dateB = new Date(b.replace(/[^0-9]/g, '-').slice(0, 7) + '-01');
-            return dateB.getTime() - dateA.getTime();
-        });
-        
-        const sortedGrouped = {};
-        sortedKeys.forEach(key => {
-            sortedGrouped[key] = grouped[key];
-        });
-        
-        return sortedGrouped;
-    }
-// OK per la PARTE 2 - Blocco B (Parte I)
     function getTodayFocusData(type) {
         const todayStr = new Date().toISOString().slice(0, 10);
         
@@ -2205,8 +2259,6 @@
         
         return { summary, upcomingReminders, upcomingBirthdays, expenseSpikes };
     }
-
-
     // --- Page router ---
     function renderNavbar(){
       const navbar=document.getElementById('navbar');
@@ -2228,10 +2280,12 @@
       const symbol = getCurrencySymbol();
       const ivaStatus = summary.ivaBalance>=0?'IVA da Versare':'IVA a Credito';
       const ivaColor = summary.ivaBalance>=0?'text-red-600':'text-blue-600';
-      const balanceColor = summary.netBalance>=0?'text-emerald-600':'text-red-600';
       
       const summarySinceStart = calculateFinancialSummary('global', 'all', 'all');
-      const totalBalance = (parseFloat(appData.currentBankBalance) || 0) + summarySinceStart.netBalance;
+      let totalBalance = (parseFloat(appData.currentBankBalance) || 0); // Saldo base
+      // Applica la variazione di saldo dovuta a tutte le transazioni registrate
+      totalBalance += summarySinceStart.transactions.reduce((acc, t) => acc + (t.gross * (t.isIncome ? 1 : -1)), 0);
+
       const freeBalance = totalBalance - (appData.taxCashReserve || 0);
 
       return `
@@ -2256,6 +2310,15 @@
           </div>
         </div>
       `;
+    }
+
+    // NUOVO: Funzione per resettare lo stato della simulazione
+    function resetSimulationState() {
+        simulationState = {
+            additionalRevenue: 0, additionalExpense: 0, taxRateOverride: null,
+            profitRateOverride: null, targetNetIncome: null
+        };
+        renderPage('activity'); 
     }
 
     function renderActivityOrPersonalPage(type){
@@ -2294,9 +2357,8 @@
                    const diff = (MAX_FORFETTARIO_REVENUE - projection.projectedRevenue).toFixed(0);
                    fiscalAdvice += `<p class="p-3 bg-yellow-100 dark:bg-yellow-900/50 rounded-lg text-sm border-l-4 border-yellow-500 mt-3"><span class="font-bold">⚠️ Allerta Ricavi:</span> Sei al ${(projection.projectedRevenue / MAX_FORFETTARIO_REVENUE * 100).toFixed(0)}% del massimale Forfettario (${MAX_FORFETTARIO_REVENUE}${symbol}). Rimangono circa ${diff}${symbol} di margine.</p>`;
                }
-               if (fiscalSim.totalCosti > projection.projectedRevenue * 0.95) {
-                   fiscalAdvice += '<p class="p-3 bg-red-100 dark:bg-red-900/50 rounded-lg text-sm border-l-4 border-red-500 mt-3"><span class="font-bold">🚨 Allerta Costi:</span> La tua spesa Attività proiettata è molto alta (oltre 95% del ricavo). Se sei Forfettario, verifica la congruità con il commercialista.</p>';
-               } else if (fiscalSim.totalRicavi > 0 && fiscalSim.totalCosti > fiscalSim.totalRicavi * (1 - appData.fiscalParams.profitRate) * 1.25) {
+               // Questo controllo è più accurato se basato sul ricavo netto, non lordo per forfettario.
+               if (fiscalSim.totalCosti > projection.projectedRevenue * (1 - appData.fiscalParams.profitRate) * 1.5) {
                     fiscalAdvice += '<p class="p-3 bg-indigo-100 dark:bg-indigo-900/50 rounded-lg text-sm border-l-4 border-indigo-500 mt-3"><span class="font-bold">💡 Suggerimento Fiscale:</span> Le tue spese (non inerenti al coefficiente) sembrano molto alte. Valuta il Regime Ordinario per l\'anno prossimo, potresti risparmiare sulle tasse.</p>';
                }
           } else if (appData.fiscalParams.regime === 'ordinario' && fiscalSim.baseImponibile < 28000 && fiscalSim.totalRicavi < MAX_FORFETTARIO_REVENUE * 0.9) {
@@ -2541,32 +2603,265 @@
       );
     }
 
+    function computeKPIs(){
+      const cacheKey = 'global_kpis';
+      const now = Date.now();
+      if (calculatedResultsCache[cacheKey] && (now - lastCacheUpdateTime < CACHE_DURATION)) {
+          return calculatedResultsCache[cacheKey];
+      }
+        
+      const all = [...appData.invoices.map(t=>({...t,isIncome:true})), ...appData.expenses.map(t=>({...t,isIncome:false}))];
+      if (all.length===0) return {savingRate:0, avgExpense:0, avgIncome:0, topClients:[], topSuppliers:[], topCategories:[]};
+
+      const byMonth = {};
+      all.forEach(t=>{
+        const ym=t.date?.slice(0,7)||'';
+        if (!byMonth[ym]) byMonth[ym] = {inc:0, exp:0};
+        const gross = parseFloat(t.gross) || 0;
+        if (t.isIncome) byMonth[ym].inc += gross; else byMonth[ym].exp += gross;
+      });
+      const months = Object.keys(byMonth);
+      const sumInc = months.reduce((s,m)=>s+byMonth[m].inc,0);
+      const sumExp = months.reduce((s,m)=>s+byMonth[m].exp,0);
+      const avgIncome = months.length? sumInc/months.length : 0;
+      const avgExpense = months.length? sumExp/months.length : 0;
+      const net = sumInc - sumExp;
+      const savingRate = sumInc > 0 ? (net/sumInc*100) : (net > 0 ? 100 : (net < 0 ? -100 : 0)); 
+
+      const sumByDesc = {};
+      all.forEach(t=>{
+        const key=(t.description||'?').trim();
+        sumByDesc[key] ||= {inc:0,exp:0};
+        const gross = parseFloat(t.gross) || 0;
+        if (t.isIncome) sumByDesc[key].inc += gross; else sumByDesc[key].exp += gross;
+      });
+      const topClients = Object.entries(sumByDesc).filter(([k,v])=>v.inc>0).sort((a,b)=>b[1].inc - a[1].inc).slice(0,3).map(([name,v])=>({name, amount:v.inc}));
+      const topSuppliers = Object.entries(sumByDesc).filter(([k,v])=>v.exp>0).sort((a,b)=>b[1].exp - a[1].exp).slice(0,3).map(([name,v])=>({name, amount:v.exp}));
+
+      const byCat = {};
+      all.forEach(t=>{
+        const cat=(t.category||'Altro').trim();
+        byCat[cat] ||= {inc:0,exp:0};
+        const gross = parseFloat(t.gross) || 0;
+        if (t.isIncome) byCat[cat].inc += gross; else byCat[cat].exp += gross;
+      });
+      const topCategories = Object.entries(byCat).sort((a,b)=>b[1].exp - a[1].exp).slice(0,3).map(([cat,v])=>({cat, amount:v.exp}));
+
+      const result = {savingRate, avgExpense, avgIncome, topClients, topSuppliers, topCategories};
+      calculatedResultsCache[cacheKey] = result;
+      return result;
+    }
+    
+    function calculateCashFlowProjection() {
+        const today = new Date();
+        const futureDate = new Date();
+        futureDate.setDate(today.getDate() + 90);
+        
+        const summarySinceStart = calculateFinancialSummary('global', 'all', 'all');
+        let netProjection = (parseFloat(appData.currentBankBalance) || 0) + summarySinceStart.netBalance;
+
+        appData.recurringExpenses.forEach(r => {
+            const nextDateStr = calculateNextRecurrence(r.lastDate, r.frequency);
+            if (nextDateStr) {
+                const nextDate = new Date(nextDateStr);
+                if (nextDate >= today && nextDate <= futureDate) {
+                    const isIncome = r.isIncome || appData.invoices.some(i => i.description === r.description);
+                    netProjection += isIncome ? r.lastAmount : -r.lastAmount;
+                }
+            }
+        });
+        
+        appData.reminders.forEach(r => {
+            const rDate = new Date(r.date);
+            // Solo promemoria che sono pagamenti (amount > 0)
+            if (!r.paid && rDate >= today && rDate <= futureDate && r.amount > 0) { 
+                netProjection -= r.amount;
+            }
+        });
+
+        return {
+            projection: +netProjection.toFixed(2), days: 90
+        };
+    }
+
+    function renderTrendChart(){
+      const canvas = document.getElementById('trendChart');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d'); 
+      
+      if (canvas.chart) { canvas.chart.destroy(); }
+      
+      const allTransactions = [
+        ...appData.invoices.map(t=>({...t,isIncome:true})), 
+        ...appData.expenses.map(t=>({...t,isIncome:false}))
+      ];
+
+      const grouped={};
+      allTransactions.forEach(t=>{
+        const ym=t.date?.slice(0,7); if(!ym) return;
+        if (!grouped[ym]) grouped[ym]={income:0,expense:0};
+        const gross = parseFloat(t.gross) || 0;
+        if (t.isIncome) grouped[ym].income += gross; else grouped[ym].expense += gross;
+      });
+      const labels=Object.keys(grouped).sort();
+      const incomes=labels.map(l=>grouped[l].income);
+      const expenses=labels.map(l=>grouped[l].expense);
+      
+      canvas.chart = new Chart(ctx,{
+        type:'line',
+        data:{ labels, datasets:[
+          { label:'Entrate', data:incomes, borderColor:'#10b981', backgroundColor:'#10b981', tension: 0.1, fill:false },
+          { label:'Uscite', data:expenses, borderColor:'#ef4444', backgroundColor:'#ef4444', tension: 0.1, fill:false }
+        ]},
+        options:{ 
+          responsive:true, 
+          maintainAspectRatio:false,
+          scales: {
+            y: { beginAtZero: true }
+          },
+          plugins: {
+            legend: {
+              labels: {
+                color: document.body.classList.contains('dark') ? '#f1f5f9' : '#1e293b' 
+              }
+            }
+          }
+        }
+      });
+    }
+    
+    // Raggruppamento per Mese
+    function groupTransactionsByMonth(transactions) {
+        const grouped = {};
+        transactions.forEach(t => {
+            const date = new Date(t.date);
+            const monthYear = date.toLocaleDateString('it-IT', { year: 'numeric', month: 'long' });
+            grouped[monthYear] = grouped[monthYear] || [];
+            grouped[monthYear].push(t);
+        });
+        
+        const sortedKeys = Object.keys(grouped).sort((a, b) => {
+            // Estrae Anno e Mese per un ordinamento corretto
+            const getDateKey = (key) => {
+                const parts = key.split(' ');
+                const year = parseInt(parts[1]);
+                const monthName = parts[0];
+                const date = new Date(year, new Date(Date.parse(monthName + " 1, 2012")).getMonth(), 1);
+                return date.getTime();
+            };
+            return getDateKey(b) - getDateKey(a); // Ordine Decrescente
+        });
+        
+        const sortedGrouped = {};
+        sortedKeys.forEach(key => {
+            // Riordina le transazioni all'interno del mese per data
+            grouped[key].sort((a, b) => new Date(b.date) - new Date(a.date));
+            sortedGrouped[key] = grouped[key];
+        });
+        
+        return sortedGrouped;
+    }
+    
+    // *** NUOVA FUNZIONE: Aggiorna solo il dettaglio transazioni del report ***
+    function updateReportDetail(query) {
+        // Prende i filtri direttamente dalla variabile di stato
+        const { type: currentReportType, filterType, filterDateStr, categoryFilter, tagFilter } = reportFilters;
+        
+        let results = calculateFinancialSummary(currentReportType, filterType, filterDateStr).transactions.slice(); 
+        
+        results = filterTransactionsByCriteria(results, categoryFilter === 'all' ? null : categoryFilter, tagFilter === 'all' ? null : tagFilter);
+        results = filterTransactions(query, results); 
+        results = sortTransactions(results); 
+        
+        const symbol = getCurrencySymbol();
+        const searchGrouped = groupTransactionsByMonth(results);
+        
+        let searchHtml = '';
+        if (Object.keys(searchGrouped).length > 0) {
+            searchHtml = Object.keys(searchGrouped).map(month => {
+                const monthlyTx = searchGrouped[month];
+                const totalMonth = monthlyTx.reduce((sum, t) => sum + (t.gross * (t.isIncome ? 1 : -1)), 0);
+                const monthColor = totalMonth >= 0 ? 'text-emerald-500' : 'text-red-500';
+                
+                return `
+                    <details class="bg-gray-50 dark:bg-gray-900 rounded-lg shadow-sm" open>
+                        <summary class="p-3 font-bold group-header flex justify-between items-center bg-gray-100 dark:bg-gray-700 rounded-lg">
+                            <span>${month} (${monthlyTx.length} movimenti)</span>
+                            <span class="${monthColor}">${totalMonth.toFixed(2)} ${symbol}</span>
+                        </summary>
+                        <div class="space-y-3 p-3">
+                            ${monthlyTx.map(t=>`
+                                <div class="flex justify-between items-center p-3 border-l-4 ${t.isIncome?'bg-emerald-50 border-emerald-300 dark:bg-emerald-900/50 dark:border-emerald-700':'bg-red-50 border-red-300 dark:bg-red-900/50 dark:border-red-700'} rounded-lg">
+                                  <div class="flex-grow">
+                                    <p class="font-semibold text-sm">${getCategoryIcon(t.category)} ${new Date(t.date).toLocaleDateString('it-IT')}: ${t.description||''}</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                                      ${t.type==='activity'?'Attività':'Personale'} | IVA ${t.vatRate}% | Cat: ${t.category||'-'} 
+                                      ${(t.tags||[]).length > 0 ? '| Tag: '+(t.tags||[]).join(', ') : ''}
+                                    </p>
+                                  </div>
+                                  <div class="text-right ml-4">
+                                    <p class="font-bold ${t.isIncome?'text-emerald-700 dark:text-emerald-300':'text-red-700 dark:text-red-300'}">${t.gross.toFixed(2)} ${symbol}</p>
+                                  </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </details>
+                `;
+            }).join('');
+        } else {
+            searchHtml = '<p class="text-gray-500">Nessuna transazione trovata con i filtri attuali.</p>';
+        }
+        
+        document.getElementById('transactions-detail').innerHTML = searchHtml;
+        
+        // Aggiorna anche il contatore di transazioni se l'elemento esiste
+        const detailHeader = document.querySelector('.report-detail-header');
+        if (detailHeader) {
+             const totalCount = results.length;
+             detailHeader.innerHTML = `Dettaglio Movimenti (${totalCount})`;
+        }
+      }
+    
     function renderReportPage(){
       const symbol = getCurrencySymbol();
       
       loadReportFilters();
       
-      const currentType = document.getElementById('report-type')?.value || reportFilters.type;
-      const filterType = document.getElementById('filter-type')?.value || reportFilters.filterType;
-      const filterDateInput = document.getElementById('filter-date');
-      const filterDateStr = filterDateInput?.value || reportFilters.filterDateStr;
-      const categoryFilter = document.getElementById('filter-category')?.value || reportFilters.categoryFilter;
-      const tagFilter = document.getElementById('filter-tag')?.value || reportFilters.tagFilter;
-      const sortKey = document.getElementById('sort-key')?.value || reportFilters.sortKey;
-      const sortDirection = document.getElementById('sort-direction')?.value || reportFilters.sortDirection;
+      // I valori initiali sono presi dai filtri salvati
+      const currentType = reportFilters.type;
+      const filterType = reportFilters.filterType;
+      const filterDateStr = reportFilters.filterDateStr;
+      const categoryFilter = reportFilters.categoryFilter;
+      const tagFilter = reportFilters.tagFilter;
+      const sortKey = reportFilters.sortKey;
+      const sortDirection = reportFilters.sortDirection;
       const searchQuery = reportFilters.searchQuery;
       
-      reportFilters = { type: currentType, filterType, filterDateStr, categoryFilter, tagFilter, sortKey, sortDirection, searchQuery };
+      // Aggiorna reportFilters con i valori degli input se sono stati cambiati
+      const currentReportType = document.getElementById('report-type')?.value || currentType;
+      const currentFilterType = document.getElementById('filter-type')?.value || filterType;
+      const currentFilterDateStr = document.getElementById('filter-date')?.value || filterDateStr;
+      const currentCategoryFilter = document.getElementById('filter-category')?.value || categoryFilter;
+      const currentTagFilter = document.getElementById('filter-tag')?.value || tagFilter;
+      const currentSortKey = document.getElementById('sort-key')?.value || sortKey;
+      const currentSortDirection = document.getElementById('sort-direction')?.value || sortDirection;
+      const currentSearchQuery = document.getElementById('search')?.value || searchQuery;
+      
+      reportFilters = { 
+          type: currentReportType, filterType: currentFilterType, filterDateStr: currentFilterDateStr, 
+          categoryFilter: currentCategoryFilter, tagFilter: currentTagFilter, 
+          sortKey: currentSortKey, sortDirection: currentSortDirection, searchQuery: currentSearchQuery 
+      };
       saveReportFilters(); 
 
-      const summary = calculateFinancialSummary(currentType, filterType, filterDateStr);
-      const cashSummary = calculateFinancialSummary('global', filterType, filterDateStr);
-      const ivaSummary = calculateFinancialSummary('activity', filterType, filterDateStr);
+      const summary = calculateFinancialSummary(currentReportType, currentFilterType, currentFilterDateStr);
+      const cashSummary = calculateFinancialSummary('global', currentFilterType, currentFilterDateStr);
+      const ivaSummary = calculateFinancialSummary('activity', currentFilterType, currentFilterDateStr);
       
-      let transactionsList = filterTransactionsByCriteria(summary.transactions, categoryFilter === 'all' ? null : categoryFilter, tagFilter === 'all' ? null : tagFilter);
+      let transactionsList = filterTransactionsByCriteria(summary.transactions, currentCategoryFilter === 'all' ? null : currentCategoryFilter, currentTagFilter === 'all' ? null : currentTagFilter);
       
-      if (searchQuery) {
-          transactionsList = filterTransactions(searchQuery, transactionsList);
+      if (currentSearchQuery) {
+          transactionsList = filterTransactions(currentSearchQuery, transactionsList);
       }
       
       transactionsList = sortTransactions(transactionsList);
@@ -2589,7 +2884,8 @@
       const liquidityBuffer = calculateLiquidityBuffer();
       
       const summarySinceStart = calculateFinancialSummary('global', 'all', 'all');
-      const totalBalance = (parseFloat(appData.currentBankBalance) || 0) + summarySinceStart.netBalance;
+      let totalBalance = (parseFloat(appData.currentBankBalance) || 0);
+      totalBalance += summarySinceStart.transactions.reduce((acc, t) => acc + (t.gross * (t.isIncome ? 1 : -1)), 0);
       const freeBalance = totalBalance - (appData.taxCashReserve || 0);
 
       const averageMonthlyNet = (KPIs.avgIncome || 0) - (KPIs.avgExpense || 0);
@@ -2597,31 +2893,40 @@
       const targetColor = targetDelta >= 0 ? 'text-emerald-600' : 'text-red-600';
 
       let periodLabel='Periodo Selezionato';
-      if (filterType==='all') periodLabel='Tutti i Dati';
-      else if (filterType==='year') periodLabel=filterDateStr;
-      else if (filterType==='month'){ const [y,m]=filterDateStr.split('-').map(Number); const d=new Date(y,m-1,1); periodLabel=d.toLocaleDateString('it-IT',{year:'numeric',month:'long'}); }
-      else if (filterType==='quarter'){ const [y,m]=filterDateStr.split('-').map(Number); periodLabel=`Trimestre Q${Math.ceil(m/3)}/${y}`; }
-      else if (filterType==='week'){ periodLabel=`Settimana di ${new Date(filterDateStr).toLocaleDateString('it-IT')}`; }
-      else if (filterType==='day') periodLabel=new Date(filterDateStr).toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'});
+      if (currentFilterType==='all') periodLabel='Tutti i Dati';
+      else if (currentFilterType==='year') periodLabel=currentFilterDateStr;
+      else if (currentFilterType==='month'){ const [y,m]=currentFilterDateStr.split('-').map(Number); const d=new Date(y,m-1,1); periodLabel=d.toLocaleDateString('it-IT',{year:'numeric',month:'long'}); }
+      else if (currentFilterType==='quarter'){ const [y,m]=currentFilterDateStr.split('-').map(Number); periodLabel=`Trimestre Q${Math.ceil(m/3)}/${y}`; }
+      else if (currentFilterType==='week'){ periodLabel=`Settimana di ${new Date(currentFilterDateStr).toLocaleDateString('it-IT')}`; }
+      else if (currentFilterType==='day') periodLabel=new Date(currentFilterDateStr).toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'});
       
       const allCategories = appData.categories || DEFAULT_CATEGORIES.slice();
       const allTags = getAllTags();
-      
-      // Funzione per attivare l'export avanzato in base al filtro corrente del report
-      const getExportFunctionCall = (exportType) => {
-        // Estrae i filtri attuali dal report (Tipo, Categoria, Periodo)
-        const currentReportType = document.getElementById('report-type')?.value || 'global';
-        const currentCategoryFilter = document.getElementById('filter-category')?.value || 'all';
-        const currentFilterType = document.getElementById('filter-type')?.value || 'year';
-        const currentFilterDateStr = document.getElementById('filter-date')?.value || new Date().toISOString().slice(0, 10);
-        
-        let txFilter = 'all'; // Default
-        if (exportType === 'income') txFilter = 'income';
-        if (exportType === 'expense') txFilter = 'expense';
-        
-        // Passa i filtri direttamente a exportCSV
-        return `exportCSV('${txFilter}', '${currentCategoryFilter}', '${currentFilterType}', '${currentFilterDateStr}')`;
-      };
+
+      const currentMonth = new Date().toISOString().slice(0, 7);
+      const monthSummary = calculateFinancialSummary('personal', 'month', currentMonth);
+      const categoryExpenseMap = {};
+      monthSummary.transactions.filter(t => !t.isIncome && t.type === 'personal').forEach(t => {
+          const cat = t.category || 'Altro';
+          categoryExpenseMap[cat] = (categoryExpenseMap[cat] || 0) + t.gross;
+      });
+
+      const budgetAnalysis = allCategories
+          .filter(cat => appData.categoryBudgets[cat] > 0 || categoryExpenseMap[cat] > 0)
+          .map(cat => {
+              const budget = appData.categoryBudgets[cat] || 0;
+              const spent = categoryExpenseMap[cat] || 0;
+              const remaining = budget - spent;
+              let colorClass = '';
+              if (budget === 0) { colorClass = spent > 0 ? 'budget-yellow' : ''; } 
+              else if (remaining < 0) { colorClass = 'budget-red'; } 
+              else if (remaining < budget * 0.20) { colorClass = 'budget-yellow'; } 
+              else { colorClass = 'budget-green'; }
+              return { cat, budget, spent, remaining, colorClass };
+          }).sort((a, b) => b.spent - a.spent);
+          
+      const fhs = calculateFinancialHealthScore();
+      const FHSColor = fhs.score > 80 ? 'text-emerald-600' : (fhs.score > 60 ? 'text-orange-600' : 'text-red-600');
 
 
       return `
@@ -2632,38 +2937,38 @@
             <div class="md:col-span-1">
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipo</label>
               <select id="report-type" onchange="renderPage('report')" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
-                <option value="global" ${currentType==='global'?'selected':''}>Totale</option>
-                <option value="activity" ${currentType==='activity'?'selected':''}>Attività</option>
-                <option value="personal" ${currentType==='personal'?'selected':''}>Personale</option>
+                <option value="global" ${currentReportType==='global'?'selected':''}>Totale</option>
+                <option value="activity" ${currentReportType==='activity'?'selected':''}>Attività</option>
+                <option value="personal" ${currentReportType==='personal'?'selected':''}>Personale</option>
               </select>
             </div>
             <div class="md:col-span-1">
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Periodo</label>
-              <select id="filter-type" onchange="updateReportDateInput()" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700" value="${filterType}">
-                <option value="day" ${filterType==='day'?'selected':''}>Giorno</option>
-                <option value="week" ${filterType==='week'?'selected':''}>Settimana</option>
-                <option value="month" ${filterType==='month'?'selected':''}>Mese</option>
-                <option value="quarter" ${filterType==='quarter'?'selected':''}>Trimestre</option>
-                <option value="year" ${filterType==='year'?'selected':''}>Anno</option>
-                <option value="all" ${filterType==='all'?'selected':''}>Tutti</option>
+              <select id="filter-type" onchange="updateReportDateInput()" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700" value="${currentFilterType}">
+                <option value="day" ${currentFilterType==='day'?'selected':''}>Giorno</option>
+                <option value="week" ${currentFilterType==='week'?'selected':''}>Settimana</option>
+                <option value="month" ${currentFilterType==='month'?'selected':''}>Mese</option>
+                <option value="quarter" ${currentFilterType==='quarter'?'selected':''}>Trimestre</option>
+                <option value="year" ${currentFilterType==='year'?'selected':''}>Anno</option>
+                <option value="all" ${currentFilterType==='all'?'selected':''}>Tutti</option>
               </select>
             </div>
             <div class="md:col-span-1">
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data/Anno</label>
-              <input type="${filterType==='year'?'number':(filterType==='month'||filterType==='quarter')?'month':'date'}" id="filter-date" value="${filterDateStr}" onchange="renderPage('report')" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700 ${filterType==='all'?'hidden':''}">
+              <input type="${currentFilterType==='year'?'number':(currentFilterType==='month'||currentFilterType==='quarter')?'month':'date'}" id="filter-date" value="${currentFilterDateStr==='all'?'':currentFilterDateStr}" onchange="renderPage('report')" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700 ${currentFilterType==='all'?'hidden':''}">
             </div>
             <div class="md:col-span-1">
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Categoria</label>
                 <select id="filter-category" onchange="renderPage('report')" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
                     <option value="all">Tutte le Categorie</option>
-                    ${allCategories.map(c => `<option value="${c}" ${categoryFilter === c ? 'selected' : ''}>${getCategoryIcon(c)} ${c}</option>`).join('')}
+                    ${allCategories.map(c => `<option value="${c}" ${currentCategoryFilter === c ? 'selected' : ''}>${getCategoryIcon(c)} ${c}</option>`).join('')}
                 </select>
             </div>
             <div class="md:col-span-1">
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tag</label>
                 <select id="filter-tag" onchange="renderPage('report')" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
                     <option value="all">Tutti i Tag</option>
-                    ${allTags.map(t => `<option value="${t}" ${tagFilter === t ? 'selected' : ''}>${t}</option>`).join('')}
+                    ${allTags.map(t => `<option value="${t}" ${currentTagFilter === t ? 'selected' : ''}>${t}</option>`).join('')}
                 </select>
             </div>
           </div>
@@ -2671,7 +2976,7 @@
           <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div class="bg-white dark:bg-gray-800 p-4 rounded-xl card text-center border-l-4 border-indigo-500">
                   <p class="text-sm text-gray-500">Punteggio Salute Finanziaria</p>
-                  <p class="text-xl font-bold ${fhs.score > 80 ? 'text-emerald-600' : (fhs.score > 60 ? 'text-orange-600' : 'text-red-600')}">${fhs.score}/${fhs.max}</p>
+                  <p class="text-2xl font-extrabold ${FHSColor}">${fhs.score}/${fhs.max}</p>
               </div>
               <div class="bg-white dark:bg-gray-800 p-4 rounded-xl card text-center border-l-4 border-dashed border-purple-500">
                   <p class="text-sm text-gray-500">Obiettivo Saldo Netto Mensile: ${appData.monthlySavingsTarget.toFixed(2)} ${symbol}</p>
@@ -2713,6 +3018,24 @@
             ${renderSummaryCard(summary, periodLabel)}
           </div>
 
+          ${currentReportType!=='personal'?`
+          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card space-y-3">
+              <h3 class="text-xl font-medium mb-3 text-gray-800 dark:text-gray-200">Analisi Budget (Personale - ${currentMonth})</h3>
+              <p class="text-xs text-gray-500 dark:text-gray-400">Verifica i limiti di spesa impostati in Gestione Dati. Se Budget è 0, monitora solo le spese.</p>
+              <div class="space-y-2">
+                  ${budgetAnalysis.map(b => `
+                      <div class="p-3 rounded-lg border-l-4 ${b.colorClass} flex justify-between items-center text-sm">
+                          <span class="font-semibold">${getCategoryIcon(b.cat)} ${b.cat}</span>
+                          <div class="text-right">
+                              ${b.budget > 0 ? `<p class="text-xs text-gray-600 dark:text-gray-300">Budget: ${b.budget.toFixed(2)} ${symbol}</p>` : ''}
+                              <p class="font-bold">Speso: ${b.spent.toFixed(2)} ${symbol}</p>
+                              ${b.budget > 0 ? `<p class="${b.remaining < 0 ? 'text-red-700 dark:text-red-300' : 'text-emerald-700 dark:text-emerald-300'} text-xs">Rimanente: ${b.remaining.toFixed(2)} ${symbol}</p>` : ''}
+                          </div>
+                      </div>
+                  `).join('') || '<p class="text-gray-500 text-center">Nessun budget definito o spesa nel mese.</p>'}
+              </div>
+          </div>`:''}
+
           <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card" style="height: 280px;">
             <h3 class="text-xl font-medium mb-3 text-gray-800 dark:text-gray-200">Andamento Mensile Entrate/Uscite</h3>
             <canvas id="trendChart"></canvas>
@@ -2731,7 +3054,7 @@
             </div>
           </div>
 
-          ${currentType!=='personal'?`
+          ${currentReportType!=='personal'?`
           <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card">
             <h3 class="text-xl font-medium mb-3 text-gray-800 dark:text-gray-200">Analisi IVA (Attività - ${periodLabel})</h3>
             <div class="bar-container">
@@ -2758,38 +3081,32 @@
               <ul class="text-sm">${KPIs.topCategories.map(c=>`<li class="flex justify-between"><span>${getCategoryIcon(c.cat)} ${c.cat}</span><span class="font-bold text-red-600 dark:text-red-300">${c.amount.toFixed(2)} ${symbol}</span></li>`).join('') || '<li class="text-gray-500">-</li>'}</ul>
             </div>
           </div>
-          
-          <div class="bg-gray-50 dark:bg-gray-800 p-5 rounded-xl card mb-2">
-            <h3 class="text-xl font-medium mb-3 text-indigo-600">Export Avanzato (CSV per Commercialista)</h3>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">Esporta i dati filtrati per il periodo e la categoria selezionati sopra. Utile per resoconti specifici (es. Corrispettivi Ottobre).</p>
-            <div class="grid grid-cols-3 gap-3">
-              <button onclick="${getExportFunctionCall('income')}" class="cta-button w-full bg-emerald-500 text-white p-3 rounded-lg font-bold hover:bg-emerald-600">Export Entrate</button>
-              <button onclick="${getExportFunctionCall('expense')}" class="cta-button w-full bg-red-500 text-white p-3 rounded-lg font-bold hover:bg-red-600">Export Uscite</button>
-              <button onclick="${getExportFunctionCall('all')}" class="cta-button w-full bg-blue-500 text-white p-3 rounded-lg font-bold hover:bg-blue-600">Export Totale</button>
-            </div>
-          </div>
-
 
           <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card mb-20">
-            <div class="flex items-center justify-between mb-4">
-              <h3 class="text-xl font-medium text-gray-800 dark:text-gray-200">Dettaglio Movimenti (${transactionsList.length})</h3>
-              <input type="text" id="search" value="${reportFilters.searchQuery}" placeholder="🔍 Cerca (descrizione, categoria, tag, importo)" class="w-64 p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
+            <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+              <h3 class="text-xl font-medium text-gray-800 dark:text-gray-200 report-detail-header">Dettaglio Movimenti (${transactionsList.length})</h3>
+              
+              <button onclick="exportPDF()" class="px-4 py-2 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 text-sm">
+                Esporta PDF 📄
+              </button>
             </div>
+            
+            <input type="text" id="search" value="${currentSearchQuery}" placeholder="🔍 Cerca (descrizione, categoria, tag, importo)" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700 mb-4">
             
             <div class="flex space-x-4 mb-4">
                 <div class="flex-1">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Ordina per</label>
                     <select id="sort-key" onchange="renderPage('report')" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
-                        <option value="date" ${sortKey === 'date' ? 'selected' : ''}>Data</option>
-                        <option value="gross" ${sortKey === 'gross' ? 'selected' : ''}>Importo</option>
-                        <option value="category" ${sortKey === 'category' ? 'selected' : ''}>Categoria</option>
+                        <option value="date" ${currentSortKey === 'date' ? 'selected' : ''}>Data</option>
+                        <option value="gross" ${currentSortKey === 'gross' ? 'selected' : ''}>Importo</option>
+                        <option value="category" ${currentSortKey === 'category' ? 'selected' : ''}>Categoria</option>
                     </select>
                 </div>
                 <div class="flex-1">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Direzione</label>
                     <select id="sort-direction" onchange="renderPage('report')" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
-                        <option value="desc" ${sortDirection === 'desc' ? 'selected' : ''}>Decrescente</option>
-                        <option value="asc" ${sortDirection === 'asc' ? 'selected' : ''}>Crescente</option>
+                        <option value="desc" ${currentSortDirection === 'desc' ? 'selected' : ''}>Decrescente</option>
+                        <option value="asc" ${currentSortDirection === 'asc' ? 'selected' : ''}>Crescente</option>
                     </select>
                 </div>
             </div>
@@ -2857,14 +3174,10 @@
       input.classList.toggle('hidden',!visible);
       
       if (visible && filterType!=='all') {
-          // Mantieni il valore salvato nei filtri di report se congruo, altrimenti usa il valore di default.
-          const savedDate = reportFilters.filterDateStr;
-          if (savedDate && savedDate !== 'all' && savedDate.startsWith(def.toString().slice(0, filterType.length===4?4:7))) {
-               input.value = savedDate;
-          } else {
-               input.value = def;
-          }
+          // Mantieni il valore se il tipo di filtro non è cambiato, altrimenti usa il default
+          input.value = filterType === reportFilters.filterType ? reportFilters.filterDateStr : def;
       } else {
+          // Se il filtro è 'all', lo stato deve rifletterlo
           reportFilters.filterDateStr = 'all';
       }
       
@@ -2872,40 +3185,58 @@
     }
     
     function calculateNextRecurrence(lastDateStr, frequency, targetDate = new Date()) {
-        let dateToStartFrom = new Date();
-        const originalDay = new Date(lastDateStr).getDate();
+        let dateToStartFrom = new Date(lastDateStr);
+        const originalDay = dateToStartFrom.getDate();
         const today = new Date(); 
+        today.setHours(0,0,0,0);
 
         let currentMonth = dateToStartFrom.getMonth();
         let currentYear = dateToStartFrom.getFullYear();
+        
         let nextRecurrence = new Date(currentYear, currentMonth, originalDay); 
 
-        if (nextRecurrence < today) {
-            if (frequency === 'monthly') currentMonth += 1;
-            else if (frequency === 'quarterly') currentMonth += 3;
-            else if (frequency === 'annual') currentYear += 1;
-        } 
-
-        nextRecurrence = new Date(currentYear, currentMonth, originalDay);
-        if (nextRecurrence.getDate() !== originalDay) {
-            nextRecurrence = new Date(nextRecurrence.getFullYear(), nextRecurrence.getMonth() + 1, 0); 
-        }
-        
-        while (nextRecurrence < targetDate) {
-            if (frequency === 'monthly') currentMonth += 1;
-            else if (frequency === 'quarterly') currentMonth += 3;
-            else if (frequency === 'annual') currentYear += 1;
-            
-            nextRecurrence = new Date(currentYear, currentMonth, originalDay);
-            if (nextRecurrence.getDate() !== originalDay) {
-                 nextRecurrence = new Date(nextRecurrence.getFullYear(), nextRecurrence.getMonth() + 1, 0);
+        // Se l'ultima data registrata è oggi o è già passata, passa al ciclo successivo
+        while (nextRecurrence <= dateToStartFrom) {
+            if (frequency === 'monthly') {
+                currentMonth += 1;
+            } else if (frequency === 'quarterly') {
+                currentMonth += 3;
+            } else if (frequency === 'annual') {
+                currentYear += 1;
+            } else {
+                return null; // Frequenza non riconosciuta
             }
+            nextRecurrence = new Date(currentYear, currentMonth, originalDay);
         }
         
-        if (nextRecurrence.getTime() >= today.getTime()) {
-            return nextRecurrence.toISOString().slice(0, 10);
+        // Regola il giorno se il mese non lo supporta (es. 31/02)
+        if (nextRecurrence.getDate() !== originalDay) {
+            nextRecurrence = new Date(nextRecurrence.getFullYear(), nextRecurrence.getMonth(), 0); 
         }
-        return null;
+
+        // Simula la ricorrenza in avanti fino a raggiungere o superare la data odierna
+        // e comunque non più di un anno nel futuro
+        let counter = 0;
+        const limitDate = new Date(today.getFullYear() + 1, today.getMonth(), today.getDate());
+
+        while (nextRecurrence < today || nextRecurrence >= limitDate) {
+            if (nextRecurrence >= limitDate) return null; // Troppo lontano nel futuro
+
+            if (nextRecurrence < today) {
+                if (frequency === 'monthly') currentMonth += 1;
+                else if (frequency === 'quarterly') currentMonth += 3;
+                else if (frequency === 'annual') currentYear += 1;
+                
+                nextRecurrence = new Date(currentYear, currentMonth, originalDay);
+                 if (nextRecurrence.getDate() !== originalDay) {
+                    nextRecurrence = new Date(nextRecurrence.getFullYear(), nextRecurrence.getMonth(), 0);
+                }
+            }
+            counter++;
+            if (counter > 15) return null; // Evita loop infiniti
+        }
+        
+        return nextRecurrence.toISOString().slice(0, 10);
     }
 
 
@@ -2913,6 +3244,7 @@
       const symbol = getCurrencySymbol();
       const list = appData.reminders||[];
       const birthdays = appData.birthdays||[];
+      const recurring = appData.recurringExpenses||[];
       const today = new Date(); today.setHours(0,0,0,0);
       
       const sortedReminders = list.slice().sort((a,b)=> new Date(a.date)-new Date(b.date));
@@ -2922,6 +3254,23 @@
         const rDate = new Date(r.date); rDate.setHours(0,0,0,0);
         return !r.paid && rDate < today;
       });
+      
+      const predictedRecurrences = recurring
+          .map(r => {
+              const nextDateStr = calculateNextRecurrence(r.lastDate, r.frequency);
+              if (!nextDateStr) return null;
+              
+              const nextDate = new Date(nextDateStr);
+              const diffDays = Math.ceil((nextDate - today) / (1000 * 60 * 60 * 24));
+              
+              if (diffDays > 90 || diffDays < 0) return null; 
+              
+              return {
+                  ...r, nextDate: nextDateStr, status: `Previsto in ${diffDays} giorni`, amount: r.lastAmount
+              };
+          })
+          .filter(r => r !== null)
+          .sort((a, b) => new Date(a.nextDate) - new Date(b.nextDate));
       
       const types = FISCAL_REMINDER_TYPES;
       
@@ -2967,18 +3316,22 @@
           ${list.length? list.map(r=>`
             <div class="bg-white dark:bg-gray-800 p-4 rounded-xl card flex justify-between items-center">
               <div class="flex-grow">
-                ${type === 'payment' ? `<span class="text-xs font-semibold px-2 py-1 rounded-full ${pill(r)}">${r.paid?'PAGATO':r.type}</span>` : ''}
+                ${type === 'payment' ? `<span class="text-xs font-semibold px-2 py-1 rounded-full ${pill(r)}">${r.paid?'PAGATO':r.type}</span>` : type === 'recurring' ? `<span class="text-xs font-semibold px-2 py-1 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300">PREVISTO (${r.frequency.toUpperCase().slice(0,1)})</span>` : ''}
                 
-                <p class="font-bold mt-1 ${r.paid?'line-through text-gray-500':'text-gray-800 dark:text-gray-200'}">${type === 'payment' ? r.description : r.name}</p>
+                <p class="font-bold mt-1 ${r.paid?'line-through text-gray-500':'text-gray-800 dark:text-gray-200'}">${type === 'payment' ? r.description : r.name || r.description}</p>
                 
                 ${type === 'payment' ? 
                     `<p class="text-sm text-gray-600 dark:text-gray-400">Scadenza: ${new Date(r.date).toLocaleDateString('it-IT')} | Importo: ${r.amount.toFixed(2)} ${symbol}</p>` :
-                    `<p class="text-sm text-gray-600 dark:text-gray-400">Data: ${r.annualDate} | Età: ${r.age} | ${r.status}</p>`}
+                type === 'recurring' ?
+                    `<p class="text-sm text-gray-600 dark:text-gray-400">Previsto il: ${new Date(r.nextDate).toLocaleDateString('it-IT')} | Est: ${r.amount.toFixed(2)} ${symbol} | ${r.status}</p>` :
+                    `<p class="text-sm text-gray-600 dark:text-gray-400">Ricorre il: ${r.annualDate} | Età Proiettata: ${r.age} | ${r.status}</p>`}
               </div>
               <div class="flex space-x-2">
-                ${type === 'payment' ? 
-                    `<button onclick="toggleReminderPaid(${r.id})" class="text-sm px-3 py-1 rounded-lg ${r.paid?'bg-orange-500 hover:bg-orange-600':'bg-emerald-500 hover:bg-emerald-600'} text-white">${r.paid?'Annulla Pag.':'Paga'}</button>` : ''}
-                <button onclick="${type === 'payment' ? `deleteReminder(${r.id})` : `deleteBirthday(${r.id})`}" class="text-red-400 hover:text-red-600">🗑️</button>
+                ${r.isFiscal && !r.paid && r.type.startsWith('IVA') && appData.fiscalParams.regime === 'forfettario' ? 
+                    `<button onclick="markTaxPaid(${r.id}, ${Math.abs(r.amount)})" class="text-sm px-3 py-1 rounded-lg bg-red-600 hover:bg-red-700 text-white">Paga (Accant.)</button>` : 
+                    (type === 'payment' && !r.isFiscal ? 
+                    `<button onclick="toggleReminderPaid(${r.id})" class="text-sm px-3 py-1 rounded-lg ${r.paid?'bg-orange-500 hover:bg-orange-600':'bg-emerald-500 hover:bg-emerald-600'} text-white">${r.paid?'Annulla Pag.':'Paga'}</button>` : '')}
+                <button onclick="${type === 'payment' ? `deleteReminder(${r.id})` : (type === 'birthday' ? `deleteBirthday(${r.id})` : `showToast('Non eliminabile da qui.', 'red')`)}" class="text-red-400 hover:text-red-600">🗑️</button>
               </div>
             </div>
           `).join(''):'<p class="text-gray-500">Nessun promemoria in questa categoria.</p>'}
@@ -2989,49 +3342,54 @@
         <div class="space-y-6">
           <h2 class="text-2xl font-semibold border-b pb-2 text-gray-700 dark:text-gray-300">Promemoria Scadenze & Eventi</h2>
           
-          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card mt-6">
-            <h3 class="text-xl font-medium mb-4 text-pink-600">Aggiungi Compleanno 🎂</h3>
-            <form id="birthday-form" onsubmit="event.preventDefault(); handleBirthdaySubmit();" class="space-y-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome</label>
-                <input id="birthday-name" name="name" required placeholder="Es. Mario Rossi" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data di Nascita (Anno opzionale)</label>
-                <input type="date" id="birthday-date" name="date" value="${new Date().toISOString().slice(0,10)}" required class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
-              </div>
-              <button type="submit" class="cta-button w-full bg-pink-500 text-white p-3 rounded-lg font-bold hover:bg-pink-600">Aggiungi Compleanno</button>
-            </form>
-          </div>
-
           ${reminderSection(sortedBirthdays, 'Compleanni in Arrivo 🎂', 'birthday')}
+          
+          ${reminderSection(predictedRecurrences, 'Spese Ricorrenti Previste (90gg) 🔮', 'recurring')}
 
-          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card mt-6">
-            <h3 class="text-xl font-medium mb-4 text-emerald-600">Aggiungi Nuovo Promemoria (Pagamento)</h3>
-            <form id="reminder-form" onsubmit="event.preventDefault(); handleReminderSubmit();" class="space-y-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipo Scadenza</label>
-                <select id="reminder-type" name="type" required class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
-                  ${types.map(t=>`<option value="${t}">${t}</option>`).join('')}
-                </select>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Descrizione</label>
-                <input id="reminder-description" name="description" required placeholder="Es. TARI 2° Rata" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
-              </div>
-              <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card mt-6">
+              <h3 class="text-xl font-medium mb-4 text-pink-600">Aggiungi Compleanno 🎂</h3>
+              <form id="birthday-form" onsubmit="event.preventDefault(); handleBirthdaySubmit();" class="space-y-4">
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data Scadenza</label>
-                  <input type="date" id="reminder-date" name="date" value="${new Date().toISOString().slice(0,10)}" required class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome</label>
+                  <input id="birthday-name" name="name" required placeholder="Es. Mario Rossi" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
+                </div>
+                <div class="mb-4">
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data di Nascita (Anno opzionale)</label>
+                  <input type="date" id="birthday-date" name="date" value="${new Date().toISOString().slice(0,10)}" required class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
+                </div>
+                <button type="submit" class="cta-button w-full bg-pink-500 text-white p-3 rounded-lg font-bold hover:bg-pink-600">Aggiungi Compleanno</button>
+              </form>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card mt-6">
+              <h3 class="text-xl font-medium mb-4 text-emerald-600">Aggiungi Nuovo Promemoria (Pagamento)</h3>
+              <form id="reminder-form" onsubmit="event.preventDefault(); handleReminderSubmit();" class="space-y-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipo Scadenza</label>
+                  <select id="reminder-type" name="type" required class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
+                    ${types.map(t=>`<option value="${t}">${t}</option>`).join('')}
+                  </select>
                 </div>
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Importo (${symbol})</label>
-                  <input type="number" id="reminder-amount" name="amount" step="0.01" min="0" required placeholder="500.00" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Descrizione</label>
+                  <input id="reminder-description" name="description" required placeholder="Es. TARI 2° Rata" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
                 </div>
-              </div>
-              <button type="submit" class="cta-button w-full bg-emerald-500 text-white p-3 rounded-lg font-bold hover:bg-emerald-600">Aggiungi Promemoria</button>
-            </form>
+                <div class="grid grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data Scadenza</label>
+                    <input type="date" id="reminder-date" name="date" value="${new Date().toISOString().slice(0,10)}" required class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Importo (${symbol})</label>
+                    <input type="number" id="reminder-amount" name="amount" step="0.01" placeholder="500.00" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700" required>
+                  </div>
+                </div>
+                <button type="submit" class="cta-button w-full bg-emerald-500 text-white p-3 rounded-lg font-bold hover:bg-emerald-600">Aggiungi Promemoria</button>
+              </form>
+            </div>
           </div>
+
 
           ${reminderSection(overdueReminders,'Scaduti (Urgenti) 🚨', 'payment')}
           ${reminderSection(upcomingReminders,'In Arrivo 📅', 'payment')}
@@ -3047,6 +3405,7 @@
             const value = localStorage.getItem(key);
             total += key.length + value.length;
         }
+        // Converti in MB e arrotonda
         return (total / (1024 * 1024)).toFixed(2);
     }
 
@@ -3060,7 +3419,7 @@
       const currentFiscal = appData.fiscalParams;
       const currentBankBalance = appData.currentBankBalance || 0;
       
-      // Diagnostica
+      // *** RESILIENZA: Dati di Diagnostica ***
       const storageSize = getLocalStorageSize();
       const storageColor = storageSize > 4 ? 'text-red-500' : (storageSize > 2 ? 'text-orange-500' : 'text-emerald-500');
       const dataChecksumStatus = localStorage.getItem(`${globalState.currentUser.dataKey}_checksum`) === appData.dataChecksum ? '✅ Congruo' : '⚠️ Non Congruo (Rischio)';
@@ -3242,6 +3601,84 @@
         </div>
       `;
     }
+    
+    function saveMonthlyTarget() {
+        const input = document.getElementById('monthly-target');
+        const target = parseFloat(input?.value) || 0;
+
+        showModal('Conferma Obiettivo', `Impostare l'obiettivo di risparmio su: ${target.toFixed(2)} ${getCurrencySymbol()}?`, true, () => {
+            appData.monthlySavingsTarget = target;
+            saveData();
+            showToast('Obiettivo risparmio salvato!');
+            renderPage('settings');
+        });
+    }
+
+    function changeCurrencySymbol() {
+        const symbolInput = document.getElementById('currency-symbol-input');
+        const newSymbol = symbolInput?.value.trim() || '€';
+
+        if (newSymbol.length > 2) {
+            showToast('Il simbolo valuta dovrebbe essere al massimo di 2 caratteri.', 'red');
+            return;
+        }
+
+        showModal('Conferma Valuta', `Impostare il simbolo valuta su: ${newSymbol}?`, true, () => {
+            appData.currencySymbol = newSymbol;
+            saveData();
+            renderPage('settings');
+            showToast('Simbolo Valuta aggiornato!');
+        });
+    }
+
+    function saveBankBalance() {
+        const balanceInput = document.getElementById('current-bank-balance');
+        const newBalance = parseFloat(balanceInput?.value) || 0;
+
+        showModal('Conferma Saldo Base', `Aggiornare il saldo base di cassa a: ${newBalance.toFixed(2)} ${getCurrencySymbol()}?`, true, () => {
+            appData.currentBankBalance = newBalance;
+            appData.taxCashReserve = 0; // Reset della cassa accantonamenti (misura di sicurezza)
+            saveData();
+            showToast('Saldo Base aggiornato! (Cassa Accantonamenti azzerata).');
+            renderPage('settings');
+        });
+    }
+
+    function saveFiscalParams() {
+        const regime = document.getElementById('fiscal-regime').value;
+        const profitRate = parseFloat(document.getElementById('fiscal-profit-rate').value) / 100;
+        const taxRate = parseFloat(document.getElementById('fiscal-tax-rate').value) / 100;
+        const inpsRate = parseFloat(document.getElementById('fiscal-inps-rate').value) / 100;
+
+        if (regime === 'forfettario' && (profitRate <= 0 || profitRate > 1 || taxRate < 0 || taxRate > 0.5)) {
+            showToast('Valori per Forfettario non validi (Profit 1-100%, Tax 0-50%).', 'red');
+            return;
+        }
+        
+        showModal('Conferma Parametri Fiscali', `Sei sicuro di voler aggiornare i parametri fiscali? Questo influenzerà le future simulazioni.`, true, () => {
+            appData.fiscalParams = {
+                regime,
+                profitRate: regime === 'forfettario' ? profitRate : DEFAULT_FISCAL_PARAMS.profitRate,
+                taxRate: regime === 'forfettario' ? taxRate : DEFAULT_FISCAL_PARAMS.taxRate,
+                inpsRate
+            };
+            saveData();
+            showToast('Parametri Fiscali salvati!');
+            renderPage('settings');
+        });
+    }
+
+    function saveCategoryBudget(category, amountStr) {
+        const amount = parseFloat(amountStr) || 0;
+
+        showModal('Conferma Budget', `Impostare il budget per "${category}" a ${amount.toFixed(2)} ${getCurrencySymbol()}?`, true, () => {
+            appData.categoryBudgets[category] = amount;
+            saveData();
+            showToast(`Budget per ${category} salvato!`);
+            renderPage('settings');
+        });
+    }
+
 
     function changePin() {
       const currentPinInput = document.getElementById('current-pin');
@@ -3268,6 +3705,17 @@
 
       showModal('Conferma Cambio PIN', `Sei sicuro di voler cambiare il PIN?`, true, () => {
         appData.pinHash = newPinHash;
+        
+        // Aggiorna l'hash PIN anche nel Global State
+        const user = globalState.currentUser;
+        if (user) {
+             const userIndex = globalState.users.findIndex(u => u.dataKey === user.dataKey);
+             if (userIndex > -1) {
+                globalState.users[userIndex].pinHash = newPinHash;
+                saveGlobalState(); 
+             }
+        }
+
         saveData();
         currentPinInput.value = '';
         newPinInput.value = '';
@@ -3276,6 +3724,42 @@
       });
     }
     
+    function deleteCurrentUserProfile() {
+        showModal('🚨 ELIMINAZIONE PROFILO CRITICA', 
+            `Sei assolutamente sicuro di voler eliminare il profilo "${globalState.currentUser.name}"? Tutti i dati (transazioni, promemoria, impostazioni) saranno persi permanentemente dal dispositivo.`, 
+            true, 
+            () => {
+                const userKey = globalState.currentUser.dataKey;
+                const userIndex = globalState.users.findIndex(u => u.dataKey === userKey);
+                
+                // 1. Rimuovi i dati locali
+                localStorage.removeItem(userKey);
+                localStorage.removeItem(`${userKey}_checksum`);
+                
+                // 2. Rimuovi l'utente dal Global State
+                if (userIndex > -1) {
+                    globalState.users.splice(userIndex, 1);
+                }
+                
+                // 3. Imposta un nuovo utente corrente (il primo rimasto)
+                if (globalState.users.length > 0) {
+                    globalState.currentUser = globalState.users[0];
+                    sessionStorage.removeItem(SESSION_STORAGE_PIN_KEY);
+                    saveGlobalState();
+                    loadData();
+                    setupPinLock();
+                    showToast(`Profilo "${userKey.replace('smartFinApp_data_', '')}" eliminato. Caricato il prossimo profilo.`, 'red');
+                } else {
+                    // Se non ci sono più utenti, resetta tutto
+                    localStorage.removeItem(GLOBAL_KEY);
+                    window.location.reload(); 
+                }
+            }, 
+            () => showToast('Eliminazione annullata.')
+        );
+    }
+    
+
     function checkReminders(){
       const today=new Date();
       
@@ -3298,13 +3782,16 @@
         const diffDays = Math.ceil((recurrence - today) / (1000 * 60 * 60 * 24));
         
         if (diffDays >= 0 && diffDays <= 7) {
-            const age = today.getFullYear() - bdDate.getFullYear();
+            let age = today.getFullYear() - bdDate.getFullYear();
+            if (new Date(`${today.getFullYear()}-${bdMonthDay}`) > today) age -= 1;
+            
             if (Notification.permission === 'granted') {
                 new Notification(`🎂 Compleanno di ${bd.name}`, { body: diffDays === 0 ? `Compie ${age} anni oggi!` : `Compie ${age} anni in ${diffDays} giorni.` });
             }
         }
       });
       
+      // *** RESILIENZA: Check Saldo Cassa Accantonamenti ***
       if (appData.taxCashReserve < 0) {
            showToast(`ATTENZIONE: Cassa Tasse/INPS è in deficit di ${Math.abs(appData.taxCashReserve).toFixed(2)} ${getCurrencySymbol()}. Rivedi gli accantonamenti fiscali!`, 'red');
       }
@@ -3318,8 +3805,14 @@
       const area=document.getElementById('content-area');
       const qa=document.getElementById('quick-actions');
 
-      if (pageId==='activity'||pageId==='personal'){ qa.classList.remove('hidden'); qa.classList.add('flex','justify-center'); }
-      else { qa.classList.add('hidden'); qa.classList.remove('flex','justify-center'); }
+      if (pageId==='activity'||pageId==='personal'){ 
+        qa.classList.remove('hidden'); 
+        qa.classList.add('flex','justify-center'); 
+      }
+      else { 
+        qa.classList.add('hidden'); 
+        qa.classList.remove('flex','justify-center'); 
+      }
 
       document.getElementById('transaction-form')?.removeAttribute('data-transaction-id');
       
@@ -3340,17 +3833,19 @@
           clearTimeout(simulationTimer);
           break;
         case 'report':
+          loadReportFilters();
           area.innerHTML = renderReportPage();
           updateReportDateInput(); 
           
-          const allTx = [...appData.invoices.map(t=>({...t,isIncome:true})), ...appData.expenses.map(t=>({...t,isIncome:false}))];
-          renderTrendChart(allTx);
-          
+          renderTrendChart();
           // Correzione Filtro Ricerca
           const searchInput = document.getElementById('search');
           if (searchInput) searchInput.value = reportFilters.searchQuery;
           searchInput?.removeEventListener('input', handleReportSearchInput);
           searchInput?.addEventListener('input', handleReportSearchInput);
+          
+          // Esegue un update iniziale del dettaglio per assicurarsi che i dati visualizzati siano aggiornati
+          updateReportDetail(reportFilters.searchQuery);
           break;
         case 'reminders':
           area.innerHTML = renderRemindersPage();
@@ -3359,7 +3854,6 @@
           area.innerHTML = renderSettingsPage();
           document.getElementById('import-file')?.addEventListener('change', importDataFile);
           document.getElementById('clean-btn')?.addEventListener('click', ()=> cleanDataByYear(document.getElementById('clean-year').value));
-          document.getElementById('currency-symbol-input')?.addEventListener('input', changeCurrencySymbol);
           break;
       }
     }
@@ -3368,15 +3862,15 @@
     function handleReportSearchInput(e) {
         const query = e.target.value;
         reportFilters.searchQuery = query; 
-        
-        // Aggiorniamo solo il Dettaglio
+        // Invece di chiamare renderPage (che è pesante), aggiorniamo solo il Dettaglio
         updateReportDetail(query);
+        // Salviamo lo stato subito dopo l'aggiornamento
+        saveReportFilters();
     }
-    
     // --- PWA ---
     function installManifest(){
       const manifest = {
-        name: "Finanza Smart PRO++",
+        name: "Finanza Smart PRO",
         short_name: "FinanzaPRO",
         start_url: ".",
         display: "standalone",
@@ -3385,6 +3879,20 @@
         icons: [
           { src:"https://fav.farm/✅", sizes:"192x192", type:"image/png" },
           { src:"https://fav.farm/💶", sizes:"512x512", type:"image/png" }
+        ],
+        shortcuts: [
+            {
+                name: "Registra Entrata", short_name: "Entrata",
+                description: "Apri il modulo rapido per registrare un'entrata.", url: "/?shortcut=income"
+            },
+            {
+                name: "Registra Uscita", short_name: "Uscita",
+                description: "Apri il modulo rapido per registrare un'uscita.", url: "/?shortcut=expense"
+            },
+            {
+                name: "Riepilogo", short_name: "Riepilogo",
+                description: "Visualizza il report finanziario.", url: "/?shortcut=report"
+            }
         ]
       };
       const blob = new Blob([JSON.stringify(manifest)], {type:'application/json'});
@@ -3394,24 +3902,32 @@
 
     async function installServiceWorker(){
       if (!('serviceWorker' in navigator)) return;
+      // Aggiornamento della cache per Enterprise-Level
+      const SW_CACHE_NAME = 'finanza-smart-v7-enterprise'; 
       const swCode = `
-        const CACHE = 'finanza-smart-v7-pro'; 
+        const CACHE = '${SW_CACHE_NAME}'; 
         self.addEventListener('install', e=>{
+          // Pre-cache l'index
           e.waitUntil(caches.open(CACHE).then(c=>c.addAll(['./'])));
           self.skipWaiting();
         });
         self.addEventListener('activate', e=>{
+          // Pulisce le vecchie cache
           e.waitUntil(caches.keys().then(keys=>Promise.all(keys.map(k=> k===CACHE?null:caches.delete(k)))));
           self.clients.claim();
         });
         self.addEventListener('fetch', e=>{
           const req = e.request;
+          // Strategia Cache-First, con fallback a Network, poi aggiornamento della cache
           e.respondWith(
             caches.match(req).then(res=> res || fetch(req).then(fr=>{
               const copy = fr.clone();
-              caches.open(CACHE).then(c=> c.put(req, copy)).catch(()=>{});
+              // Non cacheare file esterni o API di terze parti
+              if (req.url.startsWith(self.location.origin)) {
+                caches.open(CACHE).then(c=> c.put(req, copy)).catch(()=>{});
+              }
               return fr;
-            }).catch(()=>res))
+            }).catch(()=>res)) // Se la rete fallisce, restituisci comunque la cache se presente
           );
         });
       `;
@@ -3442,10 +3958,10 @@
       const appContainer = document.getElementById('app');
       appContainer?.addEventListener('change', (e) => {
           if (currentPage === 'report') {
+              // Quando cambiano i filtri principali (che richiedono un ricaricamento totale della pagina)
               if (e.target.id === 'report-type' || e.target.id === 'filter-category' || e.target.id === 'filter-tag' || e.target.id === 'sort-key' || e.target.id === 'sort-direction') {
                   const searchInput = document.getElementById('search');
                   if (searchInput) reportFilters.searchQuery = searchInput.value;
-                  
                   renderPage('report');
               }
           }
@@ -3453,8 +3969,9 @@
       appContainer?.addEventListener('input', (e) => {
           if (currentPage === 'report') {
               if (e.target.id === 'filter-date') {
+                  // Salviamo la data e ricarichiamo (perché i tipi di input sono diversi: date/month/number)
                   reportFilters.filterDateStr = e.target.value;
-                  if (e.target.type === 'number' || e.target.type === 'month') renderPage('report');
+                  if (e.target.type === 'number' || e.target.type === 'month' || e.target.type === 'date') renderPage('report');
               }
           }
       });
@@ -3473,6 +3990,7 @@
                   }
               }
               
+              // Evita di attivare scorciatoie se siamo in un campo di input
               if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') {
                   return;
               }
@@ -3487,12 +4005,15 @@
           }
       });
       
+      // Chiede il permesso per le notifiche (per i promemoria fiscali)
       if (Notification.permission!=='granted') Notification.requestPermission();
+      // Controlla i promemoria ogni ora
       setInterval(checkReminders, 60*60*1000); 
       
       installManifest();
       installServiceWorker();
       
+      // Gestione degli Shortcut PWA
       const urlParams = new URLSearchParams(window.location.search);
       const shortcut = urlParams.get('shortcut');
       if (shortcut) {
