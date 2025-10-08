@@ -1145,7 +1145,8 @@
         
         // Calcola il saldo corrente (Saldo Base + Netto transazioni dall'inizio)
         const summarySinceStart = calculateFinancialSummary('global', 'all', 'all');
-        let currentBalance = (parseFloat(appData.currentBankBalance) || 0) + summarySinceStart.netBalance;
+        let currentBalance = (parseFloat(appData.currentBankBalance) || 0);
+        currentBalance += summarySinceStart.transactions.reduce((acc, t) => acc + (t.gross * (t.isIncome ? 1 : -1)), 0);
         
         const monthlyProjection = [];
 
@@ -1160,10 +1161,13 @@
 
             // Aggiungi ricorrenze previste
             appData.recurringExpenses.forEach(r => {
-                const nextDateStr = calculateNextRecurrence(r.lastDate, r.frequency, date);
-                if (nextDateStr && new Date(nextDateStr).getMonth() === date.getMonth() && new Date(nextDateStr).getFullYear() === date.getFullYear()) {
-                    const isIncome = r.isIncome || appData.invoices.some(i => i.description === r.description);
-                    monthFlow += isIncome ? r.lastAmount : -r.lastAmount;
+                const nextDateStr = calculateNextRecurrence(r.lastDate, r.frequency);
+                if (nextDateStr) {
+                    const nextDate = new Date(nextDateStr);
+                    if (nextDate.getMonth() === date.getMonth() && nextDate.getFullYear() === date.getFullYear()) {
+                        const isIncome = r.isIncome || appData.invoices.some(i => i.description === r.description);
+                        monthFlow += isIncome ? r.lastAmount : -r.lastAmount;
+                    }
                 }
             });
 
@@ -1252,7 +1256,8 @@
         const avgMonthlyExpense = kpis.avgExpense; 
         
         const summarySinceStart = calculateFinancialSummary('global', 'all', 'all');
-        let currentLiquidita = (parseFloat(appData.currentBankBalance) || 0) + summarySinceStart.netBalance;
+        let currentLiquidita = (parseFloat(appData.currentBankBalance) || 0);
+        currentLiquidita += summarySinceStart.transactions.reduce((acc, t) => acc + (t.gross * (t.isIncome ? 1 : -1)), 0);
         
         if (avgMonthlyExpense <= 0) return 99; 
         
@@ -1425,6 +1430,7 @@
     function addFutureRecurrenceReminders(rec) {
         const reminderList = appData.reminders;
         const today = new Date();
+        today.setHours(0,0,0,0);
         let lastDate = new Date(rec.lastDate);
         let nextDate = calculateNextRecurrence(rec.lastDate, rec.frequency);
         
@@ -1466,7 +1472,7 @@
     }
     
     function saveTransaction(isIncome, data){
-      const list = isIncome ? appData.invoices : appData.expenses;
+      const list = isIncome ? appData.invoices : appData.expenses; // List dove inserire la transazione
       
       const net = parseFloat(data.net)||0;
       const vatRate = parseFloat(data.vatRate)||0;
@@ -1526,10 +1532,22 @@
 
       if (data.id){
         const idx = list.findIndex(i=>i.id===data.id);
-        if (idx>-1){ list[idx]=updatedItem; showToast(`Transazione ID ${data.id} aggiornata!`); }
-      } else { list.push(updatedItem); showToast(`"${updatedItem.description}" registrato!`); }
+        if (idx>-1){ 
+            list[idx]=updatedItem; 
+            showToast(`Transazione ID ${data.id} aggiornata!`); 
+        }
+      } else { 
+          // FIX: Utilizzare la lista corretta (invoices o expenses)
+          if (isIncome) {
+              appData.invoices.push(updatedItem);
+          } else {
+              appData.expenses.push(updatedItem);
+          }
+          showToast(`"${updatedItem.description}" registrato!`); 
+      }
 
-      saveData(); closeTransactionForm(); 
+      saveData(); 
+      closeTransactionForm(); 
     }
     
     function handleTransactionSubmit(type){
@@ -1831,7 +1849,7 @@
       showToast('Export CSV pronto (testo con 3 sezioni).');
     }
 
-    // *** NUOVA FUNZIONE: Esportazione PDF Avanzata (Logica implementata nel PDFGenerator) ***
+    // *** NUOVA FUNZIONE: Esportazione PDF Avanzata (Categoria/Mese) ***
     function exportPDF() {
         // Usa i filtri correnti salvati in reportFilters
         const currentType = reportFilters.type;
@@ -1962,6 +1980,30 @@
         });
 
         // --- Pie di pagina e Salvataggio ---
+        doc.setLineWidth(0.5);
+        doc.line(margin, y, doc.internal.pageSize.width - margin, y);
+        y += lineHeight;
+        
+        doc.setTextColor(0, 0, 0); 
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'bold');
+        
+        // Calcola i totali finali
+        const totalGross = transactionsToExport.reduce((sum, t) => sum + (t.gross * (t.isIncome ? 1 : -1)), 0);
+        const totalNet = transactionsToExport.reduce((sum, t) => sum + (t.net * (t.isIncome ? 1 : -1)), 0);
+        const totalVat = transactionsToExport.reduce((sum, t) => sum + (t.vatAmount * (t.isIncome ? 1 : -1)), 0);
+
+        doc.text(`Netto Totale: ${totalNet.toFixed(2)} ${symbol}`, margin, y);
+        y += lineHeight;
+        doc.text(`IVA Totale: ${totalVat.toFixed(2)} ${symbol}`, margin, y);
+        y += lineHeight;
+        
+        const grossColor = totalGross >= 0 ? 16 : 239; 
+        doc.setTextColor(grossColor, grossColor === 16 ? 185 : 68, grossColor === 16 ? 129 : 68);
+        doc.text(`SALDO LORDO: ${totalGross.toFixed(2)} ${symbol}`, margin, y);
+        doc.setFont(undefined, 'normal');
+
+
         const filename = `Report_FinanzaPRO_${currentType}_${filterDateStr}_${new Date().toISOString().slice(0, 10)}.pdf`;
         doc.save(filename);
         showToast('Report PDF (categoria/mese) generato e scaricato!');
@@ -2658,7 +2700,8 @@
         futureDate.setDate(today.getDate() + 90);
         
         const summarySinceStart = calculateFinancialSummary('global', 'all', 'all');
-        let netProjection = (parseFloat(appData.currentBankBalance) || 0) + summarySinceStart.netBalance;
+        let netProjection = (parseFloat(appData.currentBankBalance) || 0);
+        netProjection += summarySinceStart.transactions.reduce((acc, t) => acc + (t.gross * (t.isIncome ? 1 : -1)), 0);
 
         appData.recurringExpenses.forEach(r => {
             const nextDateStr = calculateNextRecurrence(r.lastDate, r.frequency);
@@ -3601,7 +3644,45 @@
         </div>
       `;
     }
+
+    function updateReportDateInput(){
+      const filterType = document.getElementById('filter-type')?.value;
+      const input = document.getElementById('filter-date');
+      if (!input) return;
+
+      let type='date', visible=true, def=new Date().toISOString().slice(0,10);
+      switch(filterType){
+        case 'year': 
+          type='number'; input.min=2000; input.max=new Date().getFullYear(); def=new Date().getFullYear(); 
+          break;
+        case 'month': 
+        case 'quarter': 
+          type='month'; def=new Date().toISOString().slice(0,7); 
+          break;
+        case 'week': 
+        case 'day': 
+          type='date'; def=new Date().toISOString().slice(0,10); 
+          break;
+        default: 
+          type='hidden'; visible=false; def='all';
+      }
+      
+      input.type=type; 
+      input.classList.toggle('hidden',!visible);
+      
+      if (visible && filterType!=='all') {
+          // Mantieni il valore se il tipo di filtro non è cambiato, altrimenti usa il default
+          input.value = filterType === reportFilters.filterType ? reportFilters.filterDateStr : def;
+      } else {
+          // Se il filtro è 'all', lo stato deve riflettere la data stringa corretta
+          reportFilters.filterDateStr = 'all';
+      }
+      
+      renderPage('report');
+    }
     
+    // Funzioni di supporto di Settings e Reminders (omesse qui per brevità, sono nella Parte 2 e Parte 3)
+    // ...
     function saveMonthlyTarget() {
         const input = document.getElementById('monthly-target');
         const target = parseFloat(input?.value) || 0;
@@ -3867,6 +3948,7 @@
         // Salviamo lo stato subito dopo l'aggiornamento
         saveReportFilters();
     }
+    
     // --- PWA ---
     function installManifest(){
       const manifest = {
