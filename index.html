@@ -17,7 +17,6 @@
     .bar-container { height:20px; border-radius:9999px; overflow:hidden; display:flex; }
     .bar-income{background-color:#10b981}.bar-expense{background-color:#ef4444}
     .bar-addebito{background-color:#fb923c}.bar-credito{background-color:#3b82f6}
-    /* CORREZIONE: Rimuoviamo la classe 'hidden' dall'HTML di base, la gestiamo solo con JS */
     #quick-actions{position:fixed;bottom:0;left:0;right:0;background:linear-gradient(to top,#fff, #fff8);padding:10px;box-shadow:0 -2px 10px rgba(0,0,0,.1);z-index:40;}
     /* Dark mode */
     .dark body, body.dark { background-color:#0f172a; color:#f1f5f9; }
@@ -92,16 +91,22 @@
 
     <div id="quick-actions" class="md:hidden"> 
       <div class="flex space-x-3 max-w-lg mx-auto">
-        <button onclick="quickRegister('true')"
+        <button onclick="openTransactionForm('true')"
           class="flex-1 bg-emerald-500 text-white p-3 rounded-xl font-bold hover:bg-emerald-600 shadow-xl transition transform hover:scale-[1.02] text-lg">
           💰 Registra Entrata (I)
         </button>
-        <button onclick="quickRegister('false')"
+        <button onclick="openTransactionForm('false')"
           class="flex-1 bg-red-500 text-white p-3 rounded-xl font-bold hover:bg-red-600 shadow-xl transition transform hover:scale-[1.02] text-lg">
           💸 Registra Uscita (E)
         </button>
       </div>
     </div>
+    
+    <div id="transaction-form-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 z-50 justify-center items-start p-4 overflow-y-auto">
+        <div id="transaction-form-content" class="bg-white p-6 rounded-xl w-full max-w-lg card mt-10 mb-10">
+            </div>
+    </div>
+
 
     <div id="modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 z-50 flex justify-center items-center p-4">
       <div class="bg-white p-6 rounded-xl w-full max-w-sm card">
@@ -241,9 +246,9 @@
 
     // --- UTILITY ---
     
-    // Aggiunta Logica di Debounce e Aggiornamento Parziale (Soluzione Lentezza)
+    // UTILITY DI DEBOUNCE (CORREZIONE LENTEZZA SIMULATORE)
     let simulationTimer = null;
-    const SIMULATION_DELAY = 500; // Ritardo di 500ms prima di ricalcolare
+    const SIMULATION_DELAY = 500; 
 
     function debounceSimulationUpdate() {
         if (simulationTimer) {
@@ -260,13 +265,11 @@
         const fiscalSim = calculateFiscalSimulation(new Date().getFullYear());
         const symbol = getCurrencySymbol();
         
-        // 1. Aggiorna il colore del bordo per mostrare che la simulazione è attiva
         const simCard = document.querySelector('.fiscal-simulation-card');
         if (simCard) {
             simCard.classList.remove('border-red-500', 'border-indigo-500');
             simCard.classList.add(fiscalSim.projectionIsActive ? 'border-indigo-500' : 'border-red-500');
             
-            // Aggiorna il titolo (What-If)
             const titleEl = simCard.querySelector('h3');
             if (titleEl) {
                 const fiscalTypeLabel = fiscalSim.fiscalParamsUsed.regime === 'forfettario' ? 'Forfettario' : 'Ordinario';
@@ -309,16 +312,13 @@
         const currentFiscal = fiscalSim.fiscalParamsUsed;
         const fiscalTaxLabel = currentFiscal.regime === 'forfettario' ? 'Aliquota Fiscale Simulato' : 'IRPEF Max Simulato (43%)';
         const profitRateLabel = currentFiscal.regime === 'forfettario' ? 'Coeff. Redditività Simulato' : 'Imponibile Base (Ricavi - Costi)';
-        const baseImponibileLabel = currentFiscal.regime === 'forfettario' ? `Base Imponibile (${(currentFiscal.profitRate * 100).toFixed(0)}%)` : `Base Imponibile Netta (IRPEF)`;
         
         document.querySelector('label[for="profit-rate-override"]').textContent = profitRateLabel;
         document.querySelector('label[for="tax-rate-override"]').textContent = fiscalTaxLabel;
         
         const baseImponibileSpan = document.querySelector('.base-imponibile-label');
-        if (baseImponibileSpan) baseImponibileSpan.textContent = baseImponibileLabel;
-        
+        if (baseImponibileSpan) baseImponibileSpan.textContent = fiscalSim.regime === 'forfettario' ? `Base Imponibile (${(currentFiscal.profitRate * 100).toFixed(0)}%)` : `Base Imponibile Netta (IRPEF)`;
     }
-    // Fine Aggiunta Debounce
     
     function getCurrencySymbol() {
         return appData.currencySymbol || '€';
@@ -337,7 +337,6 @@
             if (saved) {
                 const loadedFilters = JSON.parse(saved);
                 reportFilters = { ...reportFilters, ...loadedFilters };
-                // Correggi il bug del filtro searchQuery che non viene ripristinato correttamente
                 if (!loadedFilters.searchQuery) reportFilters.searchQuery = '';
             }
         } catch(e) { console.error('Errore caricamento filtri report', e); }
@@ -630,38 +629,50 @@
       setTimeout(()=>{ toast.classList.remove('opacity-100'); toast.classList.add('opacity-0'); }, 2500);
     }
 
-    // --- QUICK register (CORRETTO per tipo Entrata/Uscita) ---
-    function quickRegister(isIncomeString) {
-      const isIncome = isIncomeString === 'true';
-      document.getElementById('transaction-form-anchor')?.scrollIntoView({behavior:'smooth'});
-      
-      const isIncomeSelect = document.getElementById('isIncome');
-      if (isIncomeSelect){
-        isIncomeSelect.value = isIncomeString;
-        isIncomeSelect.dispatchEvent(new Event('change'));
-      }
-      
-      const form = document.getElementById('transaction-form');
-      if (form){
-        form.removeAttribute('data-transaction-id'); form.reset();
-        const submitBtn = form.querySelector('button[type="submit"]');
-        if (submitBtn){ submitBtn.textContent='Registra Movimento'; submitBtn.classList.remove('bg-blue-500','hover:bg-blue-600'); submitBtn.classList.add('bg-emerald-500','hover:bg-emerald-600'); }
+    // NUOVO: Gestione form in modale (per fluidità)
+    function openTransactionForm(isIncomeString, transactionId = null, transactionType = currentPage) {
+        const isIncome = isIncomeString === 'true';
+        const modal = document.getElementById('transaction-form-modal');
+        const content = document.getElementById('transaction-form-content');
+
+        content.innerHTML = renderTransactionForm(isIncome, transactionType); 
+        modal.style.display = 'flex';
         
-        // Reset default values
-        document.getElementById('date').value = new Date().toISOString().slice(0,10);
-        document.getElementById('net-amount').value = '0.00';
+        document.getElementById('isIncome').value = isIncomeString;
+        
+        setupActivityIncomeTypeListeners(transactionType);
+        setupContactAutocomplete(transactionType); 
+        setupCategoryAutocomplete();
         calculateGross();
-      }
-      
-      const incomeTypeSelect = document.getElementById('incomeType');
-      const currentScope = currentPage;
-      if (incomeTypeSelect && isIncome && currentScope === 'activity'){ 
-          incomeTypeSelect.value='Fattura (Cliente)'; 
-          incomeTypeSelect.dispatchEvent(new Event('change')); 
-      }
-      
-      showToast(isIncome?'Modulo pronto per Entrata!':'Modulo pronto per Uscita!','green');
+
+        if (transactionId !== null) {
+            editTransaction(isIncome, transactionId, transactionType, true); // true per modal-edit
+        } else {
+            // Quick registration setup
+            document.getElementById('date').value = new Date().toISOString().slice(0,10);
+            document.getElementById('net-amount').value = '0.00';
+            calculateGross();
+            
+            const incomeTypeSelect = document.getElementById('incomeType');
+            if (incomeTypeSelect && isIncome && transactionType === 'activity'){ 
+                incomeTypeSelect.value='Fattura (Cliente)'; 
+                incomeTypeSelect.dispatchEvent(new Event('change')); 
+            }
+            showToast(isIncome?'Modulo pronto per Entrata!':'Modulo pronto per Uscita!','green');
+        }
     }
+    
+    function closeTransactionForm() {
+        document.getElementById('transaction-form-modal').style.display = 'none';
+        document.getElementById('transaction-form-content').innerHTML = '';
+        renderPage(currentPage); // Refresh page per aggiornare la lista transazioni
+    }
+    
+    // Sostituisce quickRegister
+    function quickRegister(isIncomeString) {
+        openTransactionForm(isIncomeString);
+    }
+
 
     // --- Filters/period helpers (omitted for brevity) ---
     function filterByPeriod(itemDateStr, filterType, filterValue){
@@ -881,7 +892,6 @@
             scaglionePrecedenteLimite = scaglione.limite;
         }
         
-        // Per un simulatore semplificato non consideriamo le detrazioni IRPEF da lavoro autonomo.
         return irpef;
     }
 
@@ -966,9 +976,6 @@
         };
     }
     // --- Fine Core Calculations ---
-// ... (Il resto del codice continua nella parte 2)
-
-// Il resto del codice continua da qui (dopo la fine della funzione calculateFiscalSimulation)
 
     function calculateIvaQuarterly(year, quarter) {
         // Mesi inclusi nel trimestre (0-11)
@@ -1161,6 +1168,65 @@
     }
     // --- Fine Core Calculations ---
 
+    // --- NUOVA FUNZIONE: AutoFill / Smart Data ---
+    function autoFillSmartData(description) {
+        // Questa funzione viene chiamata durante l'input/caricamento. currentPage è l'ultimo render
+        const type = document.getElementById('transaction-type-hidden')?.value || currentPage; 
+        const isIncome = document.getElementById('isIncome')?.value === 'true';
+
+        if (!description || !type || type === 'report' || type === 'reminders' || type === 'settings') return;
+        
+        const desc = description.toLowerCase().trim();
+
+        // 1. Riconoscimento basato sull'ultima transazione con la stessa descrizione
+        const allTransactions = [...appData.invoices, ...appData.expenses];
+        const lastSimilarTransaction = allTransactions
+            .filter(t => t.description?.toLowerCase() === desc && (t.isIncome === isIncome) && t.type === type)
+            .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+
+        if (lastSimilarTransaction) {
+            document.getElementById('category').value = lastSimilarTransaction.category || 'Altro';
+            document.getElementById('vat-rate').value = lastSimilarTransaction.vatRate.toFixed(0);
+            if (isIncome && type === 'activity') {
+                document.getElementById('incomeType').value = lastSimilarTransaction.incomeType || 'Fattura (Cliente)';
+                document.getElementById('incomeType').dispatchEvent(new Event('change'));
+            }
+            calculateGross();
+            showToast(`Dati suggeriti in base a "${lastSimilarTransaction.description}".`);
+            return;
+        }
+
+        // 2. Riconoscimento basato su parole chiave generiche (Pattern Matching)
+        let suggestedCategory = null;
+        let suggestedVatRate = 0; // Tasso di default per non attività o non fatturabile
+        
+        if (type === 'personal') {
+            if (desc.includes('affitto') || desc.includes('mutuo')) suggestedCategory = 'Affitto';
+            else if (desc.includes('bolletta') || desc.includes('luce') || desc.includes('gas') || desc.includes('acqua')) suggestedCategory = 'Bollette';
+            else if (desc.includes('supermercato') || desc.includes('spesa') || desc.includes('alimentari')) suggestedCategory = 'Spesa';
+            else if (desc.includes('ristorante') || desc.includes('pizzeria')) suggestedCategory = 'Ristoranti';
+            else if (desc.includes('abbonamento') || desc.includes('netflix') || desc.includes('spotify')) suggestedCategory = 'Abbonamenti';
+            
+            suggestedVatRate = 0; 
+        } 
+        
+        if (type === 'activity') {
+            suggestedVatRate = 22; // Default per attività (l'utente può correggere)
+            if (desc.includes('carburante') || desc.includes('benzina') || desc.includes('diesel')) suggestedCategory = 'Carburante';
+            else if (desc.includes('marketing') || desc.includes('ads') || desc.includes('pubblicit')) suggestedCategory = 'Marketing';
+            else if (desc.includes('consulenza') || desc.includes('servizi') || desc.includes('cloud')) suggestedCategory = 'Servizi';
+            else if (desc.includes('stipendio') || desc.includes('pagamento fornitore') || desc.includes('dipendente')) suggestedCategory = 'Stipendi';
+        }
+
+        if (suggestedCategory) {
+            document.getElementById('category').value = suggestedCategory;
+            document.getElementById('vat-rate').value = suggestedVatRate.toFixed(0);
+            calculateGross();
+            showToast(`Suggerimento: categoria impostata su "${suggestedCategory}".`);
+        }
+    }
+    // --- Fine NUOVA FUNZIONE: AutoFill / Smart Data ---
+
 
     // --- Contacts / Categories helpers (omitted for brevity) ---
     function addContact(name, scope, relation){
@@ -1194,7 +1260,8 @@
         return totalExpense / totalMonths;
     }
 
-    function trackRecurringExpense(description, gross, date) {
+    // NUOVO: La logica qui genera transazioni future in appData.reminders
+    function trackRecurringExpense(description, gross, date, isIncome) {
         const desc = description.toLowerCase();
         
         const inferredFrequency = Object.keys(COMMON_FREQUENCIES).find(key => desc.includes(key)) 
@@ -1211,13 +1278,59 @@
             description: description,
             lastDate: date,
             lastAmount: +gross.toFixed(2),
-            frequency: inferredFrequency
+            frequency: inferredFrequency,
+            isIncome: isIncome
         };
 
         if (existing) {
             Object.assign(existing, newRecord);
         } else {
             appData.recurringExpenses.push(newRecord);
+        }
+        
+        // Aggiunge anche i promemoria per i prossimi 12 mesi
+        addFutureRecurrenceReminders(newRecord);
+    }
+    
+    function addFutureRecurrenceReminders(rec) {
+        const reminderList = appData.reminders;
+        const today = new Date();
+        let lastDate = new Date(rec.lastDate);
+        let nextDate = calculateNextRecurrence(rec.lastDate, rec.frequency);
+        
+        // Rimuovi i vecchi promemoria basati su questa ricorrenza per evitare duplicati
+        appData.reminders = appData.reminders.filter(r => !r.recurringKey || r.recurringKey !== rec.key);
+
+        for (let i = 0; i < 12; i++) {
+            if (!nextDate) break;
+
+            const nextDateObj = new Date(nextDate);
+            if (nextDateObj < today) {
+                // Passa alla prossima ricorrenza se è già passata
+                lastDate = nextDateObj;
+                nextDate = calculateNextRecurrence(lastDate.toISOString().slice(0, 10), rec.frequency);
+                continue;
+            }
+
+            // Verifica se il promemoria esiste già (anche se abbiamo filtrato per chiavi)
+            const exists = reminderList.some(r => r.date === nextDate && r.description === rec.description);
+            
+            if (!exists) {
+                appData.reminders.push({
+                    id: getNextId(),
+                    type: rec.isIncome ? 'Entrata Ricorrente' : 'Uscita Ricorrente',
+                    description: rec.description,
+                    date: nextDate,
+                    amount: rec.isIncome ? -rec.lastAmount : rec.lastAmount, // Nota: L'uscita è positiva nell'importo del promemoria
+                    paid: false,
+                    isFiscal: false,
+                    recurringKey: rec.key
+                });
+            }
+            
+            // Calcola la prossima data
+            lastDate = nextDateObj;
+            nextDate = calculateNextRecurrence(lastDate.toISOString().slice(0, 10), rec.frequency);
         }
     }
 
@@ -1251,11 +1364,12 @@
         vatRate: +vatRate,
         vatAmount: +vatAmount.toFixed(2),
         gross: +gross.toFixed(2),
+        isIncome: isIncome, // Aggiunto per coerenza
         incomeType: data.incomeType || (isIncome && data.dataType==='activity' ? 'Fattura (Cliente)' : null)
       };
       
-      if (!isIncome && data.dataType === 'personal' && updatedItem.description) {
-          trackRecurringExpense(updatedItem.description, updatedItem.gross, updatedItem.date);
+      if (updatedItem.description) {
+          trackRecurringExpense(updatedItem.description, updatedItem.gross, updatedItem.date, isIncome);
       }
       
       // CORREZIONE FORNITORE: Se è un'uscita (Attività o Personale) o un'entrata Attività (Fattura)
@@ -1288,7 +1402,7 @@
         if (idx>-1){ list[idx]=updatedItem; showToast(`Transazione ID ${data.id} aggiornata!`); }
       } else { list.push(updatedItem); showToast(`"${updatedItem.description}" registrato!`); }
 
-      saveData(); renderPage(currentPage);
+      saveData(); closeTransactionForm(); // Chiude il form dopo il salvataggio
     }
     
     function handleTransactionSubmit(type){
@@ -1331,9 +1445,7 @@
           }
           
           saveTransaction(isIncome, payload);
-          form.reset();
-          form.removeAttribute('data-transaction-id');
-          document.getElementById('description-label').textContent = isIncome ? 'Cliente / Descrizione' : 'Fornitore / Descrizione';
+          // La chiusura del form avviene in saveTransaction per gestire i flussi asincroni di modal
       } else {
         showToast('Compila tutti i campi richiesti.','red');
       }
@@ -1349,15 +1461,20 @@
       }
     }
     
-    function editTransaction(isIncome, id, type) {
+    // Il parametro `inModal` indica se siamo chiamati dalla UI a schermo intero (modale)
+    function editTransaction(isIncome, id, type, inModal = false) {
         const transaction = getTransactionById(isIncome, id);
         if (!transaction) { showToast('Transazione non trovata.', 'red'); return; }
 
-        document.getElementById('transaction-form-anchor')?.scrollIntoView({ behavior: 'smooth' });
+        if (!inModal) {
+            openTransactionForm(isIncome ? 'true' : 'false', id, type);
+            return;
+        }
+
         const form = document.getElementById('transaction-form');
         form.reset(); 
         form.setAttribute('data-transaction-id', transaction.id);
-
+        
         document.getElementById('isIncome').value = isIncome ? 'true' : 'false';
         document.getElementById('isIncome').dispatchEvent(new Event('change'));
 
@@ -1372,6 +1489,9 @@
         document.getElementById('tags').value = (transaction.tags || []).join(', ');
         document.getElementById('net-amount').value = transaction.net.toFixed(2);
         document.getElementById('vat-rate').value = transaction.vatRate.toFixed(0);
+        
+        // NUOVO: Ricarica i suggerimenti smart in base alla descrizione originale
+        autoFillSmartData(transaction.description || '');
 
         calculateGross();
         
@@ -1388,18 +1508,21 @@
         const transaction = getTransactionById(isIncome, id);
         if (!transaction) { showToast('Transazione non trovata.', 'red'); return; }
 
-        editTransaction(isIncome, id, type); 
+        openTransactionForm(isIncome ? 'true' : 'false', null, type); 
+        
+        // Simula la modifica per caricare i dati
+        editTransaction(isIncome, id, type, true); 
         
         const form = document.getElementById('transaction-form');
-        form.removeAttribute('data-transaction-id');
-        
+        form.removeAttribute('data-transaction-id'); // Rimuovi ID per duplicare
+
         const submitBtn = form.querySelector('button[type="submit"]');
         if (submitBtn) {
             submitBtn.textContent = 'Registra Movimento (Duplicato)';
             submitBtn.classList.remove('bg-blue-500', 'hover:bg-blue-600');
             submitBtn.classList.add('bg-emerald-500', 'hover:bg-emerald-600');
         }
-        showToast(`Dati caricati per Duplicazione (Rimuovi/Modifica data e importo).`);
+        showToast(`Dati caricati per Duplicazione (Modifica data e importo).`);
     }
     // --- Transactions CRUD (END) ---
 
@@ -1673,7 +1796,86 @@
     // --- Import/Export/Clean (END) ---
 
 
-    // --- UI wiring (omitted for brevity) ---
+    // --- UI wiring (NUOVO MODULO TRANSAZIONE) ---
+    function renderTransactionForm(isIncome, type) {
+        const isActivity = type === 'activity';
+        const isIncomeString = isIncome ? 'true' : 'false';
+        const symbol = getCurrencySymbol();
+
+        return `
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-medium ${isIncome ? 'text-emerald-600' : 'text-red-600'}">
+                    Registra ${isIncome ? 'Entrata' : 'Uscita'} (${isActivity ? 'Attività' : 'Personale'})
+                </h3>
+                <button onclick="closeTransactionForm()" class="text-gray-500 hover:text-gray-800 dark:hover:text-gray-300 font-bold text-2xl">
+                    &times;
+                </button>
+            </div>
+            <form id="transaction-form" onsubmit="event.preventDefault(); handleTransactionSubmit('${type}');" class="space-y-4">
+              <input type="hidden" id="transaction-type-hidden" name="dataType" value="${type}">
+              <input type="hidden" id="isIncome" name="isIncome" value="${isIncomeString}">
+
+              <div class="grid grid-cols-1 ${isActivity?'md:grid-cols-2':''} gap-4">
+                <div>
+                  <label for="date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data</label>
+                  <input type="date" id="date" name="date" required class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
+                </div>
+                ${isActivity?`
+                <div id="income-type-control" class="${isIncome ? '' : 'hidden'}">
+                  <label for="incomeType" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sottotipo Entrata</label>
+                  <select id="incomeType" name="incomeType" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
+                    <option value="Fattura (Cliente)">Fattura (Cliente)</option>
+                    <option value="Incasso/Corrispettivo">Incasso/Corrispettivo (POS/Contanti)</option>
+                  </select>
+                </div>`:''}
+              </div>
+
+              <div id="description-div">
+                <label id="description-label" for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">${isIncome ? 'Cliente / Descrizione' : 'Fornitore / Descrizione'}</label>
+                <input type="text" id="description" name="description" required placeholder="Seleziona o digita" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
+                <datalist id="contact-list"></datalist>
+                <p class="text-xs text-gray-500 mt-1">Suggerimento: i nomi digitati vengono salvati nei contatti. <span class="text-indigo-500 font-semibold">⚡ Smart-fill attivo.</span></p>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label for="category" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Categoria</label>
+                  <input id="category" name="category" list="category-list" required placeholder="Es. Affitto / Marketing" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700"/>
+                  <datalist id="category-list"></datalist>
+                </div>
+                <div>
+                  <label for="tags" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tag (separati da virgola)</label>
+                  <input id="tags" name="tags" placeholder="es. Q3, fattura-ricorrente" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700"/>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label for="net-amount" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Importo Netto (${symbol})</label>
+                  <input type="number" id="net-amount" name="net" step="0.01" min="0" required placeholder="100.00" 
+                         class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700" 
+                         inputmode="decimal">
+                </div>
+                <div>
+                  <label for="vat-rate" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Aliquota IVA (%)</label>
+                  <select id="vat-rate" name="vatRate" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
+                    ${IVA_RATES.map(r=>`<option value="${r}">${r}%</option>`).join('')}
+                  </select>
+                </div>
+              </div>
+
+              <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg text-sm">
+                <p class="flex justify-between"><span>IVA Calcolata:</span> <span id="vat-amount-display" class="font-bold text-blue-600">0.00 ${symbol}</span></p>
+                <p class="flex justify-between border-t mt-1 pt-1 font-bold"><span>Importo Lordo Totale:</span> <span id="gross-amount-display" class="text-lg ${isIncome ? 'text-emerald-600' : 'text-red-600'}">0.00 ${symbol}</span></p>
+              </div>
+
+              <button type="submit" class="cta-button w-full ${isIncome ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-red-500 hover:bg-red-600'} text-white p-3 rounded-lg font-bold">
+                Registra Movimento
+              </button>
+            </form>
+        `;
+    }
+    
     function setupActivityIncomeTypeListeners(scope){
       if (scope!=='activity') return;
       const incomeTypeSelect = document.getElementById('incomeType');
@@ -1704,18 +1906,10 @@
       incomeTypeSelect?.removeEventListener('change', updateVisibility);
       incomeTypeSelect?.addEventListener('change', updateVisibility);
       
-      isIncomeSelect.removeEventListener('change', setupIncomeTypeControl);
-      isIncomeSelect.addEventListener('change', setupIncomeTypeControl);
-
-      function setupIncomeTypeControl() {
-        const isIncome=isIncomeSelect.value==='true';
-        const ctl=document.getElementById('income-type-control');
-        // Mostra/Nascondi il controllo del Sottotipo solo se siamo in modalità Attività
-        if (scope==='activity' && ctl){ ctl.classList.toggle('hidden', !isIncome); }
-        updateVisibility();
-      }
+      // Qui non è necessario un listener su isIncomeSelect perché openTransactionForm lo imposta e chiama setup.
       
-      setupIncomeTypeControl(); 
+      // Call updateVisibility once to set initial state
+      updateVisibility();
     }
 
     function setupContactAutocomplete(scope){
@@ -1732,7 +1926,20 @@
         .sort((a,b)=> a.name.localeCompare(b.name));
       datalist.innerHTML = contacts.map(c=> `<option value="${c.name}"></option>`).join('');
       input.setAttribute('list','contact-list');
+      
+      // Aggiunge listener per il suggerimento smart quando la descrizione cambia
+      input.removeEventListener('input', handleDescriptionChange);
+      input.addEventListener('input', handleDescriptionChange);
     }
+    
+    function handleDescriptionChange() {
+        const desc = document.getElementById('description').value;
+        // Chiama la funzione di auto-suggerimento solo in fase di inserimento (non modifica/duplicazione)
+        if (!document.getElementById('transaction-form').getAttribute('data-transaction-id')) {
+            autoFillSmartData(desc);
+        }
+    }
+
 
     function setupCategoryAutocomplete(){
       const dl = document.getElementById('category-list');
@@ -1755,14 +1962,14 @@
       const vatAmountDisplay=document.getElementById('vat-amount-display');
       const grossAmountDisplay=document.getElementById('gross-amount-display');
       
-      let net = parseFloat(netInput.value)||0; 
-      const rate=parseFloat(vatSelect.value)||0;
+      let net = parseFloat(netInput?.value)||0; 
+      const rate=parseFloat(vatSelect?.value)||0;
       
       const vatAmt=net*rate/100; 
       const gross=net+vatAmt;
       
-      vatAmountDisplay.textContent = vatAmt.toFixed(2)+' '+getCurrencySymbol();
-      grossAmountDisplay.textContent = gross.toFixed(2)+' '+getCurrencySymbol();
+      if (vatAmountDisplay) vatAmountDisplay.textContent = vatAmt.toFixed(2)+' '+getCurrencySymbol();
+      if (grossAmountDisplay) grossAmountDisplay.textContent = gross.toFixed(2)+' '+getCurrencySymbol();
     }
     
     function getTodayFocusData(type) {
@@ -2057,75 +2264,11 @@
           <div id="transaction-form-anchor" class="pt-4"></div>
 
           <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card">
-            <h3 class="text-xl font-medium mb-4 text-emerald-600">Registra Nuovo Movimento</h3>
-            <form id="transaction-form" onsubmit="event.preventDefault(); handleTransactionSubmit('${type}');" class="space-y-4">
-              <input type="hidden" name="dataType" value="${type}">
-              <div class="grid grid-cols-1 ${isActivity?'md:grid-cols-2':''} gap-4">
-                <div>
-                  <label for="isIncome" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipo</label>
-                  <select id="isIncome" name="isIncome" required class="w-full p-2 border rounded-lg focus:ring-emerald-500 focus:border-emerald-500 dark:bg-gray-900 dark:border-gray-700">
-                    <option value="true">Entrata</option>
-                    <option value="false">${isActivity?'Spesa (Uscita)':'Uscita/Costo'}</option>
-                  </select>
-                </div>
-                ${isActivity?`
-                <div id="income-type-control">
-                  <label for="incomeType" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sottotipo Entrata</label>
-                  <select id="incomeType" name="incomeType" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
-                    <option value="Fattura (Cliente)">Fattura (Cliente)</option>
-                    <option value="Incasso/Corrispettivo">Incasso/Corrispettivo (POS/Contanti)</option>
-                  </select>
-                </div>`:''}
-              </div>
-
-              <div>
-                <label for="date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data</label>
-                <input type="date" id="date" name="date" value="${new Date().toISOString().slice(0,10)}" required class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
-              </div>
-
-              <div id="description-div">
-                <label id="description-label" for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cliente / Descrizione</label>
-                <input type="text" id="description" name="description" required placeholder="Seleziona o digita" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
-                <datalist id="contact-list"></datalist>
-                <p class="text-xs text-gray-500 mt-1">Suggerimento: i nomi digitati vengono salvati nei contatti.</p>
-              </div>
-
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label for="category" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Categoria</label>
-                  <input id="category" name="category" list="category-list" required placeholder="Es. Affitto / Marketing" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700"/>
-                  <datalist id="category-list"></datalist>
-                </div>
-                <div>
-                  <label for="tags" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tag (separati da virgola)</label>
-                  <input id="tags" name="tags" placeholder="es. Q3, fattura-ricorrente" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700"/>
-                </div>
-              </div>
-
-              <div class="grid grid-cols-2 gap-4">
-                <div>
-                  <label for="net-amount" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Importo Netto (${symbol})</label>
-                  <input type="number" id="net-amount" name="net" step="0.01" min="0" required placeholder="100.00" 
-                         class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700" 
-                         inputmode="decimal">
-                </div>
-                <div>
-                  <label for="vat-rate" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Aliquota IVA (%)</label>
-                  <select id="vat-rate" name="vatRate" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
-                    ${IVA_RATES.map(r=>`<option value="${r}">${r}%</option>`).join('')}
-                  </select>
-                </div>
-              </div>
-
-              <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg text-sm">
-                <p class="flex justify-between"><span>IVA Calcolata:</span> <span id="vat-amount-display" class="font-bold text-blue-600">0.00 ${symbol}</span></p>
-                <p class="flex justify-between border-t mt-1 pt-1 font-bold"><span>Importo Lordo Totale:</span> <span id="gross-amount-display" class="text-lg text-emerald-600">0.00 ${symbol}</span></p>
-              </div>
-
-              <button type="submit" class="cta-button w-full bg-emerald-500 text-white p-3 rounded-lg font-bold hover:bg-emerald-600">
-                Registra Movimento
-              </button>
-            </form>
+            <h3 class="text-xl font-medium mb-4 text-gray-700 dark:text-gray-300">Registra Movimento</h3>
+            <button onclick="openTransactionForm('false')" class="cta-button w-full bg-indigo-500 text-white p-3 rounded-lg font-bold hover:bg-indigo-600">
+                Apri Modulo Registrazione Rapida
+            </button>
+            <p class="text-xs text-gray-500 mt-2 text-center">Oppure usa i pulsanti flottanti in basso su mobile.</p>
           </div>
 
           <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card mb-20">
@@ -3058,13 +3201,15 @@
             <div class="space-y-2">
                 ${cats.map(cat => {
                     const currentBudget = (appData.categoryBudgets[cat] || 0).toFixed(2);
+                    // Correggiamo l'ID per il budget input per prevenire conflitti e renderlo unico
+                    const inputId = `budget-${cat.replace(/\s/g, '_').replace(/[^\w-]/g, '')}_input`;
                     return `
                         <div class="flex items-center space-x-2">
                             <span class="text-sm font-medium w-28">${getCategoryIcon(cat)} ${cat}</span>
-                            <input type="number" id="budget-${cat.replace(/\s/g, '_')}" step="0.01" min="0" placeholder="0.00" value="${currentBudget}"
+                            <input type="number" id="${inputId}" step="0.01" min="0" placeholder="0.00" value="${currentBudget}"
                                    class="p-2 border rounded-lg flex-1 dark:bg-gray-900 dark:border-gray-700 text-right" inputmode="decimal"/>
                             <button class="px-3 py-2 bg-emerald-500 text-white rounded-lg text-sm" 
-                                    onclick="saveCategoryBudget('${cat}', document.getElementById('budget-${cat.replace(/\s/g, '_')}_input').value)">
+                                    onclick="saveCategoryBudget('${cat}', document.getElementById('${inputId}').value)">
                                 Imposta
                             </button>
                         </div>
@@ -3252,7 +3397,7 @@
       const area=document.getElementById('content-area');
       const qa=document.getElementById('quick-actions');
 
-      // CORREZIONE QUICK ACTIONS: gestisce la visibilità per pagina, non la classe 'hidden' di base
+      // CORREZIONE QUICK ACTIONS: mostra/nasconde la barra in fondo a seconda della pagina
       if (pageId==='activity'||pageId==='personal'){ 
         qa.classList.remove('hidden'); 
         qa.classList.add('flex','justify-center'); 
@@ -3262,6 +3407,7 @@
         qa.classList.remove('flex','justify-center'); 
       }
 
+      // IMPORTANTE: Resetta lo stato di modifica del form
       document.getElementById('transaction-form')?.removeAttribute('data-transaction-id');
       
       // Assicurati che l'utente sia loggato prima di renderizzare
@@ -3274,10 +3420,7 @@
         case 'activity':
         case 'personal':
           area.innerHTML = renderActivityOrPersonalPage(pageId);
-          setupActivityIncomeTypeListeners(pageId);
-          setupContactAutocomplete(pageId); 
-          setupCategoryAutocomplete();
-          calculateGross(); 
+          // Non è più necessario chiamare setupActivityIncomeTypeListeners qui, perché viene chiamato da openTransactionForm
           renderWeeklyBalanceChart(pageId);
           // IMPORTANTE: Resetta il timer di debounce dopo il rendering completo
           clearTimeout(simulationTimer);
@@ -3380,12 +3523,12 @@
       // --- PERMANENT LISTENERS (Event Delegation) ---
 
       document.getElementById('app')?.addEventListener('input', (e)=>{
-        if (e.target && (e.target.id==='net-amount' || e.target.id==='vat-rate') && (currentPage==='activity'||currentPage==='personal')) calculateGross();
+        if (e.target && (e.target.id==='net-amount' || e.target.id==='vat-rate') && document.getElementById('transaction-form-modal').style.display === 'flex') calculateGross();
         
         // La logica What-If è gestita dagli oninput nel codice HTML per performance
       });
       document.getElementById('app')?.addEventListener('change', (e)=>{
-        if (e.target && e.target.id==='vat-rate' && (currentPage==='activity'||currentPage==='personal')) calculateGross();
+        if (e.target && e.target.id==='vat-rate' && document.getElementById('transaction-form-modal').style.display === 'flex') calculateGross();
       });
 
       const appContainer = document.getElementById('app');
@@ -3486,7 +3629,7 @@
           
           if (currentPage === 'activity' || currentPage === 'personal') {
               
-              if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+              if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA' && document.getElementById('transaction-form-modal').style.display === 'flex') {
                   const form = document.getElementById('transaction-form');
                   if (form && form.querySelector('button[type="submit"]') && e.target.id!=='description') {
                       e.preventDefault();
@@ -3495,16 +3638,17 @@
                   }
               }
               
+              // Evita che i tasti rapidi I/E funzionino se siamo su un input
               if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') {
                   return;
               }
 
               if (e.key === 'i' || e.key === 'I') {
                   e.preventDefault();
-                  quickRegister('true');
+                  openTransactionForm('true');
               } else if (e.key === 'e' || e.key === 'E') {
                   e.preventDefault();
-                  quickRegister('false');
+                  openTransactionForm('false');
               }
           }
       });
@@ -3519,8 +3663,8 @@
       const urlParams = new URLSearchParams(window.location.search);
       const shortcut = urlParams.get('shortcut');
       if (shortcut) {
-          if (shortcut === 'income') quickRegister('true');
-          else if (shortcut === 'expense') quickRegister('false');
+          if (shortcut === 'income') openTransactionForm('true');
+          else if (shortcut === 'expense') openTransactionForm('false');
           else if (shortcut === 'report') renderPage('report');
       }
     };
