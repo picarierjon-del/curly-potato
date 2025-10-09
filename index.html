@@ -6,7 +6,7 @@
   <title>Gestione Finanziaria Unificata Smart PRO</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <script src="https://cdn.emailjs.com/dist/email.min.js"></script> <link rel="preconnect" href="https://fonts.googleapis.com">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
     :root { color-scheme: light dark; }
@@ -66,50 +66,54 @@
     .dark .budget-yellow { background-color: #78350f; border-left-color: #f59e0b; }
     .dark .budget-red { background-color: #7f1d1d; border-left-color: #ef4444; }
     
-    /* Stili Raggruppamento (Nuovo) */
+    /* Stili Raggruppamento */
     .group-header { cursor: pointer; }
-    
-    /* Stili per Export */
+
+    /* NUOVO: Stili per la stampa PDF/HTML Export */
     @media print {
-        body { background-color: #fff !important; color: #000 !important; }
-        #app, #navbar, #quick-actions, #modal, #toast, #pin-lock-modal, .tab-active, .cta-button, .header-button { display: none !important; }
-        #print-area { display: block !important; margin: 0; padding: 0; }
-        .export-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        .export-table th, .export-table td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 10pt; color: #000 !important; }
-        .export-table th { background-color: #f2f2f2; }
-        h1, h2, h3 { color: #000 !important; }
+        body { background-color: white !important; color: black !important; padding: 0 !important; margin: 0 !important; }
+        #app, #content-area { max-width: none !important; margin: 0 !important; padding: 0 !important; }
+        .card, .bg-white, .dark\:bg-gray-800, .tab-active, #navbar, #quick-actions, #modal, #toast, .cta-button, .hidden-print { display: none !important; }
+        .export-report { display: block !important; width: 100%; }
+        .export-header { display: block; padding: 20px; text-align: center; border-bottom: 2px solid #ccc; margin-bottom: 20px; }
+        .export-transaction-list { border-collapse: collapse; width: 100%; }
+        .export-transaction-list th, .export-transaction-list td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 10px; }
+        .export-transaction-list th { background-color: #f2f2f2; font-weight: bold; }
+        .export-summary { margin-top: 20px; padding: 15px; border: 1px solid #ddd; background-color: #e6f7ff; }
+        h1, h2, h3 { color: #1e293b; }
+        .text-emerald-700 { color: #047857 !important; }
+        .text-red-700 { color: #b91c1c !important; }
     }
-    
   </style>
   <link id="dynamic-manifest" rel="manifest">
 </head>
 <body class="min-h-screen">
 
   <div id="app" class="max-w-4xl mx-auto p-4 md:p-6">
-    <header class="mb-6 flex items-center justify-between">
+    <header class="mb-6 flex items-center justify-between hidden-print">
       <div class="flex-1 text-center">
         <h1 class="text-3xl font-bold text-gray-800">Finanza Smart PRO 🚀</h1>
         <p class="text-center text-sm text-gray-500" id="header-subtitle">Caricamento...</p>
       </div>
       <button id="theme-toggle"
-        class="ml-4 px-3 py-2 rounded-lg border text-sm hover:bg-gray-100 dark:hover:bg-gray-800 header-button">
+        class="ml-4 px-3 py-2 rounded-lg border text-sm hover:bg-gray-100 dark:hover:bg-gray-800">
         🌙 Dark
       </button>
     </header>
 
-    <nav id="navbar" class="flex justify-around bg-white p-2 rounded-xl shadow-lg card"></nav>
+    <nav id="navbar" class="flex justify-around bg-white p-2 rounded-xl shadow-lg card hidden-print"></nav>
 
     <div id="content-area" class="mt-4"></div>
 
-    <div id="quick-actions" class="md:hidden"> 
+    <div id="quick-actions" class="md:hidden hidden-print"> 
       <div class="flex space-x-3 max-w-lg mx-auto">
         <button onclick="openTransactionForm('true')"
           class="flex-1 bg-emerald-500 text-white p-3 rounded-xl font-bold hover:bg-emerald-600 shadow-xl transition transform hover:scale-[1.02] text-lg">
-          💰 Registra Entrata (I)
+          💰 Entrata (I)
         </button>
         <button onclick="openTransactionForm('false')"
           class="flex-1 bg-red-500 text-white p-3 rounded-xl font-bold hover:bg-red-600 shadow-xl transition transform hover:scale-[1.02] text-lg">
-          💸 Registra Uscita (E)
+          💸 Uscita (E)
         </button>
       </div>
     </div>
@@ -119,7 +123,22 @@
             </div>
     </div>
 
-
+    <div id="email-config-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 z-50 flex justify-center items-center p-4">
+      <div class="bg-white p-6 rounded-xl w-full max-w-sm card">
+        <h3 class="text-xl font-bold mb-3 text-indigo-600">Configura EmailJS</h3>
+        <p class="text-sm text-gray-700 mb-4">Per inviare notifiche, configura il tuo account EmailJS (Servizio ID, Template ID e User ID).</p>
+        <div class="space-y-3">
+          <input type="text" id="emailjs-service-id" placeholder="Service ID" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
+          <input type="text" id="emailjs-template-id" placeholder="Template ID (es. template_reminder)" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
+          <input type="text" id="emailjs-user-id" placeholder="User ID (API Key Pubblica)" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
+          <input type="email" id="emailjs-recipient" placeholder="Tua Email (Ricevente Notifiche)" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
+        </div>
+        <div class="flex justify-end space-x-3 mt-4">
+          <button onclick="saveEmailConfig()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Salva Configurazione</button>
+        </div>
+      </div>
+    </div>
+    
     <div id="modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 z-50 flex justify-center items-center p-4">
       <div class="bg-white p-6 rounded-xl w-full max-w-sm card">
         <h3 id="modal-title" class="text-xl font-bold mb-3 text-red-600">Attenzione</h3>
@@ -135,8 +154,6 @@
       Azione completata con successo!
     </div>
   </div>
-  
-  <div id="print-area" style="display: none; padding: 20px;"></div>
   
   <div id="pin-lock-modal">
     <h2 class="text-3xl font-bold mb-3">Finanza Smart PRO</h2>
@@ -161,7 +178,7 @@
   </div>
   <script>
     // --- CONFIG/GLOBAL ---
-    const GLOBAL_KEY = 'smartFinApp_global_users_v5';
+    const GLOBAL_KEY = 'smartFinApp_global_users_v6'; // v6 per prevenire conflitti
     const SESSION_STORAGE_PIN_KEY = 'smartFinApp_unlocked';
     const SESSION_STORAGE_REPORT_KEY = 'smartFinApp_report_filters'; 
     const IVA_RATES = [0,4,5,10,22];
@@ -169,6 +186,15 @@
     const DEFAULT_CATEGORIES = ['Affitto','Bollette','Spesa','Marketing','Servizi','Stipendi','Carburante','Ristoranti','Abbonamenti','Altro'];
     const FISCAL_REMINDER_TYPES = ['IVA Trimestrale','IVA Saldo/Acconto','IMU','TARI','Tasse/Acconto','Assicurazione','Bollo Auto','Altri Costi Personali','Altri Costi Attività'];
     const MAX_FORFETTARIO_REVENUE = 85000;
+    
+    // NUOVO: Configurazione EmailJS
+    let EMAILJS_CONFIG = {
+        serviceId: '',
+        templateId: '',
+        userId: '',
+        recipientEmail: '' 
+    };
+    const EMAILJS_CONFIG_KEY = 'smartFinApp_emailjs_config';
     
     const DEFAULT_FISCAL_PARAMS = {
         regime: 'forfettario',
@@ -231,6 +257,64 @@
 
     // --- UTILITY ---
     
+    // NUOVO: Logica per EmailJS
+    function loadEmailConfig() {
+        try {
+            const saved = localStorage.getItem(EMAILJS_CONFIG_KEY);
+            if (saved) {
+                EMAILJS_CONFIG = { ...EMAILJS_CONFIG, ...JSON.parse(saved) };
+                if (EMAILJS_CONFIG.userId) {
+                    emailjs.init(EMAILJS_CONFIG.userId);
+                }
+            }
+        } catch(e) { console.error('Errore caricamento config EmailJS', e); }
+    }
+    
+    function saveEmailConfig() {
+        const serviceId = document.getElementById('emailjs-service-id').value.trim();
+        const templateId = document.getElementById('emailjs-template-id').value.trim();
+        const userId = document.getElementById('emailjs-user-id').value.trim();
+        const recipientEmail = document.getElementById('emailjs-recipient').value.trim();
+
+        if (!serviceId || !templateId || !userId || !recipientEmail) {
+            showToast('Compila tutti i campi richiesti.', 'red');
+            return;
+        }
+
+        EMAILJS_CONFIG = { serviceId, templateId, userId, recipientEmail };
+        localStorage.setItem(EMAILJS_CONFIG_KEY, JSON.stringify(EMAILJS_CONFIG));
+        emailjs.init(userId); // Reinitalizza la libreria
+        document.getElementById('email-config-modal').classList.add('hidden');
+        showToast('Configurazione EmailJS salvata con successo!');
+        renderPage('settings');
+    }
+    
+    function sendReminderEmail(reminder) {
+        if (!EMAILJS_CONFIG.serviceId || !EMAILJS_CONFIG.templateId || !EMAILJS_CONFIG.userId || !EMAILJS_CONFIG.recipientEmail) {
+            console.warn('Configurazione EmailJS incompleta. Impossibile inviare email.');
+            showToast('🚨 Configurazione EmailJS non trovata!', 'red');
+            return;
+        }
+
+        const templateParams = {
+            to_email: EMAILJS_CONFIG.recipientEmail,
+            from_name: `Finanza Smart PRO - ${globalState.currentUser.name}`,
+            reminder_type: reminder.type,
+            reminder_description: reminder.description,
+            reminder_date: new Date(reminder.date).toLocaleDateString('it-IT'),
+            reminder_amount: `${reminder.amount.toFixed(2)} ${getCurrencySymbol()}`
+        };
+
+        emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, templateParams)
+            .then((response) => {
+                console.log('SUCCESS!', response.status, response.text);
+                showToast(`Notifica email per "${reminder.description}" inviata!`);
+            }, (error) => {
+                console.error('FAILED...', error);
+                showToast('🚨 Errore nell\'invio dell\'email. Controlla User ID/Template.', 'red');
+            });
+    }
+
     // *** RESILIENZA: Calcolo Checksum CRC Semplice ***
     function calculateDataChecksum(dataToHash) {
         // Usa una funzione hash non crittografica ma veloce per rilevare alterazioni
@@ -401,6 +485,7 @@
     
     function loadData() {
         loadGlobalState();
+        loadEmailConfig(); // Carica la configurazione EmailJS
         const user = globalState.currentUser;
         if (!user) return; 
 
@@ -454,6 +539,7 @@
             saveData();
         }
     }
+    
     function saveData(){ 
         const user = globalState.currentUser;
         if (!user) return;
@@ -510,10 +596,7 @@
             document.getElementById('new-user-input').classList.add('hidden');
             document.getElementById('new-user-btn').classList.remove('hidden');
             document.getElementById('confirm-new-user-btn').classList.add('hidden');
-            
-            if(globalState.currentUser){
-               document.getElementById('pin-prompt').textContent = `Inserisci il PIN per sbloccare il profilo: ${globalState.currentUser.name}`;
-            }
+            document.getElementById('pin-prompt').textContent = `Inserisci il PIN per sbloccare il profilo: ${globalState.currentUser.name}`;
             document.getElementById('default-pin-note').classList.toggle('hidden', globalState.users.length > 1);
             
             setTimeout(() => { document.getElementById('pin-1')?.focus(); }, 100); 
@@ -528,7 +611,7 @@
     function setupUserSelector() {
         const select = document.getElementById('user-select');
         select.innerHTML = globalState.users.map(u => 
-            `<option value="${u.dataKey}" ${globalState.currentUser && u.dataKey === globalState.currentUser.dataKey ? 'selected' : ''}>${u.name}</option>`
+            `<option value="${u.dataKey}" ${u.dataKey === globalState.currentUser.dataKey ? 'selected' : ''}>${u.name}</option>`
         ).join('');
         
         select.onchange = () => {
@@ -833,13 +916,10 @@
 
     // *** MIGLIORAMENTO PERFORMANCE: Funzione centrale con Caching ***
     function calculateFinancialSummary(type, filterType, filterDateStr) {
-      // La cache non deve essere usata per i filtri specifici del Report, che cambiano spesso.
-      // Usiamo la cache solo per i totali GLOBALI (type='global', filterType='all') e le proiezioni FHS/KPIs
-      const isGlobalCached = type === 'global' && filterType === 'all';
-      const cacheKey = isGlobalCached ? 'global_all_summary' : `${type}:${filterType}:${filterDateStr}`;
+      const cacheKey = `${type}:${filterType}:${filterDateStr}`;
       const now = Date.now();
       
-      if (isGlobalCached && calculatedResultsCache[cacheKey] && (now - lastCacheUpdateTime < CACHE_DURATION)) {
+      if (calculatedResultsCache[cacheKey] && (now - lastCacheUpdateTime < CACHE_DURATION)) {
         return calculatedResultsCache[cacheKey];
       }
 
@@ -880,10 +960,8 @@
       };
       
       // Salva nella cache solo se il ricalcolo è avvenuto
-      if(isGlobalCached) {
-        calculatedResultsCache[cacheKey] = result;
-        lastCacheUpdateTime = now; 
-      }
+      calculatedResultsCache[cacheKey] = result;
+      lastCacheUpdateTime = now; 
 
       return result;
     }
@@ -1102,6 +1180,8 @@
         const ivaBalance = ivaAddebito - ivaCredito;
         return { ivaAddebito, ivaCredito, ivaBalance: +ivaBalance.toFixed(2) };
     }
+// OK per la PARTE 2
+
     // Calcolo Proiezione Saldo Conto a 6 Mesi
     function calculateSixMonthBalanceProjection() {
         // Usa KPI dalla cache
@@ -1135,10 +1215,7 @@
             appData.reminders.forEach(r => {
                 const rDate = new Date(r.date);
                 if (!r.paid && rDate.getFullYear() === date.getFullYear() && rDate.getMonth() === date.getMonth()) {
-                    // Solo le scadenze che non sono ricorrenze automatiche (per evitare il doppio conteggio)
-                    if(!r.recurringKey) {
-                        monthFlow -= r.amount;
-                    }
+                    monthFlow -= r.amount;
                 }
             });
             
@@ -1169,47 +1246,34 @@
         let score = 0;
         let maxScore = 100;
         
-        // 1. Tasso di Risparmio (Max 30 punti)
-        const savingsRateScore = Math.min(Math.max(kpis.savingRate, 0) * 1.5, 30); 
+        const savingsRateScore = Math.min(kpis.savingRate, 30); 
         score += savingsRateScore;
         
-        // 2. Buffer di Liquidità (Max 30 punti)
         let liquidityScore = 0;
         if (monthsAutonomy >= 6) liquidityScore = 30;
         else if (monthsAutonomy >= 3) liquidityScore = 20;
         else if (monthsAutonomy >= 1) liquidityScore = 10;
         score += liquidityScore;
         
-        // 3. Rispetto Budget (Max 20 punti)
         let budgetScore = 20;
         const currentMonth = new Date().toISOString().slice(0, 7);
-        // Utilizza i dati non filtrati dal summary per il mese corrente
         const monthSummary = calculateFinancialSummary('personal', 'month', currentMonth);
-        const categoryExpenseMap = monthSummary.transactions
-                .filter(t => !t.isIncome && t.type === 'personal')
-                .reduce((map, t) => {
-                    const cat = t.category || 'Altro';
-                    map[cat] = (map[cat] || 0) + t.gross;
-                    return map;
-                }, {});
-
-        const budgetItems = Object.keys(appData.categoryBudgets).filter(k => appData.categoryBudgets[k] > 0);
+        const budgetItems = Object.keys(appData.categoryBudgets);
         
         budgetItems.forEach(cat => {
             const budget = appData.categoryBudgets[cat] || 0;
-            const spent = categoryExpenseMap[cat] || 0;
-            if (spent > budget) {
+            const spent = monthSummary.transactions.filter(t => !t.isIncome && t.type === 'personal' && t.category === cat).reduce((s, t) => s + t.gross, 0);
+            if (budget > 0 && spent > budget) {
                 budgetScore -= 5; 
             }
         });
         score += Math.max(0, budgetScore);
         
-        // 4. Proiezione a 6 Mesi (Max 20 punti)
         const sixMonthProj = calculateSixMonthBalanceProjection().projection;
         let projScore = 0;
-        if (sixMonthProj >= 3000) projScore = 20; // Ottimo buffer
-        else if (sixMonthProj >= 0) projScore = 10; // Sufficiente, non negativo
-        else projScore = 0; // Stress
+        if (sixMonthProj >= 1000) projScore = 20;
+        else if (sixMonthProj >= 0) projScore = 10;
+        else projScore = 0;
         score += projScore;
 
         const result = { score: Math.round(Math.min(score, maxScore)), max: maxScore };
@@ -1334,10 +1398,32 @@
 
 
     // --- Contacts / Categories helpers ---
+    // REVISIONE: Semplificazione logica contatti. Assicuriamo che la descrizione venga pulita e il tipo sia corretto.
     function addContact(name, scope, relation){
-      const clean = (name||'').trim(); if (!clean) return;
-      const exists = appData.contacts.find(c=> c.name.toLowerCase()===clean.toLowerCase() && c.scope===scope );
-      if (!exists){ appData.contacts.push({ id:getNextId(), name:clean, scope, relation }); saveData(); }
+      const clean = (name||'').trim(); 
+      if (!clean || clean === 'Corrispettivi/Incasso Giornaliero') return; // Non salvare corrispettivi come contatti
+      
+      const isClient = relation === 'client';
+      const typeLabel = isClient ? 'Cliente' : 'Fornitore';
+
+      // Cerchiamo un match quasi esatto, ignorando maiuscole/minuscole
+      const exists = appData.contacts.find(c=> 
+        c.name.toLowerCase() === clean.toLowerCase() && c.scope === scope 
+      );
+      
+      if (!exists){ 
+        appData.contacts.push({ id:getNextId(), name:clean, scope, relation: relation }); 
+        saveData(); 
+      } else if (exists.relation !== relation) {
+        // Se esiste ma il ruolo è diverso (es. prima fornitore, ora cliente), aggiorna a 'both'
+        if (exists.relation === 'supplier' && isClient) {
+            exists.relation = 'both';
+            saveData();
+        } else if (exists.relation === 'client' && !isClient) {
+            exists.relation = 'both';
+            saveData();
+        }
+      }
     }
     
     function ensureCategory(cat){
@@ -1398,7 +1484,7 @@
         let lastDate = new Date(rec.lastDate);
         let nextDate = calculateNextRecurrence(rec.lastDate, rec.frequency);
         
-        // Rimuove i vecchi promemoria automatici per questa ricorrenza
+        // Rimuove solo i promemoria ricorrenti legati a questa chiave (non i promemoria fiscali o manuali)
         appData.reminders = appData.reminders.filter(r => !r.recurringKey || r.recurringKey !== rec.key);
 
         for (let i = 0; i < 12; i++) {
@@ -1411,14 +1497,13 @@
                 continue;
             }
 
-            // Verifica che il promemoria non esista già per evitare duplicati in un ciclo di 12 mesi
             const exists = reminderList.some(r => r.date === nextDate && r.description === rec.description);
             
             if (!exists) {
                 appData.reminders.push({
                     id: getNextId(), type: rec.isIncome ? 'Entrata Ricorrente' : 'Uscita Ricorrente',
                     description: rec.description, date: nextDate,
-                    amount: rec.isIncome ? -rec.lastAmount : rec.lastAmount, // Importo negativo se entrata (per coerenza con la logica promemoria)
+                    amount: rec.isIncome ? -rec.lastAmount : rec.lastAmount, // Importo in negativo per entrate ricorrenti
                     paid: false, isFiscal: false, recurringKey: rec.key
                 });
             }
@@ -1427,6 +1512,8 @@
             nextDate = calculateNextRecurrence(lastDate.toISOString().slice(0, 10), rec.frequency);
         }
     }
+
+
     // --- Transactions CRUD (START) ---
     function getTransactionById(isIncome, id) {
         const list = isIncome ? appData.invoices : appData.expenses;
@@ -1452,12 +1539,9 @@
         incomeType: data.incomeType || (isIncome && data.dataType==='activity' ? 'Fattura (Cliente)' : null)
       };
       
-      // Logica Accantonamento Fiscale (solo per nuove Entrate Attività in Forfettario)
-      if (updatedItem.type === 'activity' && updatedItem.isIncome && appData.fiscalParams.regime === 'forfettario' && !data.id) {
+      if (updatedItem.type === 'activity' && updatedItem.isIncome && appData.fiscalParams.regime === 'forfettario') {
           const params = appData.fiscalParams;
-          // Calcola l'accantonamento solo sul netto (o lordo se c'è IVA, ma la base imponibile è sul ricavo totale)
-          const taxableRevenue = updatedItem.net + updatedItem.vatAmount; 
-          const taxableAmount = taxableRevenue * params.profitRate;
+          const taxableAmount = updatedItem.gross * params.profitRate;
           const taxesToAccrue = taxableAmount * (params.taxRate + params.inpsRate);
           
           appData.taxCashReserve += taxesToAccrue;
@@ -1469,23 +1553,22 @@
           trackRecurringExpense(updatedItem.description, updatedItem.gross, updatedItem.date, isIncome);
       }
       
-      const isActivityExpense = !isIncome && data.dataType === 'activity';
-      const isPersonalTx = data.dataType === 'personal';
+      // REVISIONE CONTATTI: la logica è centralizzata nella funzione addContact
       const isActivityIncomeFattura = isIncome && data.dataType === 'activity' && data.incomeType !== 'Incasso/Corrispettivo';
-
-      const shouldSaveContact = (isActivityExpense || isPersonalTx || isActivityIncomeFattura) && 
-                                updatedItem.description?.trim() && 
-                                updatedItem.description.trim() !== 'Corrispettivi/Incasso Giornaliero';
-
-
-      if (shouldSaveContact){
-        const contactName = updatedItem.description.trim(); 
-        const relation = isIncome ? 'client':'supplier';
-        
-        if (!data.id || (list.find(it=>it.id===data.id)?.description !== contactName)){
-          addContact(contactName, data.dataType, relation);
-        }
+      const isActivityExpense = !isIncome && data.dataType === 'activity';
+      const isPersonalExpense = !isIncome && data.dataType === 'personal'; 
+      const isPersonalIncome = isIncome && data.dataType === 'personal'; 
+      
+      if (isActivityIncomeFattura) {
+        addContact(updatedItem.description, 'activity', 'client');
+      } else if (isActivityExpense) {
+        addContact(updatedItem.description, 'activity', 'supplier');
+      } else if (isPersonalExpense || isPersonalIncome) {
+        // Personale usa 'personal' come scope e definisce 'client'/'supplier'
+        addContact(updatedItem.description, 'personal', isIncome ? 'client' : 'supplier');
       }
+
+
       
       ensureCategory(updatedItem.category);
 
@@ -1519,7 +1602,6 @@
           
           const grossAmount = parseFloat(payload.net) * (1 + (parseFloat(payload.vatRate) / 100)) || 0;
           
-          // Allerta Spesa Anomala (Solo per nuove uscite personali)
           if (!payload.id && !isIncome && type === 'personal') {
               const monthlyAvg = getAverageMonthlyExpense(payload.category);
               if (monthlyAvg > 0 && grossAmount > monthlyAvg * 1.20) {
@@ -1545,7 +1627,7 @@
       const listName = isIncome ? 'invoices':'expenses';
       const idx = appData[listName].findIndex(i=>i.id===id);
       if (idx>-1){
-        showModal('Conferma Eliminazione','Eliminare definitivamente questa transazione? L\'accantonamento fiscale non sarà ricalcolato automaticamente.',true,()=>{
+        showModal('Conferma Eliminazione','Eliminare definitivamente questa transazione?',true,()=>{
           appData[listName].splice(idx,1); saveData(); showToast('Transazione eliminata.','red'); renderPage(currentPage);
         });
       }
@@ -1579,10 +1661,7 @@
         document.getElementById('net-amount').value = transaction.net.toFixed(2);
         document.getElementById('vat-rate').value = transaction.vatRate.toFixed(0);
         
-        // Auto-compilazione intelligente (solo se non è un corrispettivo)
-        if (!(type === 'activity' && isIncome && transaction.incomeType==='Incasso/Corrispettivo')) {
-            autoFillSmartData(transaction.description || '');
-        }
+        autoFillSmartData(transaction.description || '');
 
         calculateGross();
         
@@ -1626,7 +1705,7 @@
             `Confermi di aver pagato ${amountPaid.toFixed(2)}${getCurrencySymbol()} di tasse/INPS? Il saldo accantonato sarà ridotto.`, 
             true, 
             () => {
-                appData.taxCashReserve -= Math.abs(amountPaid); // L'importo è negativo nel promemoria se è un'uscita, ma lo trattiamo come positivo qui.
+                appData.taxCashReserve -= amountPaid;
                 const reminder = appData.reminders.find(r => r.id === reminderId);
                 if (reminder) {
                     reminder.paid = true;
@@ -1677,14 +1756,35 @@
         });
         saveData(); 
     }
-
     // --- Reminders CRUD ---
     function saveReminder(data){
       appData.reminders ||= [];
-      if (data.id){ const i=appData.reminders.findIndex(r=>r.id===data.id); if(i>-1){ appData.reminders[i]={...appData.reminders[i],...data}; } }
-      else { appData.reminders.push({ id:getNextId(), ...data, paid:false }); }
-      saveData(); showToast('Promemoria salvato!'); renderPage('reminders');
+      if (data.id){ 
+          const i=appData.reminders.findIndex(r=>r.id===data.id); 
+          if(i>-1){ 
+              appData.reminders[i]={...appData.reminders[i],...data}; 
+          } 
+      }
+      else { 
+          const newReminder = { id:getNextId(), ...data, paid:false, isFiscal: false };
+          appData.reminders.push(newReminder); 
+          
+          // NUOVO: Proponi notifica email per promemoria manuali
+          if (EMAILJS_CONFIG.recipientEmail) {
+             showModal(
+                'Notifica Email', 
+                `Vuoi inviare una notifica email per "${newReminder.description}" a ${EMAILJS_CONFIG.recipientEmail}?`, 
+                true, 
+                () => sendReminderEmail(newReminder),
+                () => showToast('Promemoria salvato senza notifica.')
+             );
+          }
+      }
+      saveData(); 
+      showToast('Promemoria salvato!'); 
+      renderPage('reminders');
     }
+    
     function toggleReminderPaid(id){ 
         const r=appData.reminders.find(x=>x.id===id); 
         if(r){ 
@@ -1694,6 +1794,7 @@
             renderPage('reminders'); 
         } 
     }
+    
     function deleteReminder(id){
       const i=(appData.reminders||[]).findIndex(r=>r.id===id);
       if (i>-1){
@@ -1702,10 +1803,21 @@
         });
       }
     }
+    
     function handleReminderSubmit(){
-      const f=document.getElementById('reminder-form'); const d=new FormData(f);
-      const payload={ type:d.get('type'), description:d.get('description'), date:d.get('date'), amount: parseFloat(d.get('amount'))||0 };
-      if (payload.description && payload.date && payload.amount>0){ 
+      const f=document.getElementById('reminder-form'); 
+      const d=new FormData(f);
+      const amount = parseFloat(d.get('amount'))||0;
+      
+      const payload={ 
+          type:d.get('type'), 
+          description:d.get('description').trim(), 
+          date:d.get('date'), 
+          // NUOVO: L'amount viene salvato sempre come negativo se è Entrata Ricorrente per la coerenza dei promemoria
+          amount: (d.get('type') === 'Entrata Ricorrente' && amount > 0) ? -amount : amount 
+      };
+      
+      if (payload.description && payload.date && payload.amount !== 0){ 
         saveReminder(payload); 
         f.reset(); 
         document.getElementById('reminder-date').value = new Date().toISOString().slice(0,10); 
@@ -1729,6 +1841,7 @@
       }
       saveData(); showToast('Compleanno salvato!'); renderPage('reminders');
     }
+    
     function deleteBirthday(id){
       const i=(appData.birthdays||[]).findIndex(r=>r.id===id);
       if (i>-1){
@@ -1737,12 +1850,15 @@
         });
       }
     }
+    
     function handleBirthdaySubmit(){
-        const f=document.getElementById('birthday-form'); const d=new FormData(f);
+        const f=document.getElementById('birthday-form'); 
+        const d=new FormData(f);
         const dateStr = d.get('date');
         
         const payload={ 
-            name: d.get('name').trim(), date: dateStr, 
+            name: d.get('name').trim(), 
+            date: dateStr, 
         };
         
         if (payload.name && payload.date){ 
@@ -1753,178 +1869,6 @@
         else showToast('Compila tutti i campi validi.','red');
     }
 
-    // --- Contatti CRUD (Gestione) ---
-    function deleteContact(id){
-      const i=appData.contacts.findIndex(c=>c.id===id);
-      if (i>-1){
-        showModal('Conferma Eliminazione Contatto','Le transazioni non verranno cancellate.',true,()=>{
-          appData.contacts.splice(i,1); saveData(); showToast('Contatto eliminato.','red'); renderPage('settings');
-        });
-      }
-    }
-    
-    function deleteUnusedContacts() {
-        const usedDescriptions = new Set();
-        [...appData.invoices, ...appData.expenses].forEach(t => {
-            if (t.description && t.description.trim() !== 'Corrispettivi/Incasso Giornaliero') {
-                usedDescriptions.add(t.description.trim().toLowerCase());
-            }
-        });
-
-        const initialLength = appData.contacts.length;
-        appData.contacts = appData.contacts.filter(c => usedDescriptions.has(c.name.toLowerCase()));
-        const removedCount = initialLength - appData.contacts.length;
-
-        saveData();
-        showToast(`${removedCount} contatti non usati eliminati.`);
-        renderPage('settings');
-    }
-    
-    function deleteUnusedCategories() {
-        const usedCategories = new Set(DEFAULT_CATEGORIES.map(c => c.toLowerCase()));
-        [...appData.invoices, ...appData.expenses].forEach(t => {
-            if (t.category) {
-                usedCategories.add(t.category.trim().toLowerCase());
-            }
-        });
-        
-        const initialLength = appData.categories.length;
-        appData.categories = appData.categories.filter(c => usedCategories.has(c.toLowerCase()));
-        appData.categories.sort((a,b)=>a.localeCompare(b));
-        const removedCount = initialLength - appData.categories.length;
-
-        saveData();
-        showToast(`${removedCount} categorie non usate (non di default) eliminate.`);
-        renderPage('settings');
-    }
-
-    function saveFiscalParams() {
-        const regime = document.getElementById('fiscal-regime').value;
-        const profitRate = parseFloat(document.getElementById('fiscal-profit-rate').value) / 100;
-        const taxRate = parseFloat(document.getElementById('fiscal-tax-rate').value) / 100;
-        const inpsRate = parseFloat(document.getElementById('fiscal-inps-rate').value) / 100;
-
-        if (isNaN(profitRate) || isNaN(taxRate) || isNaN(inpsRate)) {
-            showToast('Assicurati che tutti i tassi siano numeri validi.', 'red');
-            return;
-        }
-
-        showModal('Conferma Aggiornamento', `Aggiornare i parametri fiscali per la simulazione?`, true, () => {
-            appData.fiscalParams = { regime, profitRate, taxRate, inpsRate };
-            saveData();
-            showToast('Parametri fiscali aggiornati!','green');
-            renderPage('settings');
-        });
-    }
-
-    function saveBankBalance() {
-        const balance = parseFloat(document.getElementById('current-bank-balance').value) || 0;
-        showModal('Conferma Saldo Iniziale', `Aggiornare il saldo contabile base a ${balance.toFixed(2)}${getCurrencySymbol()}?`, true, () => {
-            appData.currentBankBalance = balance;
-            saveData();
-            showToast('Saldo base aggiornato!','green');
-            renderPage('settings');
-        });
-    }
-
-    function saveMonthlyTarget() {
-        const input = document.getElementById('monthly-target');
-        const target = parseFloat(input?.value) || 0;
-
-        showModal('Conferma Obiettivo', `Impostare l'obiettivo di risparmio su: ${target.toFixed(2)} ${getCurrencySymbol()}?`, true, () => {
-            appData.monthlySavingsTarget = target;
-            saveData();
-            showToast('Obiettivo risparmio salvato!');
-            renderPage('settings');
-        });
-    }
-
-    function saveCategoryBudget(category, amount) {
-        const budget = parseFloat(amount) || 0;
-        
-        showModal('Conferma Budget', `Impostare il budget mensile per la categoria "${category}" a ${budget.toFixed(2)} ${getCurrencySymbol()}?`, true, () => {
-            appData.categoryBudgets[category] = budget;
-            saveData();
-            showToast(`Budget per ${category} salvato!`);
-            renderPage('settings');
-        });
-    }
-
-    function changeCurrencySymbol() {
-        const symbolInput = document.getElementById('currency-symbol-input');
-        const newSymbol = symbolInput?.value.trim() || '€';
-
-        if (newSymbol.length > 2) {
-            showToast('Il simbolo valuta dovrebbe essere al massimo di 2 caratteri.', 'red');
-            return;
-        }
-
-        showModal('Conferma Valuta', `Impostare il simbolo valuta su: ${newSymbol}?`, true, () => {
-            appData.currencySymbol = newSymbol;
-            saveData();
-            renderPage('settings');
-            showToast('Simbolo Valuta aggiornato!');
-        });
-    }
-
-    function changePin() {
-      const currentPinInput = document.getElementById('current-pin');
-      const newPinInput = document.getElementById('new-pin');
-      
-      const currentPin = currentPinInput?.value.trim();
-      const newPin = newPinInput?.value.trim();
-      
-      const expectedHash = appData.pinHash;
-      const enteredHash = hashPin(currentPin);
-      
-      if (enteredHash !== expectedHash) {
-        showToast('Il PIN attuale non è corretto.','red');
-        currentPinInput.value = '';
-        return;
-      }
-
-      if (!newPin || newPin.length !== 4 || isNaN(newPin)) {
-        showToast('Il nuovo PIN deve essere esattamente di 4 cifre.','red');
-        return;
-      }
-      
-      const newPinHash = hashPin(newPin);
-
-      showModal('Conferma Cambio PIN', `Sei sicuro di voler cambiare il PIN?`, true, () => {
-        appData.pinHash = newPinHash;
-        saveData();
-        currentPinInput.value = '';
-        newPinInput.value = '';
-        showToast('PIN modificato con successo! Sarà richiesto al prossimo riavvio.');
-        renderPage('settings');
-      });
-    }
-    
-    function deleteCurrentUserProfile() {
-        showModal('🚨 ELIMINAZIONE PROFILO', `Confermi l'eliminazione PERMANENTE del profilo "${globalState.currentUser.name}" e di TUTTI i suoi dati? Questa azione è irreversibile.`, true, () => {
-            const dataKey = globalState.currentUser.dataKey;
-            
-            // 1. Rimuovi i dati locali dell'utente
-            localStorage.removeItem(dataKey);
-            localStorage.removeItem(`${dataKey}_checksum`);
-            
-            // 2. Rimuovi l'utente dalla lista globale
-            globalState.users = globalState.users.filter(u => u.dataKey !== dataKey);
-            
-            // 3. Seleziona un nuovo utente o blocca
-            if (globalState.users.length > 0) {
-                globalState.currentUser = globalState.users[0];
-            } else {
-                globalState.currentUser = null;
-            }
-            
-            saveGlobalState();
-            sessionStorage.removeItem(SESSION_STORAGE_PIN_KEY); // Forza il re-lock
-            
-            showToast(`Profilo "${dataKey}" eliminato.`, 'red');
-            window.location.reload(); 
-        });
-    }
 
     // --- Import/Export/Clean ---
     function exportDataJSON(){
@@ -1974,101 +1918,80 @@
       const a=document.createElement('a'); a.href=url; a.download=`finanza_export_${typeFilter}_${new Date().toISOString().slice(0,10)}.txt`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
       showToast('Export CSV pronto (testo con 3 sezioni).');
     }
-
-    // *** NUOVO: Funzione per l'Export Dettagliato PDF/Stampabile ***
-    function exportReportPDF(filterType, filterDateStr, reportType) {
-        const symbol = getCurrencySymbol();
-        const summary = calculateFinancialSummary(reportType, filterType, filterDateStr);
-        const transactionsList = summary.transactions.slice(); 
+    
+    // NUOVA FUNZIONE: Esporta report in PDF/HTML per la stampa
+    function exportReportToPrint() {
+        // Nascondi la UI e mostra solo l'area di stampa
+        const app = document.getElementById('app');
+        app.classList.add('hidden-print');
         
-        const groupedByMonth = groupTransactionsByMonth(transactionsList);
+        const reportContainer = document.createElement('div');
+        reportContainer.classList.add('export-report');
         
-        let periodLabel='Tutti i Dati';
-        if (filterType==='year') periodLabel=filterDateStr;
-        else if (filterType==='month'){ const [y,m]=filterDateStr.split('-').map(Number); const d=new Date(y,m-1,1); periodLabel=d.toLocaleDateString('it-IT',{year:'numeric',month:'long'}); }
-
-        let htmlContent = `
-            <div style="font-family:'Inter',sans-serif; padding: 20px;">
-                <h1 style="text-align:center; color:#1e293b;">Rapporto Finanziario Dettagliato</h1>
-                <h2 style="text-align:center; color:#475569;">Profilo: ${globalState.currentUser.name} | Tipo: ${reportType === 'global' ? 'Totale' : (reportType === 'activity' ? 'Attività' : 'Personale')}</h2>
-                <h3 style="text-align:center; color:#1e293b;">Periodo: ${periodLabel} | Generato il: ${new Date().toLocaleDateString('it-IT')}</h3>
-                
-                <div style="margin-top: 20px; padding: 10px; border: 1px solid #ccc; background-color: #f7f9fc;">
-                    <p><strong>TOTALE ENTRATE:</strong> <span style="color:#10b981;">${summary.totalIncomes.toFixed(2)} ${symbol}</span></p>
-                    <p><strong>TOTALE USCITE:</strong> <span style="color:#ef4444;">${summary.totalExpenses.toFixed(2)} ${symbol}</span></p>
-                    <p><strong>SALDO NETTO:</strong> <span style="color:${summary.netBalance >= 0 ? '#10b981' : '#ef4444'}; font-size: 1.1em;">${summary.netBalance.toFixed(2)} ${symbol}</span></p>
+        const { type, filterType, filterDateStr, categoryFilter, tagFilter } = reportFilters;
+        
+        const summary = calculateFinancialSummary(type, filterType, filterDateStr);
+        let transactionsList = filterTransactionsByCriteria(summary.transactions, categoryFilter === 'all' ? null : categoryFilter, tagFilter === 'all' ? null : tagFilter);
+        transactionsList = sortTransactions(transactionsList); 
+        
+        // Calcola il titolo e il riepilogo
+        let periodLabel = document.querySelector('#content-area h3.text-xl.font-extrabold')?.textContent || 'Periodo Selezionato';
+        const typeLabel = type === 'global' ? 'Totale' : (type === 'activity' ? 'Attività' : 'Personale');
+        
+        const exportContent = `
+            <div class="export-header">
+                <h1>Report Finanziario - Finanza Smart PRO</h1>
+                <h2>Profilo: ${globalState.currentUser.name} | Tipo: ${typeLabel}</h2>
+                <p>Periodo: <strong>${periodLabel}</strong></p>
+                <p>Filtro Categoria: <strong>${categoryFilter}</strong> | Filtro Tag: <strong>${tagFilter}</strong></p>
+                <div class="export-summary">
+                    <p>Entrate Totali: <strong class="text-emerald-700">${summary.totalIncomes.toFixed(2)} ${getCurrencySymbol()}</strong></p>
+                    <p>Uscite Totali: <strong class="text-red-700">${summary.totalExpenses.toFixed(2)} ${getCurrencySymbol()}</strong></p>
+                    <p>Saldo Netto: <strong>${summary.netBalance.toFixed(2)} ${getCurrencySymbol()}</strong></p>
                 </div>
+            </div>
+            
+            <h3>Dettaglio Movimenti (${transactionsList.length})</h3>
+            <table class="export-transaction-list">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Descrizione</th>
+                        <th>Categoria</th>
+                        <th>Tipo</th>
+                        <th>Netto</th>
+                        <th>IVA (${transactionsList.length > 0 ? transactionsList[0].vatRate : 0}%)</th>
+                        <th>Lordo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${transactionsList.map(t => `
+                        <tr>
+                            <td>${new Date(t.date).toLocaleDateString('it-IT')}</td>
+                            <td>${t.description || t.incomeType || '-'}</td>
+                            <td>${t.category || '-'}</td>
+                            <td style="color: ${t.isIncome ? '#047857' : '#b91c1c'};">${t.isIncome ? 'Entrata' : 'Uscita'}</td>
+                            <td>${t.net.toFixed(2)} ${getCurrencySymbol()}</td>
+                            <td>${t.vatAmount.toFixed(2)} ${getCurrencySymbol()}</td>
+                            <td>${t.gross.toFixed(2)} ${getCurrencySymbol()}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
         `;
         
-        // Raggruppamento per Categoria/Mese (miglioramento richiesto)
-        const groupedByCategoryMonth = transactionsList.reduce((acc, t) => {
-            const cat = t.category || 'Altro';
-            const ym = t.date.slice(0, 7);
-            
-            acc[cat] = acc[cat] || {};
-            acc[cat][ym] = acc[cat][ym] || { totalIncome: 0, totalExpense: 0, transactions: [] };
+        reportContainer.innerHTML = exportContent;
+        document.body.appendChild(reportContainer);
 
-            if (t.isIncome) {
-                acc[cat][ym].totalIncome += t.gross;
-            } else {
-                acc[cat][ym].totalExpense += t.gross;
-            }
-            acc[cat][ym].transactions.push(t);
-            return acc;
-        }, {});
-        
-        htmlContent += `<h3 style="margin-top: 30px; border-bottom: 2px solid #ddd; padding-bottom: 5px;">Dettaglio per Categoria e Mese</h3>`;
-        
-        const sortedCategories = Object.keys(groupedByCategoryMonth).sort();
-        
-        sortedCategories.forEach(cat => {
-            htmlContent += `
-                <h4 style="margin-top: 15px; background-color: #eee; padding: 8px; border-left: 5px solid #10b981; color:#1e293b;">${getCategoryIcon(cat)} Categoria: ${cat}</h4>
-            `;
-            const sortedMonths = Object.keys(groupedByCategoryMonth[cat]).sort().reverse();
+        // Funzione per eseguire la stampa
+        setTimeout(() => {
+            window.print();
             
-            sortedMonths.forEach(ym => {
-                const monthData = groupedByCategoryMonth[cat][ym];
-                const totalMonth = monthData.totalIncome - monthData.totalExpense;
-                
-                htmlContent += `
-                    <div style="margin-top: 10px; padding: 10px; border: 1px dashed #ccc;">
-                        <p><strong>Mese: ${new Date(ym + '-01').toLocaleDateString('it-IT', { year: 'numeric', month: 'long' })}</strong></p>
-                        <p style="margin-left: 10px;">Entrate: <span style="color:#10b981;">${monthData.totalIncome.toFixed(2)} ${symbol}</span> | Uscite: <span style="color:#ef4444;">${monthData.totalExpense.toFixed(2)} ${symbol}</span> | Saldo Mese: <span style="color:${totalMonth >= 0 ? '#10b981' : '#ef4444'};">${totalMonth.toFixed(2)} ${symbol}</span></p>
-                        <table class="export-table">
-                            <thead>
-                                <tr>
-                                    <th>Data</th><th>Descrizione</th><th>Categoria</th><th>Netto</th><th>IVA</th><th>Lordo</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${monthData.transactions.map(t => `
-                                    <tr style="background-color:${t.isIncome ? '#f1fff1' : '#fff1f1'};">
-                                        <td>${t.date}</td>
-                                        <td>${t.description || ''}</td>
-                                        <td>${t.category || ''}</td>
-                                        <td style="text-align:right;">${t.net.toFixed(2)}</td>
-                                        <td style="text-align:right;">${t.vatAmount.toFixed(2)}</td>
-                                        <td style="text-align:right; font-weight: bold; color:${t.isIncome ? '#10b981' : '#ef4444'};">${t.gross.toFixed(2)}</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    </div>
-                `;
-            });
-        });
-        
-        htmlContent += `</div>`;
-        
-        // Inserisci il contenuto nell'area nascosta e stampa
-        const printArea = document.getElementById('print-area');
-        printArea.innerHTML = htmlContent;
-        window.print();
-        printArea.innerHTML = ''; // Pulisci dopo la stampa
-        showToast('Generazione report PDF completata.');
+            // Ripristina la UI dopo la stampa
+            document.body.removeChild(reportContainer);
+            app.classList.remove('hidden-print');
+        }, 500); 
     }
-
 
     function importDataFile(ev){
       const file = ev.target.files[0]; if(!file) return;
@@ -2126,7 +2049,50 @@
         renderPage('settings');
       });
     }
+    
+    function deleteContact(id){
+      const i=appData.contacts.findIndex(c=>c.id===id);
+      if (i>-1){
+        showModal('Conferma Eliminazione Contatto','Le transazioni non verranno cancellate.',true,()=>{
+          appData.contacts.splice(i,1); saveData(); showToast('Contatto eliminato.','red'); renderPage('settings');
+        });
+      }
+    }
+    
+    function deleteUnusedContacts() {
+        const usedDescriptions = new Set();
+        [...appData.invoices, ...appData.expenses].forEach(t => {
+            if (t.description && t.description.trim() !== 'Corrispettivi/Incasso Giornaliero') {
+                usedDescriptions.add(t.description.trim().toLowerCase());
+            }
+        });
 
+        const initialLength = appData.contacts.length;
+        appData.contacts = appData.contacts.filter(c => usedDescriptions.has(c.name.toLowerCase()));
+        const removedCount = initialLength - appData.contacts.length;
+
+        saveData();
+        showToast(`${removedCount} contatti non usati eliminati.`);
+        renderPage('settings');
+    }
+    
+    function deleteUnusedCategories() {
+        const usedCategories = new Set(DEFAULT_CATEGORIES.map(c => c.toLowerCase()));
+        [...appData.invoices, ...appData.expenses].forEach(t => {
+            if (t.category) {
+                usedCategories.add(t.category.trim().toLowerCase());
+            }
+        });
+        
+        const initialLength = appData.categories.length;
+        appData.categories = appData.categories.filter(c => usedCategories.has(c.toLowerCase()));
+        appData.categories.sort((a,b)=>a.localeCompare(b));
+        const removedCount = initialLength - appData.categories.length;
+
+        saveData();
+        showToast(`${removedCount} categorie non usate (non di default) eliminate.`);
+        renderPage('settings');
+    }
     // --- Import/Export/Clean (END) ---
 
 
@@ -2219,10 +2185,13 @@
       const updateVisibility = ()=>{
         const isIncome = isIncomeSelect.value==='true';
         const incomeType = incomeTypeSelect?.value || 'Fattura (Cliente)';
+        
+        // La logica per "Corrispettivi/Incasso Giornaliero"
         if (isIncome && incomeType==='Incasso/Corrispettivo'){
           descriptionDiv.classList.add('hidden');
           const desc = document.getElementById('description');
           desc.removeAttribute('required'); 
+          // Assicura che il valore sia pre-impostato se non in modalità modifica
           if (document.getElementById('transaction-form').getAttribute('data-transaction-id')===null) {
              desc.value = 'Corrispettivi/Incasso Giornaliero';
           }
@@ -2231,7 +2200,10 @@
           descriptionDiv.classList.remove('hidden');
           const desc = document.getElementById('description');
           desc.setAttribute('required','required');
-          if (document.getElementById('transaction-form').getAttribute('data-transaction-id')===null){ desc.value=''; }
+          // Svuota se non è in modifica e il tipo è cambiato
+          if (document.getElementById('transaction-form').getAttribute('data-transaction-id')===null && desc.value === 'Corrispettivi/Incasso Giornaliero'){ 
+              desc.value=''; 
+          }
           document.getElementById('description-label').textContent = isIncome ? 'Cliente / Descrizione' : 'Fornitore / Descrizione';
           setupContactAutocomplete(scope);
         }
@@ -2243,6 +2215,7 @@
       updateVisibility();
     }
 
+    // REVISIONE: La logica qui ora gestisce meglio i ruoli "client", "supplier", "both"
     function setupContactAutocomplete(scope){
       const isIncome = document.getElementById('isIncome').value==='true';
       const incomeType = document.getElementById('incomeType')?.value;
@@ -2251,10 +2224,16 @@
       if (!input || !datalist) return;
 
       if (scope==='activity' && isIncome && incomeType==='Incasso/Corrispettivo'){ datalist.innerHTML=''; return; }
-      const relation = isIncome ? 'client':'supplier';
+      
+      const requiredRelation = isIncome ? 'client':'supplier';
+      
       const contacts = appData.contacts
-        .filter(c=> c.scope===scope && (c.relation===relation || c.relation==='both'))
+        .filter(c=> 
+            c.scope===scope && 
+            (c.relation===requiredRelation || c.relation==='both')
+        )
         .sort((a,b)=> a.name.localeCompare(b.name));
+        
       datalist.innerHTML = contacts.map(c=> `<option value="${c.name}"></option>`).join('');
       input.setAttribute('list','contact-list');
       
@@ -2318,6 +2297,8 @@
         
         return { summary, upcomingReminders, upcomingBirthdays, expenseSpikes };
     }
+
+
     // --- Page router ---
     function renderNavbar(){
       const navbar=document.getElementById('navbar');
@@ -2341,10 +2322,9 @@
       const ivaColor = summary.ivaBalance>=0?'text-red-600':'text-blue-600';
       
       const summarySinceStart = calculateFinancialSummary('global', 'all', 'all');
-      let totalBalance = (parseFloat(appData.currentBankBalance) || 0) + summarySinceStart.netBalance;
+      const totalBalance = (parseFloat(appData.currentBankBalance) || 0) + summarySinceStart.netBalance;
       
       const freeBalance = totalBalance - (appData.taxCashReserve || 0);
-      totalBalance = totalBalance - (appData.taxCashReserve < 0 ? appData.taxCashReserve : 0); // Visualizza il totale reale in banca
 
       return `
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -2359,17 +2339,16 @@
           <div class="bg-white dark:bg-gray-800 p-4 rounded-xl card text-center col-span-2 md:col-span-1 border-l-4 ${freeBalance>=0?'border-emerald-500':'border-red-500'}">
             <p class="text-sm text-gray-500">Saldo Libero Reale</p>
             <p class="text-2xl font-extrabold ${freeBalance>=0?'text-emerald-600':'text-red-600'}">${freeBalance.toFixed(2)} ${symbol}</p>
-             <p class="text-xs text-gray-400">Totale Cassa (Base+Movimenti): ${totalBalance.toFixed(2)}</p>
+             <p class="text-xs text-gray-400">Totale Cassa: ${totalBalance.toFixed(2)}</p>
           </div>
           <div id="tax-reserve-container" class="bg-white dark:bg-gray-800 p-4 rounded-xl card text-center col-span-2 md:col-span-1 border-l-4 ${appData.taxCashReserve>=0?'border-emerald-500':'border-red-500'}">
             <p class="text-sm text-gray-500">Cassa Accantonamenti (Tasse/INPS)</p>
             <p id="tax-reserve-amount" class="text-xl font-bold ${appData.taxCashReserve>=0?'text-emerald-600':'text-red-600'}">${appData.taxCashReserve.toFixed(2)} ${symbol}</p>
-            <p class="text-xs text-gray-400">${ivaStatus}: ${summary.ivaBalance.toFixed(2)}</p>
+            <p class="text-xs text-gray-400">IVA Saldo: ${summary.ivaBalance.toFixed(2)}</p>
           </div>
         </div>
       `;
     }
-
     // NUOVO: Funzione per resettare lo stato della simulazione
     function resetSimulationState() {
         simulationState = {
@@ -2611,7 +2590,7 @@
             <button onclick="openTransactionForm('false')" class="cta-button w-full bg-indigo-500 text-white p-3 rounded-lg font-bold hover:bg-indigo-600">
                 Apri Modulo Registrazione Rapida
             </button>
-            <p class="text-xs text-gray-500 mt-2 text-center">Oppure usa i pulsanti flottanti in basso su mobile (Tasti I/E su desktop).</p>
+            <p class="text-xs text-gray-500 mt-2 text-center">Oppure usa i pulsanti flottanti in basso su mobile.</p>
           </div>
 
           <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card mb-20">
@@ -2732,8 +2711,12 @@
         
         appData.reminders.forEach(r => {
             const rDate = new Date(r.date);
-            if (!r.paid && rDate >= today && rDate <= futureDate && !r.recurringKey) {
-                netProjection -= r.amount;
+            // Assicurati che Entrata Ricorrente (promemoria negativo) non sia pagata due volte
+            const isRecurExp = r.amount > 0; // Uscita ricorrente
+            const isRecurInc = r.amount < 0; // Entrata ricorrente (il promemoria è negativo per coerenza)
+
+            if (!r.paid && rDate >= today && rDate <= futureDate) {
+                 netProjection -= r.amount; // L'importo negativo (entrata) si aggiunge, l'importo positivo (uscita) si sottrae
             }
         });
 
@@ -2806,6 +2789,8 @@
         
         const sortedGrouped = {};
         sortedKeys.forEach(key => {
+            // Ordina le transazioni all'interno del mese per data
+            grouped[key].sort((a,b)=> new Date(b.date)-new Date(a.date));
             sortedGrouped[key] = grouped[key];
         });
         
@@ -2822,9 +2807,12 @@
         const sortKey = document.getElementById('sort-key').value;
         const sortDirection = document.getElementById('sort-direction').value;
         
-        // Aggiorna i filtri globali per il ripristino o l'export
-        reportFilters = { type: currentReportType, filterType, filterDateStr: filterDate, categoryFilter, tagFilter, sortKey, sortDirection, searchQuery: query };
-        saveReportFilters(); 
+        // Aggiorna filtri globali per coerenza
+        reportFilters = { 
+            type: currentReportType, filterType, filterDateStr: filterDate, 
+            categoryFilter, tagFilter, sortKey, sortDirection, searchQuery: query 
+        };
+        saveReportFilters();
         
         // Usa la summary che beneficia della cache
         let results = calculateFinancialSummary(currentReportType, filterType, filterDate).transactions.slice(); 
@@ -2859,12 +2847,8 @@
                                       ${(t.tags||[]).length > 0 ? '| Tag: '+(t.tags||[]).join(', ') : ''}
                                     </p>
                                   </div>
-                                  <div class="text-right ml-4 flex space-x-2">
-                                    <div>
-                                        <p class="font-bold ${t.isIncome?'text-emerald-700 dark:text-emerald-300':'text-red-700 dark:text-red-300'}">${t.gross.toFixed(2)} ${symbol}</p>
-                                    </div>
-                                    <button onclick="editTransaction(${t.isIncome},${t.id},'${t.type}')" class="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-200" title="Modifica">✏️</button>
-                                    <button onclick="deleteTransaction(${t.isIncome},${t.id})" class="text-red-400 hover:text-red-600" title="Elimina">🗑️</button>
+                                  <div class="text-right ml-4">
+                                    <p class="font-bold ${t.isIncome?'text-emerald-700 dark:text-emerald-300':'text-red-700 dark:text-red-300'}">${t.gross.toFixed(2)} ${symbol}</p>
                                   </div>
                                 </div>
                             `).join('')}
@@ -2884,6 +2868,7 @@
       
       loadReportFilters();
       
+      // I valori dei filtri sono letti dagli elementi DOM, ma se l'elemento non esiste ancora, usiamo i valori salvati
       const currentType = document.getElementById('report-type')?.value || reportFilters.type;
       const filterType = document.getElementById('filter-type')?.value || reportFilters.filterType;
       const filterDateInput = document.getElementById('filter-date');
@@ -2901,9 +2886,15 @@
       const cashSummary = calculateFinancialSummary('global', filterType, filterDateStr);
       const ivaSummary = calculateFinancialSummary('activity', filterType, filterDateStr);
       
-      // La lista filtrata e ordinata verrà generata in updateReportDetail
-      const transactionsList = summary.transactions.slice(); // Lista completa prima dei filtri di dettaglio
+      let transactionsList = filterTransactionsByCriteria(summary.transactions, categoryFilter === 'all' ? null : categoryFilter, tagFilter === 'all' ? null : tagFilter);
       
+      if (searchQuery) {
+          transactionsList = filterTransactions(searchQuery, transactionsList);
+      }
+      
+      transactionsList = sortTransactions(transactionsList);
+      
+      const groupedTransactions = groupTransactionsByMonth(transactionsList);
 
       const totalCash = cashSummary.totalIncomes + cashSummary.totalExpenses;
       const cashIncomePercent = totalCash>0 ? (cashSummary.totalIncomes/totalCash)*100 : 50;
@@ -2969,7 +2960,7 @@
         <div class="space-y-6">
           <h2 class="text-2xl font-semibold border-b pb-2 text-gray-700 dark:text-gray-300">Riepilogo Finanziario Globale</h2>
 
-          <div class="bg-white dark:bg-gray-800 p-4 rounded-xl card grid grid-cols-1 md:grid-cols-5 gap-4">
+          <div class="bg-white dark:bg-gray-800 p-4 rounded-xl card grid grid-cols-1 md:grid-cols-5 gap-4 hidden-print">
             <div class="md:col-span-1">
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipo</label>
               <select id="report-type" onchange="renderPage('report')" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
@@ -3007,9 +2998,14 @@
                     ${allTags.map(t => `<option value="${t}" ${tagFilter === t ? 'selected' : ''}>${t}</option>`).join('')}
                 </select>
             </div>
+            <div class="md:col-span-5 pt-3">
+                 <button onclick="exportReportToPrint()" class="cta-button w-full bg-indigo-500 text-white p-3 rounded-lg font-bold hover:bg-indigo-600">
+                    🖨️ Esporta in PDF/Stampa Report Attuale
+                </button>
+            </div>
           </div>
           
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4 hidden-print">
               <div class="bg-white dark:bg-gray-800 p-4 rounded-xl card text-center border-l-4 border-indigo-500">
                   <p class="text-sm text-gray-500">Punteggio Salute Finanziaria</p>
                   <p class="text-2xl font-extrabold ${FHSColor}">${fhs.score}/${fhs.max}</p>
@@ -3034,7 +3030,7 @@
               </div>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 hidden-print">
             <div class="bg-white dark:bg-gray-800 p-4 rounded-xl card text-center">
               <p class="text-sm text-gray-500">Tasso di Risparmio</p>
               <p class="text-2xl font-extrabold ${KPIs.savingRate>=0?'text-emerald-600':'text-red-600'}">${(KPIs.savingRate||0).toFixed(1)}%</p>
@@ -3055,7 +3051,7 @@
           </div>
 
           ${currentType!=='personal'?`
-          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card space-y-3">
+          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card space-y-3 hidden-print">
               <h3 class="text-xl font-medium mb-3 text-gray-800 dark:text-gray-200">Analisi Budget (Personale - ${currentMonth})</h3>
               <p class="text-xs text-gray-500 dark:text-gray-400">Verifica i limiti di spesa impostati in Gestione Dati. Se Budget è 0, monitora solo le spese.</p>
               <div class="space-y-2">
@@ -3072,12 +3068,12 @@
               </div>
           </div>`:''}
 
-          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card" style="height: 280px;">
+          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card hidden-print" style="height: 280px;">
             <h3 class="text-xl font-medium mb-3 text-gray-800 dark:text-gray-200">Andamento Mensile Entrate/Uscite</h3>
             <canvas id="trendChart"></canvas>
           </div>
 
-          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card">
+          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card hidden-print">
             <h3 class="text-xl font-medium mb-3 text-gray-800 dark:text-gray-200">Analisi Cash Flow (${periodLabel})</h3>
             <p class="text-sm text-gray-600 dark:text-gray-400 mb-2 font-semibold">Distribuzione Entrate vs Uscite</p>
             <div class="bar-container">
@@ -3091,7 +3087,7 @@
           </div>
 
           ${currentType!=='personal'?`
-          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card">
+          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card hidden-print">
             <h3 class="text-xl font-medium mb-3 text-gray-800 dark:text-gray-200">Analisi IVA (Attività - ${periodLabel})</h3>
             <div class="bar-container">
               <div class="bar-addebito h-full" style="width:${ivaAddebitoPercent.toFixed(1)}%"></div>
@@ -3103,7 +3099,7 @@
             </div>
           </div>`:''}
 
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 hidden-print">
             <div class="bg-white dark:bg-gray-800 p-4 rounded-xl card">
               <h4 class="font-semibold mb-2">Top 3 Clienti</h4>
               <ul class="text-sm">${KPIs.topClients.map(c=>`<li class="flex justify-between"><span>${c.name}</span><span class="font-bold text-emerald-600 dark:text-emerald-300">${c.amount.toFixed(2)} ${symbol}</span></li>`).join('') || '<li class="text-gray-500">-</li>'}</ul>
@@ -3119,20 +3115,15 @@
           </div>
 
           <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card mb-20">
-            <div class="flex items-center justify-between mb-4">
-              <h3 class="text-xl font-medium text-gray-800 dark:text-gray-200">Dettaglio Movimenti</h3>
-              <div class="flex items-center space-x-3">
-                <input type="text" id="search" value="${reportFilters.searchQuery}" placeholder="🔍 Cerca (descrizione, categoria, tag, importo)" class="w-64 p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
-                <button onclick="exportReportPDF(reportFilters.filterType, reportFilters.filterDateStr, reportFilters.type)" class="px-3 py-2 bg-indigo-500 text-white rounded-lg text-sm hover:bg-indigo-600 font-bold" title="Esporta PDF dettagliato per Categoria/Mese">
-                    Export Dettaglio PDF 🖨️
-                </button>
-              </div>
+            <div class="flex items-center justify-between mb-4 hidden-print">
+              <h3 class="text-xl font-medium text-gray-800 dark:text-gray-200">Dettaglio Movimenti (${transactionsList.length})</h3>
+              <input type="text" id="search" value="${reportFilters.searchQuery}" placeholder="🔍 Cerca (descrizione, categoria, tag, importo)" class="w-64 p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
             </div>
             
-            <div class="flex space-x-4 mb-4">
+            <div class="flex space-x-4 mb-4 hidden-print">
                 <div class="flex-1">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Ordina per</label>
-                    <select id="sort-key" onchange="updateReportDetail(reportFilters.searchQuery)" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
+                    <select id="sort-key" onchange="renderPage('report')" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
                         <option value="date" ${sortKey === 'date' ? 'selected' : ''}>Data</option>
                         <option value="gross" ${sortKey === 'gross' ? 'selected' : ''}>Importo</option>
                         <option value="category" ${sortKey === 'category' ? 'selected' : ''}>Categoria</option>
@@ -3140,7 +3131,7 @@
                 </div>
                 <div class="flex-1">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Direzione</label>
-                    <select id="sort-direction" onchange="updateReportDetail(reportFilters.searchQuery)" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
+                    <select id="sort-direction" onchange="renderPage('report')" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
                         <option value="desc" ${sortDirection === 'desc' ? 'selected' : ''}>Decrescente</option>
                         <option value="asc" ${sortDirection === 'asc' ? 'selected' : ''}>Crescente</option>
                     </select>
@@ -3148,7 +3139,37 @@
             </div>
 
             <div id="transactions-detail" class="space-y-4">
-              </div>
+              ${Object.keys(groupedTransactions).length > 0 ? Object.keys(groupedTransactions).map(month => {
+                  const monthlyTx = groupedTransactions[month];
+                  const totalMonth = monthlyTx.reduce((sum, t) => sum + (t.gross * (t.isIncome ? 1 : -1)), 0);
+                  const monthColor = totalMonth >= 0 ? 'text-emerald-500' : 'text-red-500';
+
+                  return `
+                      <details class="bg-gray-50 dark:bg-gray-900 rounded-lg shadow-sm" open>
+                          <summary class="p-3 font-bold group-header flex justify-between items-center bg-gray-100 dark:bg-gray-700 rounded-lg">
+                              <span>${month} (${monthlyTx.length} movimenti)</span>
+                              <span class="${monthColor}">${totalMonth.toFixed(2)} ${symbol}</span>
+                          </summary>
+                          <div class="space-y-3 p-3">
+                              ${monthlyTx.map(t=>`
+                                <div class="flex justify-between items-center p-3 border-l-4 ${t.isIncome?'bg-emerald-50 border-emerald-300 dark:bg-emerald-900/50 dark:border-emerald-700':'bg-red-50 border-red-300 dark:bg-red-900/50 dark:border-red-700'} rounded-lg">
+                                  <div class="flex-grow">
+                                    <p class="font-semibold text-sm">${getCategoryIcon(t.category)} ${new Date(t.date).toLocaleDateString('it-IT')}: ${t.description||''}</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                                      ${t.type==='activity'?'Attività':'Personale'} | IVA ${t.vatRate}% | Cat: ${t.category||'-'} 
+                                      ${(t.tags||[]).length > 0 ? '| Tag: '+(t.tags||[]).join(', ') : ''}
+                                    </p>
+                                  </div>
+                                  <div class="text-right ml-4">
+                                    <p class="font-bold ${t.isIncome?'text-emerald-700 dark:text-emerald-300':'text-red-700 dark:text-red-300'}">${t.gross.toFixed(2)} ${symbol}</p>
+                                  </div>
+                                </div>
+                              `).join('')}
+                          </div>
+                      </details>
+                  `;
+              }).join('') : '<p class="text-gray-500">Nessuna transazione nel periodo.</p>'}
+            </div>
           </div>
         </div>
       `;
@@ -3162,7 +3183,7 @@
       let type='date', visible=true, def=new Date().toISOString().slice(0,10);
       switch(filterType){
         case 'year': 
-          type='number'; input.min=2000; input.max=new Date().getFullYear(); def=new Date().getFullYear(); 
+          type='number'; input.min=2000; input.max=new Date().getFullYear(); def=String(new Date().getFullYear()); 
           break;
         case 'month': 
         case 'quarter': 
@@ -3180,14 +3201,11 @@
       input.classList.toggle('hidden',!visible);
       
       if (visible && filterType!=='all') {
-          // Mantieni il valore se il tipo di filtro non cambia drasticamente il formato
-          if (filterType === reportFilters.filterType) {
-              input.value = reportFilters.filterDateStr;
-          } else {
-              input.value = def;
+          input.value = filterType === reportFilters.filterType ? reportFilters.filterDateStr : def;
+          // Correzione per il filtro Trimestre (mantiene il mese, ma il filtroByPeriod usa il trimestre)
+          if (filterType === 'quarter' && input.value.length === 10) { 
+              input.value = input.value.slice(0, 7); 
           }
-          reportFilters.filterDateStr = input.value;
-          
       } else {
           reportFilters.filterDateStr = 'all';
       }
@@ -3196,50 +3214,41 @@
     }
     
     function calculateNextRecurrence(lastDateStr, frequency, targetDate = new Date()) {
-        let dateToStartFrom = new Date(lastDateStr);
-        const originalDay = new Date(lastDateStr).getDate();
         const today = new Date(); 
-
-        let currentMonth = dateToStartFrom.getMonth();
-        let currentYear = dateToStartFrom.getFullYear();
-        let nextRecurrence = new Date(currentYear, currentMonth, originalDay); 
-
-        // Avanza la data iniziale se è nel passato
-        while(nextRecurrence.getTime() <= today.getTime()){
-            if (frequency === 'monthly') {
-                currentMonth += 1;
-            } else if (frequency === 'quarterly') {
-                currentMonth += 3;
-            } else if (frequency === 'annual') {
-                currentYear += 1;
-            }
-            nextRecurrence = new Date(currentYear, currentMonth, originalDay); 
+        today.setHours(0,0,0,0);
+        
+        let lastDate = new Date(lastDateStr);
+        lastDate.setHours(0,0,0,0);
+        
+        // Calcola la prima data di ricorrenza *dopo* l'ultima transazione registrata (lastDate)
+        let nextRecurrence = new Date(lastDate);
+        
+        // Avanza la data al ciclo successivo in base alla frequenza
+        const advanceDate = (date, freq) => {
+            const d = new Date(date);
+            const originalDay = d.getDate();
             
-            // Gestione del giorno mancante (es. 31/01 -> 28/02)
-            if (nextRecurrence.getDate() !== originalDay) {
-                 nextRecurrence = new Date(nextRecurrence.getFullYear(), nextRecurrence.getMonth() + 1, 0);
-            }
-
-            if (currentYear > today.getFullYear() + 10) return null; // Limite di sicurezza
-        }
-
-        // Trova la prossima ricorrenza che non è dopo la target date (se specificata)
-        while (nextRecurrence.getTime() > targetDate.getTime()) {
-             // Ritorna la data precedente valida
-            if (frequency === 'monthly') currentMonth -= 1;
-            else if (frequency === 'quarterly') currentMonth -= 3;
-            else if (frequency === 'annual') currentYear -= 1;
+            if (freq === 'monthly') d.setMonth(d.getMonth() + 1);
+            else if (freq === 'quarterly') d.setMonth(d.getMonth() + 3);
+            else if (freq === 'annual') d.setFullYear(d.getFullYear() + 1);
             
-            nextRecurrence = new Date(currentYear, currentMonth, originalDay);
-            if (nextRecurrence.getDate() !== originalDay) {
-                 nextRecurrence = new Date(nextRecurrence.getFullYear(), nextRecurrence.getMonth() + 1, 0);
+            // Correzione per mesi corti (es. da 31 Gennaio a Marzo)
+            if (d.getDate() !== originalDay) {
+                d.setDate(0); // Ultimo giorno del mese precedente
             }
+            return d;
+        };
+
+        // Trova la prossima ricorrenza che sia >= ORA (o data target)
+        if (nextRecurrence.getTime() <= today.getTime()) {
+             nextRecurrence = advanceDate(nextRecurrence, frequency);
         }
         
-        if (nextRecurrence.getTime() >= today.getTime()) {
-            return nextRecurrence.toISOString().slice(0, 10);
+        while (nextRecurrence.getTime() < targetDate.getTime()) {
+            nextRecurrence = advanceDate(nextRecurrence, frequency);
         }
-        return null;
+        
+        return nextRecurrence.toISOString().slice(0, 10);
     }
 
 
@@ -3266,7 +3275,7 @@
               const nextDate = new Date(nextDateStr);
               const diffDays = Math.ceil((nextDate - today) / (1000 * 60 * 60 * 24));
               
-              if (diffDays > 90 || diffDays < 0) return null; 
+              if (diffDays > 120 || diffDays < 0) return null; // Limita a 4 mesi (120gg)
               
               return {
                   ...r, nextDate: nextDateStr, status: `Previsto in ${diffDays} giorni`, amount: r.lastAmount
@@ -3275,7 +3284,8 @@
           .filter(r => r !== null)
           .sort((a, b) => new Date(a.nextDate) - new Date(b.nextDate));
       
-      const types = FISCAL_REMINDER_TYPES;
+      // NUOVO: Aggiunta Entrata Ricorrente
+      const types = [...FISCAL_REMINDER_TYPES, 'Uscita Ricorrente (Manuale)', 'Entrata Ricorrente (Manuale)'];
       
       const getBirthdayInfo = (bd) => {
         const bdDate = new Date(bd.date);
@@ -3324,13 +3334,13 @@
                 <p class="font-bold mt-1 ${r.paid?'line-through text-gray-500':'text-gray-800 dark:text-gray-200'}">${type === 'payment' ? r.description : r.name || r.description}</p>
                 
                 ${type === 'payment' ? 
-                    `<p class="text-sm text-gray-600 dark:text-gray-400">Scadenza: ${new Date(r.date).toLocaleDateString('it-IT')} | Importo: ${r.amount.toFixed(2)} ${symbol}</p>` :
+                    `<p class="text-sm text-gray-600 dark:text-gray-400">Scadenza: ${new Date(r.date).toLocaleDateString('it-IT')} | Importo: ${Math.abs(r.amount).toFixed(2)} ${symbol} ${r.amount<0?' (Entrata)':''}</p>` :
                 type === 'recurring' ?
                     `<p class="text-sm text-gray-600 dark:text-gray-400">Previsto il: ${new Date(r.nextDate).toLocaleDateString('it-IT')} | Est: ${r.amount.toFixed(2)} ${symbol} | ${r.status}</p>` :
                     `<p class="text-sm text-gray-600 dark:text-gray-400">Ricorre il: ${r.annualDate} | Età Proiettata: ${r.age} | ${r.status}</p>`}
               </div>
               <div class="flex space-x-2">
-                ${r.isFiscal && !r.paid && r.type.startsWith('IVA') && appData.fiscalParams.regime === 'forfettario' ? 
+                ${r.isFiscal && !r.paid && (r.type.startsWith('IVA') || r.type.includes('Tasse')) && appData.fiscalParams.regime === 'forfettario' ? 
                     `<button onclick="markTaxPaid(${r.id}, ${Math.abs(r.amount)})" class="text-sm px-3 py-1 rounded-lg bg-red-600 hover:bg-red-700 text-white">Paga (Accant.)</button>` : 
                     (type === 'payment' && !r.isFiscal ? 
                     `<button onclick="toggleReminderPaid(${r.id})" class="text-sm px-3 py-1 rounded-lg ${r.paid?'bg-orange-500 hover:bg-orange-600':'bg-emerald-500 hover:bg-emerald-600'} text-white">${r.paid?'Annulla Pag.':'Paga'}</button>` : '')}
@@ -3385,7 +3395,8 @@
                   </div>
                   <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Importo (${symbol})</label>
-                    <input type="number" id="reminder-amount" name="amount" step="0.01" min="0" required placeholder="500.00" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
+                    <input type="number" id="reminder-amount" name="amount" step="0.01" required placeholder="500.00" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700">
+                    <p class="text-xs text-gray-500 mt-1">Negativo se Entrata Ricorrente.</p>
                   </div>
                 </div>
                 <button type="submit" class="cta-button w-full bg-emerald-500 text-white p-3 rounded-lg font-bold hover:bg-emerald-600">Aggiungi Promemoria</button>
@@ -3400,7 +3411,6 @@
         </div>
       `;
     }
-
     function getLocalStorageSize() {
         let total = 0;
         for(let i=0; i<localStorage.length; i++) {
@@ -3411,7 +3421,48 @@
         // Converti in MB e arrotonda
         return (total / (1024 * 1024)).toFixed(2);
     }
+    
+    // NUOVO: Funzione per salvare il Saldo Base della Banca
+    function saveBankBalance() {
+        const input = document.getElementById('current-bank-balance');
+        const balance = parseFloat(input?.value) || 0;
 
+        showModal('Aggiorna Saldo Base', `Impostare il Saldo Conto Iniziale (Base) su: ${balance.toFixed(2)} ${getCurrencySymbol()}? (Le transazioni non cambieranno)`, true, () => {
+            appData.currentBankBalance = balance;
+            saveData();
+            showToast('Saldo Base Aggiornato!');
+            renderPage('settings');
+        });
+    }
+
+    // NUOVO: Funzione per salvare i parametri fiscali
+    function saveFiscalParams() {
+        const regime = document.getElementById('fiscal-regime').value;
+        const profitRate = parseFloat(document.getElementById('fiscal-profit-rate').value) / 100 || 0;
+        const taxRate = parseFloat(document.getElementById('fiscal-tax-rate').value) / 100 || 0;
+        const inpsRate = parseFloat(document.getElementById('fiscal-inps-rate').value) / 100 || 0;
+        
+        const regimeLabel = regime === 'forfettario' ? 'Forfettario' : 'Ordinario';
+        
+        showModal('Salva Parametri Fiscali', `Confermi di salvare i parametri per il regime ${regimeLabel}?`, true, () => {
+            appData.fiscalParams = { regime, profitRate, taxRate, inpsRate };
+            saveData();
+            showToast('Parametri Fiscali Salvati!');
+            renderPage('settings');
+        });
+    }
+
+    // NUOVO: Funzione per salvare il budget di categoria
+    function saveCategoryBudget(category, amount) {
+        const budget = parseFloat(amount) || 0;
+
+        showModal('Salva Budget', `Impostare il budget mensile per "${category}" su: ${budget.toFixed(2)} ${getCurrencySymbol()}?`, true, () => {
+            appData.categoryBudgets[category] = budget;
+            saveData();
+            showToast(`Budget per ${category} salvato!`);
+            renderPage('settings');
+        });
+    }
 
     function renderSettingsPage(){
       const currentYear=new Date().getFullYear();
@@ -3459,12 +3510,12 @@
                 <div>
                     <label for="fiscal-profit-rate" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Coeff. Redditività (%)</label>
                     <input type="number" id="fiscal-profit-rate" step="1" min="1" max="100" value="${(currentFiscal.profitRate * 100).toFixed(0)}" 
-                           class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700 text-right"/>
+                           class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700 text-right" ${currentFiscal.regime==='ordinario'?'disabled':''}/>
                 </div>
                 <div>
                     <label for="fiscal-tax-rate" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Aliquota Fiscale (%)</label>
                     <input type="number" id="fiscal-tax-rate" step="0.1" min="0" max="50" value="${(currentFiscal.taxRate * 100).toFixed(1)}" 
-                           class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700 text-right"/>
+                           class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700 text-right" ${currentFiscal.regime==='ordinario'?'disabled':''}/>
                 </div>
                 <div>
                     <label for="fiscal-inps-rate" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Aliquota INPS (%)</label>
@@ -3476,25 +3527,25 @@
           </div>
 
           <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card space-y-4">
-            <h3 class="text-xl font-medium text-blue-600">Configurazione Liquidità & Valuta</h3>
-            
-            <div class="border-b pb-4 mb-4">
-                <p class="text-sm text-gray-700 dark:text-gray-300 mb-2">Simbolo Valuta Attuale: <span class="font-bold text-lg">${symbol}</span></p>
-                <div>
-                    <label for="currency-symbol-input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Imposta Simbolo Valuta (es. €, $, £)</label>
-                    <input type="text" id="currency-symbol-input" maxlength="2" value="${symbol}" placeholder="€" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700"/>
-                </div>
-                <button onclick="changeCurrencySymbol()" class="cta-button w-full bg-blue-500 text-white p-3 rounded-lg font-bold hover:bg-blue-600 mt-3">Salva Valuta</button>
-            </div>
+              <h3 class="text-xl font-medium text-blue-600">Configurazione Liquidità & Valuta</h3>
+              
+              <div class="border-b pb-4 mb-4">
+                  <p class="text-sm text-gray-700 dark:text-gray-300 mb-2">Simbolo Valuta Attuale: <span class="font-bold text-lg">${symbol}</span></p>
+                  <div>
+                      <label for="currency-symbol-input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Imposta Simbolo Valuta (es. €, $, £)</label>
+                      <input type="text" id="currency-symbol-input" maxlength="2" value="${symbol}" placeholder="€" class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700"/>
+                  </div>
+                  <button onclick="changeCurrencySymbol()" class="cta-button w-full bg-blue-500 text-white p-3 rounded-lg font-bold hover:bg-blue-600 mt-3">Salva Valuta</button>
+              </div>
 
-            <div>
-                <label for="current-bank-balance" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Saldo Conto Iniziale (Bank Balance Base, ${symbol})</label>
-                <p class="text-xs text-gray-500 mb-1">Questo è il saldo base all'inizio delle registrazioni. Le transazioni si sommano a questo.</p>
-                <input type="number" id="current-bank-balance" step="0.01" value="${currentBankBalance.toFixed(2)}"
-                       class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700" 
-                       inputmode="decimal"/>
-            </div>
-            <button onclick="saveBankBalance()" class="cta-button w-full bg-blue-500 text-white p-3 rounded-lg font-bold hover:bg-blue-600">Aggiorna Saldo Base</button>
+              <div>
+                  <label for="current-bank-balance" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Saldo Conto Iniziale (Bank Balance Base, ${symbol})</label>
+                  <p class="text-xs text-gray-500 mb-1">Questo è il saldo base all'inizio delle registrazioni. Le transazioni si sommano a questo.</p>
+                  <input type="number" id="current-bank-balance" step="0.01" value="${currentBankBalance.toFixed(2)}"
+                         class="w-full p-2 border rounded-lg dark:bg-gray-900 dark:border-gray-700" 
+                         inputmode="decimal"/>
+              </div>
+              <button onclick="saveBankBalance()" class="cta-button w-full bg-blue-500 text-white p-3 rounded-lg font-bold hover:bg-blue-600">Aggiorna Saldo Base</button>
           </div>
           
           <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card space-y-4">
@@ -3536,7 +3587,7 @@
                   <div class="flex-grow">
                     <span class="font-semibold text-sm">${c.name}</span>
                     <span class="text-xs ml-2 px-2 py-0.5 rounded-full ${c.scope==='activity'?'bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300':'bg-pink-100 text-pink-700 dark:bg-pink-900 dark:text-pink-300'}">
-                      ${c.scope==='activity'?'Attività':'Personale'}
+                      ${c.scope==='activity'?'Attività':'Personale'} (${c.relation})
                     </span>
                   </div>
                   <button onclick="deleteContact(${c.id})" class="text-red-400 hover:text-red-600">🗑️</button>
@@ -3559,6 +3610,16 @@
              <button onclick="deleteUnusedCategories()" class="cta-button w-full bg-gray-400 text-white p-3 rounded-lg font-bold hover:bg-gray-500">Pulisci Categorie Non Usate</button>
           </div>
           
+          <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card space-y-4">
+            <h3 class="text-xl font-medium text-indigo-600">Notifiche Email (EmailJS)</h3>
+            <p class="text-sm text-gray-700 dark:text-gray-300">Stato: ${EMAILJS_CONFIG.userId ? `<span class="font-bold text-emerald-600">Configurato per ${EMAILJS_CONFIG.recipientEmail}</span>` : '<span class="font-bold text-red-600">Non Configurato</span>'}</p>
+            <p class="text-xs text-gray-500">Utilizzato per inviare promemoria manuali al tuo indirizzo email.</p>
+            <button onclick="document.getElementById('email-config-modal').classList.remove('hidden'); setupEmailConfigModal();" 
+                    class="cta-button w-full bg-indigo-500 text-white p-3 rounded-lg font-bold hover:bg-indigo-600">
+                ${EMAILJS_CONFIG.userId ? 'Modifica Configurazione EmailJS' : 'Configura EmailJS'}
+            </button>
+          </div>
+
           <div class="bg-white dark:bg-gray-800 p-5 rounded-xl card space-y-4">
             <h3 class="text-xl font-medium text-purple-600">Gestione Sicurezza (PIN)</h3>
             <p class="text-sm text-gray-700 dark:text-gray-300">PIN Attuale HASH: <span class="font-bold">${appData.pinHash.slice(0, 8)}...</span></p>
@@ -3605,15 +3666,124 @@
       `;
     }
     
+    // NUOVO: Logica per il modal di configurazione EmailJS
+    function setupEmailConfigModal() {
+        document.getElementById('emailjs-service-id').value = EMAILJS_CONFIG.serviceId;
+        document.getElementById('emailjs-template-id').value = EMAILJS_CONFIG.templateId;
+        document.getElementById('emailjs-user-id').value = EMAILJS_CONFIG.userId;
+        document.getElementById('emailjs-recipient').value = EMAILJS_CONFIG.recipientEmail;
+    }
+
+    function saveMonthlyTarget() {
+        const input = document.getElementById('monthly-target');
+        const target = parseFloat(input?.value) || 0;
+
+        showModal('Conferma Obiettivo', `Impostare l'obiettivo di risparmio su: ${target.toFixed(2)} ${getCurrencySymbol()}?`, true, () => {
+            appData.monthlySavingsTarget = target;
+            saveData();
+            showToast('Obiettivo risparmio salvato!');
+            renderPage('settings');
+        });
+    }
+
+    function changeCurrencySymbol() {
+        const symbolInput = document.getElementById('currency-symbol-input');
+        const newSymbol = symbolInput?.value.trim() || '€';
+
+        if (newSymbol.length > 2) {
+            showToast('Il simbolo valuta dovrebbe essere al massimo di 2 caratteri.', 'red');
+            return;
+        }
+
+        showModal('Conferma Valuta', `Impostare il simbolo valuta su: ${newSymbol}?`, true, () => {
+            appData.currencySymbol = newSymbol;
+            saveData();
+            renderPage('settings');
+            showToast('Simbolo Valuta aggiornato!');
+        });
+    }
+
+    function changePin() {
+      const currentPinInput = document.getElementById('current-pin');
+      const newPinInput = document.getElementById('new-pin');
+      
+      const currentPin = currentPinInput?.value.trim();
+      const newPin = newPinInput?.value.trim();
+      
+      const expectedHash = appData.pinHash;
+      const enteredHash = hashPin(currentPin);
+      
+      if (enteredHash !== expectedHash) {
+        showToast('Il PIN attuale non è corretto.','red');
+        currentPinInput.value = '';
+        return;
+      }
+
+      if (!newPin || newPin.length !== 4 || isNaN(newPin)) {
+        showToast('Il nuovo PIN deve essere esattamente di 4 cifre.','red');
+        return;
+      }
+      
+      const newPinHash = hashPin(newPin);
+
+      showModal('Conferma Cambio PIN', `Sei sicuro di voler cambiare il PIN?`, true, () => {
+        appData.pinHash = newPinHash;
+        saveData();
+        currentPinInput.value = '';
+        newPinInput.value = '';
+        showToast('PIN modificato con successo! Sarà richiesto al prossimo riavvio.');
+        renderPage('settings');
+      });
+    }
+    
+    function deleteCurrentUserProfile() {
+        showModal('Elimina Profilo', `Sei sicuro di voler eliminare permanentemente il profilo "${globalState.currentUser.name}"? Tutti i dati andranno persi!`, true, () => {
+            
+            // 1. Rimuovi i dati specifici dell'utente
+            localStorage.removeItem(globalState.currentUser.dataKey);
+            localStorage.removeItem(`${globalState.currentUser.dataKey}_checksum`);
+            
+            // 2. Rimuovi l'utente dallo stato globale
+            globalState.users = globalState.users.filter(u => u.dataKey !== globalState.currentUser.dataKey);
+            
+            if (globalState.users.length > 0) {
+                // Seleziona il primo utente rimanente come nuovo utente corrente
+                globalState.currentUser = globalState.users[0];
+                saveGlobalState();
+                loadData();
+                sessionStorage.removeItem(SESSION_STORAGE_PIN_KEY);
+                showToast(`Profilo "${globalState.currentUser.name}" caricato. Reinserisci PIN.`, 'red');
+            } else {
+                // Nessun utente rimanente, reset completo
+                globalState.currentUser = null;
+                saveGlobalState();
+                localStorage.removeItem(GLOBAL_KEY);
+                sessionStorage.removeItem(SESSION_STORAGE_PIN_KEY);
+                showToast('Ultimo profilo eliminato. Ricarica la pagina per ricominciare.', 'red');
+            }
+            
+            // Forziamo il blocco PIN
+            setupPinLock();
+        });
+    }
+
     function checkReminders(){
       const today=new Date();
       
       (appData.reminders||[]).forEach(r=>{
         const diff=(new Date(r.date)-today)/(1000*60*60*24);
+        const absDiff = Math.abs(diff);
+
         if (!r.paid && diff>=0 && diff<=3){
+          // Notifica nativa
           if (Notification.permission==='granted'){
             new Notification(`🔔 Scadenza: ${r.type}`, { body:`${r.description} - Scade il ${new Date(r.date).toLocaleDateString('it-IT')}` });
           }
+        }
+        
+        // NUOVO: Notifica Email per scadenza fiscale (2 giorni prima)
+        if (!r.paid && r.isFiscal && absDiff >= 1.5 && absDiff < 2.5 && EMAILJS_CONFIG.userId) {
+            sendReminderEmail(r);
         }
       });
       
@@ -3676,14 +3846,10 @@
           clearTimeout(simulationTimer);
           break;
         case 'report':
-          loadReportFilters();
           area.innerHTML = renderReportPage();
           updateReportDateInput(); 
           
           renderTrendChart();
-          // Carica il dettaglio delle transazioni (aggiornato)
-          updateReportDetail(reportFilters.searchQuery); 
-          
           // Correzione Filtro Ricerca
           const searchInput = document.getElementById('search');
           if (searchInput) searchInput.value = reportFilters.searchQuery;
@@ -3697,20 +3863,21 @@
           area.innerHTML = renderSettingsPage();
           document.getElementById('import-file')?.addEventListener('change', importDataFile);
           document.getElementById('clean-btn')?.addEventListener('click', ()=> cleanDataByYear(document.getElementById('clean-year').value));
+          // NUOVO: Listener per cambiare regime fiscale (aggiorna i campi)
+          document.getElementById('fiscal-regime')?.addEventListener('change', (e) => {
+             const isForfettario = e.target.value === 'forfettario';
+             document.getElementById('fiscal-profit-rate').disabled = !isForfettario;
+             document.getElementById('fiscal-tax-rate').disabled = !isForfettario;
+          });
           break;
       }
     }
     
     // *** CORREZIONE PERF. FILTRO: Funzione per gestire l'input di ricerca in Report ***
-    let searchDebounceTimer;
     function handleReportSearchInput(e) {
         const query = e.target.value;
-        
-        clearTimeout(searchDebounceTimer);
-        searchDebounceTimer = setTimeout(() => {
-            // Invece di chiamare renderPage (che è pesante), aggiorniamo solo il Dettaglio
-            updateReportDetail(query);
-        }, 300); // Debounce per evitare ricalcoli costosi ad ogni digitazione
+        // Invece di chiamare renderPage (che è pesante), aggiorniamo solo il Dettaglio
+        updateReportDetail(query);
     }
     
     // --- PWA ---
@@ -3796,7 +3963,7 @@
       const appContainer = document.getElementById('app');
       appContainer?.addEventListener('change', (e) => {
           if (currentPage === 'report') {
-              if (e.target.id === 'report-type' || e.target.id === 'filter-category' || e.target.id === 'filter-tag') {
+              if (e.target.id === 'report-type' || e.target.id === 'filter-category' || e.target.id === 'filter-tag' || e.target.id === 'sort-key' || e.target.id === 'sort-direction') {
                   // Salviamo la ricerca corrente per non perderla
                   const searchInput = document.getElementById('search');
                   if (searchInput) reportFilters.searchQuery = searchInput.value;
@@ -3806,23 +3973,11 @@
               }
           }
       });
-      appContainer?.addEventListener('change', (e) => { // Per i campi di ordinamento
-           if (currentPage === 'report') {
-              if (e.target.id === 'sort-key' || e.target.id === 'sort-direction') {
-                   // Aggiorna solo il dettaglio (più performante)
-                   updateReportDetail(reportFilters.searchQuery);
-              }
-           }
-      });
-      
       appContainer?.addEventListener('input', (e) => {
           if (currentPage === 'report') {
               if (e.target.id === 'filter-date') {
                   reportFilters.filterDateStr = e.target.value;
-                  // Se il campo è un tipo che non cambia onchange (month, date), deve essere renderizzato per applicare il filtro
-                  if (e.target.type === 'number' || e.target.type === 'month' || e.target.type === 'date') {
-                      renderPage('report');
-                  }
+                  if (e.target.type === 'number') renderPage('report');
               }
           }
       });
