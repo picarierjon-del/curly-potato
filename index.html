@@ -3,260 +3,261 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>OMNIA BLACK BOX - Sovereign</title>
+    <title>OMNIA ELITE - Gestione Titolare</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #020617; color: #f8fafc; }
-        .mono { font-family: 'JetBrains Mono', monospace; }
-        .secure-blur { backdrop-filter: blur(20px); background: rgba(2, 6, 23, 0.95); }
         .glass-card { background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(51, 65, 85, 0.3); border-radius: 20px; }
-        .input-pro { background: #0f172a; border: 1px solid #1e293b; color: white; border-radius: 12px; padding: 12px; width: 100%; outline: none; text-align: center; font-weight: bold; }
-        .input-pro:focus { border-color: #3b82f6; box-shadow: 0 0 15px rgba(59, 130, 246, 0.3); }
+        .input-pro { background: #0f172a; border: 1px solid #1e293b; color: white; border-radius: 10px; padding: 10px; width: 100%; outline: none; text-align: center; font-weight: bold; font-size: 14px; }
+        .input-pro:focus { border-color: #3b82f6; }
         #authScreen { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; background: #020617; }
         .hidden { display: none !important; }
     </style>
 </head>
-<body class="pb-40">
+<body class="pb-44">
 
     <div id="authScreen">
         <div class="text-center space-y-6 p-8 glass-card w-80">
-            <h1 class="text-2xl font-black italic text-blue-500">SECURE<span class="text-white">ACCESS</span></h1>
-            <input type="password" id="pinInput" class="input-pro text-2xl tracking-[1em]" placeholder="****" maxlength="4">
-            <button onclick="checkAuth()" class="w-full bg-blue-600 py-4 rounded-xl font-black">SBLOCCA SISTEMA</button>
-            <p class="text-[10px] text-slate-500 uppercase tracking-widest">Riservato alla Direzione</p>
+            <h1 class="text-xl font-black text-blue-500 italic">OMNIA ELITE ACCESS</h1>
+            <input type="password" id="pinInput" class="input-pro text-2xl tracking-[0.5em]" placeholder="****" maxlength="4">
+            <button onclick="checkAuth()" class="w-full bg-blue-600 py-4 rounded-xl font-black uppercase tracking-widest text-sm">Entra</button>
         </div>
     </div>
 
     <div id="mainUI" class="hidden">
         
-        <nav class="sticky top-0 z-50 bg-[#020617]/90 border-b border-slate-800 p-4 backdrop-blur-md flex justify-between items-center">
-            <div>
+        <nav class="sticky top-0 z-50 bg-[#020617]/95 border-b border-slate-800 p-4 backdrop-blur-md">
+            <div class="flex justify-between items-center mb-3">
                 <h1 class="text-lg font-black text-blue-500 italic">OMNIA<span class="text-white">SOVEREIGN</span></h1>
-                <p id="topDate" class="text-[9px] font-bold text-slate-400"></p>
+                <button onclick="exportMonthlyPDF()" class="bg-blue-600 text-[10px] font-black px-4 py-2 rounded-lg uppercase">Report Ragioniere</button>
             </div>
-            <div class="flex gap-2">
-                <button onclick="exportFullData()" class="bg-slate-800 p-2 rounded-lg text-xs">☁️ Backup</button>
-                <button onclick="location.reload()" class="bg-red-900/20 text-red-500 p-2 rounded-lg text-xs">🔒 Logout</button>
+            <div class="flex gap-2 items-center bg-slate-900 p-2 rounded-xl border border-slate-800">
+                <button onclick="changeDate(-1)" class="p-2 text-blue-500 font-bold">◀</button>
+                <input type="date" id="datePicker" class="bg-transparent text-xs font-bold text-center flex-1 outline-none text-white" onchange="setDateFromPicker()">
+                <button onclick="changeDate(1)" class="p-2 text-blue-500 font-bold">▶</button>
             </div>
         </nav>
 
-        <div class="grid grid-cols-2 gap-3 px-4 mt-4">
-            <div class="glass-card p-4">
-                <p class="text-[8px] font-bold text-slate-500 uppercase">Utile Stimato (Mese)</p>
-                <h3 id="kpiProfit" class="text-xl font-black text-green-400">€ 0</h3>
-            </div>
-            <div class="glass-card p-4">
-                <p class="text-[8px] font-bold text-slate-500 uppercase">IVA da Accantonare</p>
-                <h3 id="kpiIva" class="text-xl font-black text-blue-400">€ 0</h3>
-            </div>
-        </div>
-
-        <div class="flex gap-1 p-1 bg-slate-900 mx-4 mt-4 rounded-xl border border-slate-800">
-            <button onclick="showTab('day')" id="tDay" class="flex-1 py-2 text-[10px] font-black rounded-lg bg-blue-600">CASSA</button>
-            <button onclick="showTab('bank')" id="tBank" class="flex-1 py-2 text-[10px] font-black rounded-lg text-slate-500">BANCA</button>
-            <button onclick="showTab('archive')" id="tArchive" class="flex-1 py-2 text-[10px] font-black rounded-lg text-slate-500">ARCHIVIO</button>
+        <div class="flex gap-2 p-1 bg-slate-900/50 mx-4 mt-4 rounded-xl border border-slate-800">
+            <button onclick="showTab('day')" id="tDay" class="flex-1 py-2 text-[10px] font-black rounded-lg bg-blue-600">CASSA GIORNO</button>
+            <button onclick="showTab('bank')" id="tBank" class="flex-1 py-2 text-[10px] font-black rounded-lg text-slate-500">DISTINTA BANCA</button>
         </div>
 
         <div id="secDay" class="p-4 space-y-4">
-            <div class="glass-card p-6 text-center">
-                <span class="text-[9px] font-black text-slate-500 uppercase">Corrispettivo Lordo del Giorno</span>
+            <div class="glass-card p-5 text-center bg-gradient-to-b from-blue-900/10 to-transparent">
+                <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Totale Corrispettivi (Chiusura Z)</span>
                 <input type="number" id="total_sales" class="bg-transparent text-5xl font-black text-white w-full outline-none mt-2" placeholder="0.00" oninput="runLogic()">
             </div>
 
-            <div class="glass-card p-4 space-y-3">
-                <h4 class="text-[9px] font-black text-blue-500 uppercase italic">Digital & Delivery (Netto Commissioni)</h4>
-                <div class="grid grid-cols-2 gap-3 text-xs">
-                    <div>
-                        <label class="text-slate-500 block mb-1">POS/Satispay</label>
-                        <input type="number" id="pos_total" class="input-pro text-sm" oninput="runLogic()">
-                    </div>
-                    <div>
-                        <label class="text-orange-500 block mb-1">Just Eat (-25%)</label>
-                        <input type="number" id="je_total" class="input-pro text-sm" oninput="runLogic()">
-                    </div>
-                    <div class="col-span-2">
-                        <label class="text-green-500 block mb-1">Deliveroo/Glovo (-30%)</label>
-                        <input type="number" id="del_total" class="input-pro text-sm" oninput="runLogic()">
-                    </div>
+            <div class="glass-card p-4 space-y-4">
+                <h4 class="text-[10px] font-black text-blue-400 uppercase tracking-widest border-b border-slate-800 pb-2 italic">Tracciati (Accredito in Banca)</h4>
+                <div class="grid grid-cols-2 gap-3">
+                    <div><label class="text-[9px] text-slate-500 uppercase font-bold mb-1 block">Bancomat</label><input type="number" id="p_bancomat" class="input-pro" oninput="runLogic()"></div>
+                    <div><label class="text-[9px] text-slate-500 uppercase font-bold mb-1 block">SumUp</label><input type="number" id="p_sumup" class="input-pro" oninput="runLogic()"></div>
+                    <div><label class="text-[9px] text-blue-400 uppercase font-bold mb-1 block">Satispay</label><input type="number" id="p_satispay" class="input-pro" oninput="runLogic()"></div>
+                    <div><label class="text-[9px] text-orange-500 uppercase font-bold mb-1 block">Just Eat</label><input type="number" id="p_justeat" class="input-pro" oninput="runLogic()"></div>
+                    <div><label class="text-[9px] text-green-500 uppercase font-bold mb-1 block">Delivery</label><input type="number" id="p_delivery" class="input-pro" oninput="runLogic()"></div>
+                    <div><label class="text-[9px] text-purple-400 uppercase font-bold mb-1 block">App</label><input type="number" id="p_app" class="input-pro" oninput="runLogic()"></div>
                 </div>
-            </div>
-
-            <div class="glass-card p-4 bg-blue-900/5">
-                <h4 class="text-[9px] font-black text-slate-400 uppercase mb-3 text-center">Conteggio Fisico Cassetto</h4>
-                <div class="grid grid-cols-3 gap-2">
-                    <input type="number" id="c50" placeholder="50€" class="input-pro text-xs" oninput="runLogic()">
-                    <input type="number" id="c20" placeholder="20€" class="input-pro text-xs" oninput="runLogic()">
-                    <input type="number" id="c10" placeholder="10€" class="input-pro text-xs" oninput="runLogic()">
-                </div>
-                <div id="cassaDiff" class="mt-3 text-center text-[10px] font-bold py-2 rounded-lg">DISCREPANZA: € 0.00</div>
             </div>
 
             <div class="glass-card p-4">
-                <div class="flex justify-between mb-3">
-                    <h4 class="text-[9px] font-black text-slate-400 uppercase italic tracking-widest">Uscite Cash & Foto Bolle</h4>
-                    <span id="sumSup" class="mono text-xs font-bold text-orange-400">€ 0.00</span>
+                <div class="flex justify-between items-center mb-4">
+                    <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Uscite / Fornitori</h4>
+                    <span id="sumSup" class="text-sm font-bold text-red-400">€ 0.00</span>
                 </div>
-                <div id="supList" class="space-y-2 max-h-40 overflow-y-auto"></div>
+                <p class="text-[8px] text-slate-500 mb-3 uppercase tracking-tighter italic">* Spunta la casella solo se pagato in CONTANTI</p>
+                <div id="supList" class="space-y-2 max-h-48 overflow-y-auto pr-1"></div>
             </div>
         </div>
 
         <div id="secBank" class="p-4 hidden space-y-4">
             <div class="glass-card p-6 border-l-4 border-green-500">
-                <h2 class="text-xs font-black text-green-500 uppercase mb-4 tracking-tighter">Liquidità Pronta per Deposito</h2>
-                <div id="bankList" class="space-y-2"></div>
-                <div class="mt-6 pt-4 border-t border-slate-800">
-                    <p class="text-[9px] text-slate-500 uppercase font-bold">Totale da versare</p>
-                    <div id="bankTotal" class="text-4xl font-black italic">€ 0.00</div>
+                <h2 class="text-sm font-black text-green-500 uppercase mb-4 italic">Versamento Banca (Settimanale)</h2>
+                <div id="bankList" class="space-y-3"></div>
+                <div class="mt-8 pt-4 border-t border-slate-700">
+                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Totale Contanti da Versare</p>
+                    <div id="bankTotal" class="text-4xl font-black italic text-white">€ 0.00</div>
                 </div>
             </div>
         </div>
 
-        <div class="fixed bottom-0 left-0 right-0 p-6 bg-[#020617]/95 border-t border-slate-800 backdrop-blur-xl flex justify-between items-center">
-            <div class="text-left">
-                <p class="text-[8px] font-black text-slate-500 uppercase">Cassa Netta Teorica</p>
-                <div id="theoCash" class="text-2xl font-black italic">€ 0.00</div>
+        <div class="fixed bottom-0 left-0 right-0 p-6 bg-[#020617]/98 border-t border-slate-800 backdrop-blur-xl flex justify-between items-center z-[100]">
+            <div>
+                <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Cassa Cash (Oggi)</p>
+                <div id="theoCash" class="text-3xl font-black italic text-white">€ 0.00</div>
             </div>
-            <button onclick="saveData()" class="bg-blue-600 text-white font-black px-12 py-4 rounded-2xl shadow-xl shadow-blue-900/30">SALVA</button>
+            <button onclick="saveData()" class="bg-blue-600 hover:bg-blue-500 text-white font-black px-10 py-4 rounded-2xl shadow-xl transition-all">SALVA</button>
         </div>
 
     </div>
 
     <script>
-        const { jsPDF } = window.jspdf;
-        let authPin = "1234"; // MODIFICA QUESTO PIN
         let activeDate = new Date();
+        const pin = "1234"; // MODIFICA QUI
 
         function checkAuth() {
-            const val = document.getElementById('pinInput').value;
-            if(val === authPin) {
+            if(document.getElementById('pinInput').value === pin) {
                 document.getElementById('authScreen').classList.add('hidden');
                 document.getElementById('mainUI').classList.remove('hidden');
                 init();
-            } else {
-                alert("ACCESSO NEGATO");
-                document.getElementById('pinInput').value = "";
-            }
+            } else { alert("PIN ERRATO"); }
         }
 
         function init() {
+            const iso = activeDate.toISOString().split('T')[0];
+            document.getElementById('datePicker').value = iso;
             renderSuppliers();
-            document.getElementById('topDate').innerText = activeDate.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-            loadToday();
-            runLogic();
+            loadDateData();
+        }
+
+        function changeDate(days) {
+            activeDate.setDate(activeDate.getDate() + days);
+            init();
+        }
+
+        function setDateFromPicker() {
+            activeDate = new Date(document.getElementById('datePicker').value);
+            loadDateData();
         }
 
         function renderSuppliers() {
             const container = document.getElementById('supList');
-            for(let i=1; i<=10; i++) {
+            container.innerHTML = "";
+            for(let i=0; i<8; i++) {
                 container.innerHTML += `
-                    <div class="flex gap-2 items-center bg-slate-900/50 p-2 rounded-xl border border-slate-800">
-                        <input type="number" class="sup-amt bg-transparent flex-1 text-xs font-bold outline-none" placeholder="Fornitore ${i} €" oninput="runLogic()">
-                        <input type="checkbox" class="sup-check w-4 h-4 accent-blue-600" onchange="runLogic()">
-                        <label class="bg-slate-800 p-2 rounded-lg cursor-pointer">
-                            📸 <input type="file" accept="image/*" capture="camera" class="hidden">
-                        </label>
+                    <div class="flex gap-2 items-center bg-slate-900/40 p-2 rounded-xl border border-slate-800">
+                        <input type="number" class="sup-amt bg-transparent flex-1 text-xs font-bold outline-none text-white" placeholder="Importo €" oninput="runLogic()">
+                        <div class="flex items-center gap-2 bg-slate-800 px-3 py-1 rounded-lg">
+                            <span class="text-[8px] font-bold uppercase text-slate-400">Cash?</span>
+                            <input type="checkbox" class="sup-check w-5 h-5 accent-blue-600" onchange="runLogic()">
+                        </div>
                     </div>`;
             }
         }
 
         function runLogic() {
             const total = parseFloat(document.getElementById('total_sales').value) || 0;
+            const digitalIds = ['p_bancomat', 'p_sumup', 'p_satispay', 'p_justeat', 'p_delivery', 'p_app'];
+            const digitalSum = digitalIds.reduce((acc, id) => acc + (parseFloat(document.getElementById(id).value) || 0), 0);
             
-            // Commissioni & Netto
-            const pos = parseFloat(document.getElementById('pos_total').value) || 0;
-            const je = (parseFloat(document.getElementById('je_total').value) || 0) * 0.75;
-            const del = (parseFloat(document.getElementById('del_total').value) || 0) * 0.70;
-            
-            let supCash = 0;
+            let cashExpenses = 0;
             document.querySelectorAll('.sup-amt').forEach((el, i) => {
-                if(document.querySelectorAll('.sup-check')[i].checked) supCash += parseFloat(el.value) || 0;
+                if(document.querySelectorAll('.sup-check')[i].checked) {
+                    cashExpenses += parseFloat(el.value) || 0;
+                }
             });
 
-            // Calcoli Fiscali
-            const iva = (total - (total / 1.10)); // Stima scorporo 10%
-            const theoCash = total - (parseFloat(document.getElementById('pos_total').value)||0) - (parseFloat(document.getElementById('je_total').value)||0) - (parseFloat(document.getElementById('del_total').value)||0) - supCash;
+            const netCash = total - digitalSum - cashExpenses;
             
-            // Conteggio Fisico
-            const physical = (parseFloat(document.getElementById('c50').value)||0)*50 + (parseFloat(document.getElementById('c20').value)||0)*20 + (parseFloat(document.getElementById('c10').value)||0)*10;
-            const diff = physical - theoCash;
-
-            // Update UI
-            document.getElementById('sumSup').innerText = `€ ${supCash.toFixed(2)}`;
-            document.getElementById('kpiIva').innerText = `€ ${iva.toFixed(0)}`;
-            document.getElementById('theoCash').innerText = `€ ${theoCash.toFixed(2)}`;
-            
-            const diffEl = document.getElementById('cassaDiff');
-            diffEl.innerText = `DISCREPANZA CASSA: € ${diff.toFixed(2)}`;
-            diffEl.className = Math.abs(diff) < 1 ? "mt-3 text-center text-[10px] font-bold py-2 rounded-lg bg-green-900/20 text-green-400" : "mt-3 text-center text-[10px] font-bold py-2 rounded-lg bg-red-900/20 text-red-400";
-        }
-
-        function showTab(tab) {
-            document.getElementById('secDay').classList.toggle('hidden', tab !== 'day');
-            document.getElementById('secBank').classList.toggle('hidden', tab !== 'bank');
-            document.getElementById('secArchive').classList.toggle('hidden', tab !== 'archive');
-            
-            ['tDay', 'tBank', 'tArchive'].forEach(t => document.getElementById(t).classList.remove('bg-blue-600', 'text-white'));
-            document.getElementById('t' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('bg-blue-600', 'text-white');
-            
-            if(tab === 'bank') calculateBank();
-        }
-
-        function calculateBank() {
-            const container = document.getElementById('bankList');
-            container.innerHTML = "";
-            let grandTotal = 0;
-            for(let i=0; i<7; i++) {
-                let d = new Date(); d.setDate(d.getDate() - i);
-                let key = d.toISOString().split('T')[0];
-                let saved = JSON.parse(localStorage.getItem('sovereign_' + key) || '{"total":0}');
-                if(saved.total > 0) {
-                    let cash = saved.total - (saved.pos||0) - (saved.je||0) - (saved.del||0) - (saved.supTotal||0);
-                    grandTotal += cash;
-                    container.innerHTML += `<div class="flex justify-between text-sm py-2 border-b border-slate-800"><span>${key}</span><span class="font-bold">€ ${cash.toFixed(2)}</span></div>`;
-                }
-            }
-            document.getElementById('bankTotal').innerText = `€ ${grandTotal.toFixed(2)}`;
+            document.getElementById('theoCash').innerText = `€ ${netCash.toFixed(2)}`;
+            document.getElementById('sumSup').innerText = `€ ${cashExpenses.toFixed(2)}`;
         }
 
         function saveData() {
             const key = activeDate.toISOString().split('T')[0];
             const data = {
                 total: document.getElementById('total_sales').value,
-                pos: document.getElementById('pos_total').value,
-                je: document.getElementById('je_total').value,
-                del: document.getElementById('del_total').value,
-                supTotal: parseFloat(document.getElementById('sumSup').innerText.replace('€ ','')),
-                amts: Array.from(document.querySelectorAll('.sup-amt')).map(e => e.value),
-                checks: Array.from(document.querySelectorAll('.sup-check')).map(e => e.checked)
+                digital: {
+                    bancomat: document.getElementById('p_bancomat').value,
+                    sumup: document.getElementById('p_sumup').value,
+                    satispay: document.getElementById('p_satispay').value,
+                    justeat: document.getElementById('p_justeat').value,
+                    delivery: document.getElementById('p_delivery').value,
+                    app: document.getElementById('p_app').value
+                },
+                supAmts: Array.from(document.querySelectorAll('.sup-amt')).map(e => e.value),
+                supChecks: Array.from(document.querySelectorAll('.sup-check')).map(e => e.checked)
             };
-            localStorage.setItem('sovereign_' + key, JSON.stringify(data));
-            alert("🔒 GIORNATA SIGILLATA NELL'ARCHIVIO");
+            localStorage.setItem('omnia_elite_' + key, JSON.stringify(data));
+            alert("✅ Archiviato per data: " + key);
         }
 
-        function loadToday() {
+        function loadDateData() {
             const key = activeDate.toISOString().split('T')[0];
-            const saved = JSON.parse(localStorage.getItem('sovereign_' + key));
+            const saved = JSON.parse(localStorage.getItem('omnia_elite_' + key));
+            
+            // Clear inputs
+            document.querySelectorAll('input:not(#datePicker):not(#pinInput)').forEach(i => i.type === 'checkbox' ? i.checked = false : i.value = "");
+            
             if(saved) {
                 document.getElementById('total_sales').value = saved.total;
-                document.getElementById('pos_total').value = saved.pos;
-                document.getElementById('je_total').value = saved.je;
-                document.getElementById('del_total').value = saved.del;
-                document.querySelectorAll('.sup-amt').forEach((e, i) => e.value = saved.amts[i]);
-                document.querySelectorAll('.sup-check').forEach((e, i) => e.checked = saved.checks[i]);
+                document.getElementById('p_bancomat').value = saved.digital.bancomat;
+                document.getElementById('p_sumup').value = saved.digital.sumup;
+                document.getElementById('p_satispay').value = saved.digital.satispay;
+                document.getElementById('p_justeat').value = saved.digital.justeat;
+                document.getElementById('p_delivery').value = saved.digital.delivery;
+                document.getElementById('p_app').value = saved.digital.app;
+                document.querySelectorAll('.sup-amt').forEach((e, i) => e.value = saved.supAmts[i]);
+                document.querySelectorAll('.sup-check').forEach((e, i) => e.checked = saved.supChecks[i]);
             }
+            runLogic();
         }
 
-        // Il Backup esporta un file JSON con tutta la storia del locale
-        function exportFullData() {
-            const blob = new Blob([JSON.stringify(localStorage)], {type: 'application/json'});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url; a.download = 'backup_omnia_sovereign.json';
-            a.click();
+        function showTab(tab) {
+            document.getElementById('secDay').classList.toggle('hidden', tab !== 'day');
+            document.getElementById('secBank').classList.toggle('hidden', tab !== 'bank');
+            document.getElementById('tDay').className = tab === 'day' ? "flex-1 py-2 text-[10px] font-black rounded-lg bg-blue-600" : "flex-1 py-2 text-[10px] font-black rounded-lg text-slate-500";
+            document.getElementById('tBank').className = tab === 'bank' ? "flex-1 py-2 text-[10px] font-black rounded-lg bg-blue-600 text-white" : "flex-1 py-2 text-[10px] font-black rounded-lg text-slate-500";
+            if(tab === 'bank') renderBankReport();
+        }
+
+        function renderBankReport() {
+            const list = document.getElementById('bankList');
+            list.innerHTML = "";
+            let grandTotal = 0;
+            
+            // Analizza gli ultimi 7 giorni rispetto alla data selezionata
+            for(let i=0; i<7; i++) {
+                let d = new Date(activeDate);
+                d.setDate(d.getDate() - i);
+                const key = d.toISOString().split('T')[0];
+                const s = JSON.parse(localStorage.getItem('omnia_elite_' + key) || '{"total":0, "digital":{}, "supAmts":[]}');
+                
+                const digSum = Object.values(s.digital || {}).reduce((a, b) => a + (parseFloat(b)||0), 0);
+                let cashEx = 0;
+                if(s.supAmts) s.supAmts.forEach((a, idx) => { if(s.supChecks[idx]) cashEx += (parseFloat(a)||0); });
+                
+                const dayCash = (parseFloat(s.total)||0) - digSum - cashEx;
+                if(dayCash > 0) grandTotal += dayCash;
+
+                list.innerHTML += `
+                    <div class="flex justify-between items-center bg-slate-900/40 p-3 rounded-xl border border-slate-800">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase">${d.toLocaleDateString('it-IT', {weekday:'short', day:'numeric', month:'short'})}</span>
+                        <span class="font-black text-sm">€ ${dayCash.toFixed(2)}</span>
+                    </div>`;
+            }
+            document.getElementById('bankTotal').innerText = `€ ${grandTotal.toFixed(2)}`;
+        }
+
+        function exportMonthlyPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const m = activeDate.getMonth() + 1;
+            const y = activeDate.getFullYear();
+            
+            doc.setFontSize(16);
+            doc.text(`REPORT FISCALE MENSILE - ${m}/${y}`, 14, 15);
+            
+            const rows = [];
+            const lastDay = new Date(y, m, 0).getDate();
+            for(let i=1; i<=lastDay; i++) {
+                const key = `${y}-${String(m).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+                const s = JSON.parse(localStorage.getItem('omnia_elite_' + key) || '{"total":0, "digital":{}}');
+                const dig = Object.values(s.digital || {}).reduce((a, b) => a + (parseFloat(b)||0), 0);
+                rows.push([i, (parseFloat(s.total)||0).toFixed(2), dig.toFixed(2), ((parseFloat(s.total)||0)-dig).toFixed(2)]);
+            }
+
+            doc.autoTable({
+                head: [['Giorno', 'Lordo Z', 'Elettronico', 'Contante']],
+                body: rows,
+                startY: 25,
+                styles: { fontSize: 8 }
+            });
+            doc.save(`Corrispettivi_${m}_${y}.pdf`);
         }
     </script>
 </body>
