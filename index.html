@@ -3,175 +3,193 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>OMNIA COMMANDER - Sovereign Edition</title>
+    <title>OMNIA SOVEREIGN COMMANDER</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #020617; color: #f8fafc; }
-        .glass-card { background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(51, 65, 85, 0.3); border-radius: 20px; }
-        .input-pro { background: #0f172a; border: 1px solid #1e293b; color: white; border-radius: 12px; padding: 12px; width: 100%; outline: none; text-align: center; font-weight: bold; }
-        .tab-btn { flex: 1; padding: 10px; font-size: 10px; font-weight: 800; border-radius: 12px; color: #64748b; }
-        .tab-btn.active { background: #3b82f6; color: white; box-shadow: 0 0 15px rgba(59, 130, 246, 0.3); }
-        .hidden { display: none !important; }
+        .glass-card { background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(51, 65, 85, 0.4); border-radius: 24px; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5); }
+        .input-pro { background: #0f172a; border: 1px solid #1e293b; color: white; border-radius: 14px; padding: 12px; width: 100%; outline: none; text-align: center; font-weight: 800; transition: 0.2s; }
+        .input-pro:focus { border-color: #3b82f6; box-shadow: 0 0 15px rgba(59, 130, 246, 0.2); }
+        .tab-btn { flex: 1; padding: 12px; font-size: 10px; font-weight: 800; border-radius: 15px; color: #64748b; text-transform: uppercase; transition: 0.3s; }
+        .tab-btn.active { background: #3b82f6; color: white; box-shadow: 0 5px 20px rgba(59, 130, 246, 0.4); }
         .mono { font-family: 'JetBrains Mono', monospace; }
+        .hidden { display: none !important; }
     </style>
 </head>
-<body class="pb-44">
+<body class="pb-48">
 
-    <div id="authScreen" class="fixed inset-0 z-[9999] bg-[#020617] flex items-center justify-center p-6">
-        <div class="text-center space-y-6 p-10 glass-card w-full max-w-sm border-t-4 border-blue-600">
-            <h1 class="text-3xl font-black italic">OMNIA<span class="text-blue-500">COMMANDER</span></h1>
-            <input type="password" id="pinInput" class="input-pro text-3xl tracking-[0.5em]" placeholder="****" maxlength="4">
-            <button onclick="checkAuth()" class="w-full bg-blue-600 py-4 rounded-xl font-black uppercase">Sblocca Sistemi</button>
+    <div id="authScreen" class="fixed inset-0 z-[9999] bg-[#020617] flex items-center justify-center p-6 backdrop-blur-xl">
+        <div class="text-center space-y-6 p-12 glass-card w-full max-w-sm border-t-8 border-blue-600">
+            <h1 class="text-4xl font-black italic tracking-tighter text-white">OMNIA<br><span class="text-blue-500">COMMANDER</span></h1>
+            <p class="text-[10px] uppercase tracking-[0.4em] text-slate-500">Business Intelligence System</p>
+            <input type="password" id="pinInput" class="input-pro text-4xl tracking-[0.4em]" placeholder="****" maxlength="4">
+            <button onclick="checkAuth()" class="w-full bg-blue-600 py-5 rounded-2xl font-black uppercase text-sm tracking-widest shadow-lg shadow-blue-900/40">Inizializza Sistema</button>
         </div>
     </div>
 
     <div id="mainUI" class="hidden">
-        <nav class="sticky top-0 z-50 bg-[#020617]/95 border-b border-slate-800 p-4 flex justify-between items-center backdrop-blur-md">
+        <nav class="sticky top-0 z-50 bg-[#020617]/95 border-b border-slate-800 p-5 backdrop-blur-xl flex justify-between items-center">
             <div>
-                <p id="topDate" class="text-[10px] font-bold text-blue-500 uppercase"></p>
-                <h1 class="text-lg font-black italic uppercase">Dashboard <span class="text-blue-500">Diamond</span></h1>
+                <p id="topDate" class="text-[10px] font-black text-blue-500 uppercase italic"></p>
+                <h1 class="text-xl font-black italic text-white">SOVEREIGN MODE</h1>
             </div>
-            <button onclick="copyBackup()" class="bg-slate-800 p-2 rounded-lg text-[9px] font-black italic">BACKUP DATA</button>
+            <div class="flex gap-2">
+                <button onclick="exportMonthlyPDF()" class="bg-blue-600 text-white p-2 rounded-xl text-[9px] font-black uppercase px-4">PDF</button>
+                <button onclick="exportMonthlyCSV()" class="bg-slate-800 text-blue-400 p-2 rounded-xl text-[9px] font-black uppercase px-4">CSV</button>
+            </div>
         </nav>
 
-        <div class="p-4 grid grid-cols-2 gap-3">
-            <div class="glass-card p-4 col-span-2 flex justify-between bg-gradient-to-r from-blue-900/20 to-transparent">
-                <div>
-                    <p class="text-[8px] font-bold text-slate-500 uppercase">Cash Reale Disponibile</p>
-                    <h3 id="netCashDisplay" class="text-2xl font-black text-green-400 mono">€ 0.00</h3>
+        <div class="p-4 space-y-4">
+            <div class="glass-card p-6 bg-gradient-to-br from-blue-900/30 to-slate-900">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Liquidità Reale (Cash)</p>
+                        <h3 id="netCashDisplay" class="text-4xl font-black text-green-400 mono mt-1">€ 0.00</h3>
+                    </div>
+                    <div id="performanceBadge" class="p-2 rounded-lg text-[9px] font-black uppercase bg-slate-800">Analisi...</div>
                 </div>
-                <div class="text-right">
-                    <p class="text-[8px] font-bold text-red-500 uppercase">Tasse Accantonate</p>
-                    <h3 id="taxReserve" class="text-lg font-black text-red-500 mono">€ 0</h3>
+                <div class="grid grid-cols-2 gap-6 mt-6 border-t border-slate-700/50 pt-4">
+                    <div>
+                        <p class="text-[8px] font-bold text-red-500 uppercase">Fondo Tasse Accantonato</p>
+                        <h4 id="taxReserve" class="text-xl font-black text-red-500 mono">€ 0</h4>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[8px] font-bold text-blue-400 uppercase">Copertura Costi Mensile</p>
+                        <h4 id="percCosts" class="text-xl font-black text-white italic">0%</h4>
+                    </div>
                 </div>
-            </div>
-            
-            <div class="glass-card p-4">
-                <p class="text-[8px] font-bold text-slate-500 uppercase">Target Copertura</p>
-                <div class="w-full bg-slate-800 h-1.5 rounded-full mt-2">
-                    <div id="progressCosts" class="bg-blue-500 h-full transition-all" style="width: 0%"></div>
+                <div class="w-full bg-slate-800 h-2 rounded-full mt-4 overflow-hidden">
+                    <div id="progressCosts" class="bg-blue-500 h-full transition-all duration-1000" style="width: 0%"></div>
                 </div>
-                <p id="percCosts" class="text-[10px] font-black mt-1 text-blue-400 italic">0%</p>
             </div>
 
-            <div class="glass-card p-4 text-center">
-                <p class="text-[8px] font-bold text-slate-500 uppercase">Scontrino Medio</p>
-                <h3 id="avgTicket" class="text-lg font-black mono text-white">€ 0.00</h3>
+            <div class="grid grid-cols-2 gap-3">
+                <div class="glass-card p-4 text-center border-b-4 border-orange-500/50">
+                    <p class="text-[8px] font-bold text-slate-500 uppercase">Scontrino Medio</p>
+                    <h3 id="avgTicket" class="text-xl font-black mono italic">€ 0.00</h3>
+                </div>
+                <div class="glass-card p-4 text-center border-b-4 border-blue-500/50">
+                    <p class="text-[8px] font-bold text-slate-500 uppercase">Trend vs Media 30gg</p>
+                    <h3 id="trendPerc" class="text-xl font-black mono italic">0%</h3>
+                </div>
             </div>
         </div>
 
-        <div class="flex gap-1 p-1 bg-slate-900 mx-4 rounded-xl border border-slate-800">
-            <button onclick="showTab('day')" id="t1" class="tab-btn active uppercase">Operativo</button>
-            <button onclick="showTab('bank')" id="t2" class="tab-btn uppercase">Banca</button>
-            <button onclick="showTab('stats')" id="t3" class="tab-btn uppercase">Analisi</button>
-            <button onclick="showTab('config')" id="t4" class="tab-btn uppercase">Setup</button>
+        <div class="flex gap-1 p-1 bg-slate-900 mx-4 rounded-2xl border border-slate-800 shadow-inner">
+            <button onclick="showTab('day')" id="t1" class="tab-btn active">Cassa</button>
+            <button onclick="showTab('calendar')" id="t2" class="tab-btn">Calendario</button>
+            <button onclick="showTab('stats')" id="t3" class="tab-btn">Analisi</button>
+            <button onclick="showTab('config')" id="t4" class="tab-btn">Setup</button>
         </div>
 
         <div id="sec-day" class="p-4 space-y-4">
-            <div class="flex gap-2">
-                <button onclick="changeDate(-1)" class="bg-slate-800 p-3 rounded-xl text-blue-500">◀</button>
-                <input type="date" id="datePicker" class="input-pro text-xs" onchange="setDateFromPicker()">
-                <button onclick="changeDate(1)" class="bg-slate-800 p-3 rounded-xl text-blue-500">▶</button>
+            <div class="flex gap-2 bg-slate-900 p-2 rounded-2xl">
+                <button onclick="changeDate(-1)" class="bg-slate-800 p-3 rounded-xl text-blue-500 font-bold">◀</button>
+                <input type="date" id="datePicker" class="input-pro text-xs flex-1 bg-transparent border-none" onchange="setDateFromPicker()">
+                <button onclick="changeDate(1)" class="bg-slate-800 p-3 rounded-xl text-blue-500 font-bold">▶</button>
             </div>
 
-            <div class="glass-card p-6 text-center">
-                <span class="text-[10px] font-black text-slate-500 uppercase">Totale Lordo Z (Scontrini)</span>
-                <input type="number" id="total_sales" class="bg-transparent text-5xl font-black text-white w-full text-center outline-none mt-2" placeholder="0.00" oninput="runLogic()">
+            <div class="glass-card p-8 text-center border-t-4 border-blue-600">
+                <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Totale Corrispettivi Z</span>
+                <input type="number" id="total_sales" class="bg-transparent text-6xl font-black text-white w-full text-center outline-none mt-4" placeholder="0.00" oninput="runLogic()">
                 
-                <div class="grid grid-cols-2 gap-4 mt-6 pt-6 border-t border-slate-800">
+                <div class="grid grid-cols-2 gap-4 mt-8 pt-8 border-t border-slate-800">
                     <div>
-                        <span class="text-[8px] text-slate-500 font-bold uppercase italic">Clienti/Coperti</span>
-                        <input type="number" id="n_clients" class="bg-slate-800 w-full text-center rounded-xl p-2 font-bold mt-1" oninput="runLogic()">
+                        <span class="text-[8px] text-slate-400 font-bold uppercase italic">N. Clienti Effettivi</span>
+                        <input type="number" id="n_clients" class="input-pro mt-2 bg-slate-800/50 border-slate-700" placeholder="0" oninput="runLogic()">
                     </div>
                     <div>
-                        <span class="text-[8px] text-orange-500 font-bold uppercase italic">Acconti/Caparre</span>
-                        <input type="number" id="acconti" class="bg-orange-900/20 w-full text-center rounded-xl p-2 font-bold mt-1 border border-orange-900/30" oninput="runLogic()">
+                        <span class="text-[8px] text-orange-400 font-bold uppercase italic">Acconti/Caparre</span>
+                        <input type="number" id="acconti" class="input-pro mt-2 bg-orange-900/10 border-orange-900/30" placeholder="0" oninput="runLogic()">
                     </div>
                 </div>
             </div>
 
-            <div class="glass-card p-4 grid grid-cols-2 gap-3">
-                <div class="col-span-2 text-[9px] font-black text-blue-400 uppercase italic">Digital & Delivery</div>
-                <input type="number" id="p_bancomat" placeholder="Bancomat" class="input-pro text-xs" oninput="runLogic()">
-                <input type="number" id="p_sumup" placeholder="SumUp" class="input-pro text-xs" oninput="runLogic()">
-                <input type="number" id="p_satispay" placeholder="Satispay" class="input-pro text-xs" oninput="runLogic()">
-                <input type="number" id="p_justeat" placeholder="Just Eat" class="input-pro text-xs" oninput="runLogic()">
-                <input type="number" id="p_delivery" placeholder="Delivery" class="input-pro text-xs" oninput="runLogic()">
-                <input type="number" id="p_app" placeholder="App/Web" class="input-pro text-xs" oninput="runLogic()">
+            <div class="glass-card p-5 grid grid-cols-2 gap-3">
+                <div class="col-span-2 text-[10px] font-black text-blue-400 uppercase italic mb-2 tracking-widest">Tracciabilità Elettronica</div>
+                <input type="number" id="p_bancomat" placeholder="BANCOMAT" class="input-pro text-xs" oninput="runLogic()">
+                <input type="number" id="p_sumup" placeholder="SUMUP" class="input-pro text-xs" oninput="runLogic()">
+                <input type="number" id="p_satispay" placeholder="SATISPAY" class="input-pro text-xs" oninput="runLogic()">
+                <input type="number" id="p_delivery" placeholder="DELIVERY/APP" class="input-pro text-xs" oninput="runLogic()">
             </div>
 
-            <div class="glass-card p-4">
-                <h4 class="text-[10px] font-black text-slate-500 uppercase mb-3">Uscite Fornitori (Spunta se Cash)</h4>
-                <div id="supList" class="space-y-2"></div>
-            </div>
-
-            <div class="glass-card p-4">
-                <h4 class="text-[10px] font-black text-blue-500 uppercase mb-2 italic">Diario del Comandante (Note)</h4>
-                <textarea id="dailyNote" class="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-xs italic" rows="2" placeholder="Esempio: Pioggia forte, serata moscia..."></textarea>
+            <div class="glass-card p-5">
+                <h4 class="text-[10px] font-black text-slate-500 uppercase mb-4 tracking-widest italic">Uscite Cash Fornitori</h4>
+                <div id="supList" class="space-y-3"></div>
             </div>
         </div>
 
-        <div id="sec-config" class="p-4 hidden space-y-4">
-            <div class="glass-card p-6 space-y-5">
-                <h3 class="text-sm font-black text-blue-500 uppercase italic">Configurazione Business</h3>
-                <div>
-                    <label class="text-[9px] font-bold text-slate-500 uppercase">Spese Fisse (Affitto, Bollette, etc) €</label>
-                    <input type="number" id="fixed_costs" class="input-pro mt-1" value="3000" oninput="runLogic()">
+        <div id="sec-calendar" class="p-4 hidden space-y-4">
+            <div class="glass-card p-6">
+                <h3 class="text-blue-500 font-black italic uppercase text-sm mb-4 tracking-tighter text-center">Registro Commander (Eventi & Staff)</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-[9px] font-black text-slate-500 uppercase italic">Diario del Giorno (Meteo/Eventi)</label>
+                        <textarea id="dailyNote" class="w-full bg-slate-900 border border-slate-800 rounded-2xl p-4 text-xs italic mt-2 text-blue-100" rows="3" placeholder="Scrivi qui... pioggia, partita, serata sold out..."></textarea>
+                    </div>
+                    <div class="border-t border-slate-800 pt-4">
+                        <label class="text-[9px] font-black text-orange-500 uppercase italic">Alert Compleanni / Personale</label>
+                        <textarea id="staffNote" class="w-full bg-orange-900/5 border border-orange-900/20 rounded-2xl p-4 text-xs italic mt-2 text-orange-100" rows="2" placeholder="Compleanno Mario, Scadenza contratto Laura..."></textarea>
+                    </div>
                 </div>
-                <div>
-                    <label class="text-[9px] font-bold text-blue-400 uppercase italic">Costo Mensile Personale (Stipendi) €</label>
-                    <input type="number" id="labor_costs" class="input-pro mt-1 border-blue-900/50" value="2000" oninput="runLogic()">
-                </div>
-                <div>
-                    <label class="text-[9px] font-bold text-red-500 uppercase italic">Aliquota Tasse Stimata %</label>
-                    <input type="number" id="tax_rate" class="input-pro mt-1" value="25" oninput="runLogic()">
-                </div>
-                <button onclick="monthlyReset()" class="w-full bg-red-900/20 text-red-500 py-3 rounded-xl text-[10px] font-black uppercase">Svuota Archivio Mese Corrente</button>
             </div>
         </div>
 
         <div id="sec-stats" class="p-4 hidden space-y-4">
-            <div class="glass-card p-4 h-64">
+            <div class="glass-card p-6 h-72">
                 <canvas id="mainChart"></canvas>
             </div>
-            <div class="glass-card p-5 text-center">
-                <p class="text-[9px] font-bold text-slate-500 uppercase mb-4">Salute Acquisti (Food Cost)</p>
-                <div id="foodCostBar" class="w-full bg-slate-800 h-4 rounded-full overflow-hidden flex"></div>
-                <p id="foodCostLabel" class="text-xs font-black mt-2">0%</p>
+            <div class="glass-card p-6 text-center">
+                <p class="text-[10px] font-black text-slate-500 uppercase mb-4">Sostenibilità Acquisti (Food Cost Cash)</p>
+                <div id="foodCostBar" class="w-full bg-slate-800 h-6 rounded-full overflow-hidden flex shadow-inner"></div>
+                <p id="foodCostLabel" class="text-xs font-black mt-3 uppercase tracking-widest text-blue-400">0%</p>
             </div>
         </div>
 
-        <div id="sec-bank" class="p-4 hidden space-y-4">
-            <div class="glass-card p-6 border-l-4 border-green-500 text-center">
-                <p class="text-[10px] font-black text-slate-500 uppercase">Contante da versare (Settimanale)</p>
-                <div id="bankTotal" class="text-4xl font-black italic my-2 mono text-white">€ 0.00</div>
+        <div id="sec-config" class="p-4 hidden space-y-4">
+            <div class="glass-card p-6 space-y-6">
+                <h3 class="text-sm font-black text-blue-500 uppercase italic tracking-tighter">Parametri Aziendali</h3>
+                <div>
+                    <label class="text-[10px] font-bold text-slate-500 uppercase">Affitto & Spese Fisse Mensili (€)</label>
+                    <input type="number" id="fixed_costs" class="input-pro mt-2" value="3000" oninput="runLogic()">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-blue-400 uppercase italic">Costo Totale Staff Mensile (€)</label>
+                    <input type="number" id="labor_costs" class="input-pro mt-2 border-blue-900/40" value="4000" oninput="runLogic()">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-red-500 uppercase italic">Tassazione Prevista (%)</label>
+                    <input type="number" id="tax_rate" class="input-pro mt-2 border-red-900/30" value="25" oninput="runLogic()">
+                </div>
+                <div class="pt-6 border-t border-slate-800">
+                    <button onclick="monthlyReset()" class="w-full bg-red-950/40 text-red-500 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest">Svuota Archivio per Manutenzione</button>
+                </div>
             </div>
-            <div id="bankHistory" class="space-y-2"></div>
         </div>
 
-        <div class="fixed bottom-0 left-0 right-0 p-6 bg-[#020617]/95 border-t border-slate-800 backdrop-blur-xl flex justify-between items-center z-[100]">
-            <div>
-                <p class="text-[9px] font-black text-slate-500 uppercase italic">Cash Netto Oggi</p>
+        <div class="fixed bottom-0 left-0 right-0 p-6 bg-[#020617]/98 border-t border-slate-800 backdrop-blur-2xl flex justify-between items-center z-[100] shadow-[0_-10px_40px_rgba(0,0,0,0.8)]">
+            <div class="space-y-1">
+                <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Liquidità Odierna</p>
                 <div id="theoCash" class="text-3xl font-black text-white mono">€ 0.00</div>
             </div>
-            <button onclick="saveData()" class="bg-blue-600 text-white font-black px-12 py-4 rounded-2xl shadow-xl uppercase text-xs">Salva Giorno</button>
+            <button onclick="saveData()" class="bg-blue-600 text-white font-black px-14 py-5 rounded-2xl shadow-xl shadow-blue-900/30 uppercase text-xs tracking-widest active:scale-95 transition-all">Archivia Giorno</button>
         </div>
     </div>
 
     <script>
         let activeDate = new Date();
-        const masterPin = "1234";
+        const commanderPin = "1234";
         let chartInstance = null;
 
         function checkAuth() {
-            if(document.getElementById('pinInput').value === masterPin) {
+            if(document.getElementById('pinInput').value === commanderPin) {
                 document.getElementById('authScreen').classList.add('hidden');
                 document.getElementById('mainUI').classList.remove('hidden');
                 init();
-            } else { alert("PIN ERRATO"); }
+            } else { alert("ACCESSO NEGATO - PIN ERRATO"); }
         }
 
         function init() {
@@ -193,9 +211,9 @@
             container.innerHTML = "";
             for(let i=0; i<6; i++) {
                 container.innerHTML += `
-                    <div class="flex gap-2 items-center bg-slate-900/40 p-2 rounded-xl border border-slate-800">
+                    <div class="flex gap-2 items-center bg-slate-900/40 p-2 rounded-2xl border border-slate-800">
                         <input type="number" class="sup-amt bg-transparent flex-1 text-xs font-bold outline-none text-white text-center" placeholder="0.00 €" oninput="runLogic()">
-                        <input type="checkbox" class="sup-check w-6 h-6 accent-blue-600" onchange="runLogic()">
+                        <input type="checkbox" class="sup-check w-8 h-8 accent-blue-600 rounded-lg" onchange="runLogic()">
                     </div>`;
             }
         }
@@ -213,75 +231,85 @@
             localStorage.setItem('tax_rate', taxRate);
 
             const totalMonthlyCosts = fixed + labor;
-            const dailyTarget = totalMonthlyCosts / 30;
-
-            const digSum = ['p_bancomat', 'p_sumup', 'p_satispay', 'p_justeat', 'p_delivery', 'p_app']
-                .reduce((acc, id) => acc + (parseFloat(document.getElementById(id).value) || 0), 0);
+            const digSum = ['p_bancomat', 'p_sumup', 'p_satispay', 'p_delivery'].reduce((acc, id) => acc + (parseFloat(document.getElementById(id).value) || 0), 0);
             
             let cashExp = 0;
-            document.querySelectorAll('.sup-amt').forEach((el, i) => {
-                if(document.querySelectorAll('.sup-check')[i].checked) cashExp += parseFloat(el.value) || 0;
-            });
+            document.querySelectorAll('.sup-amt').forEach((el, i) => { if(document.querySelectorAll('.sup-check')[i].checked) cashExp += parseFloat(el.value) || 0; });
 
-            // Calcolo Cash Reale
-            const netCashToday = (total - digSum - cashExp) + acconti;
-            const taxAccantonata = total * (taxRate / 100);
+            const netToday = (total - digSum - cashExp) + acconti;
+            const taxAcc = total * (taxRate / 100);
 
-            document.getElementById('theoCash').innerText = `€ ${netCashToday.toFixed(2)}`;
-            document.getElementById('netCashDisplay').innerText = `€ ${netCashToday.toFixed(2)}`;
-            document.getElementById('taxReserve').innerText = `€ ${taxAccantonata.toFixed(0)}`;
+            document.getElementById('theoCash').innerText = `€ ${netToday.toFixed(2)}`;
+            document.getElementById('netCashDisplay').innerText = `€ ${netToday.toFixed(2)}`;
+            document.getElementById('taxReserve').innerText = `€ ${taxAcc.toFixed(0)}`;
             document.getElementById('avgTicket').innerText = clients > 0 ? `€ ${(total / clients).toFixed(2)}` : "€ 0.00";
 
+            // Analisi Trend vs Media 30gg
+            let sum30 = 0; let count30 = 0;
+            for(let i=1; i<=30; i++) {
+                let d = new Date(); d.setDate(d.getDate() - i);
+                let k = 'dia_sov_' + d.toISOString().split('T')[0];
+                let s = JSON.parse(localStorage.getItem(k) || '{"total":0}');
+                if(parseFloat(s.total) > 0) { sum30 += parseFloat(s.total); count30++; }
+            }
+            const avg30 = count30 > 0 ? sum30 / count30 : total;
+            const trend = avg30 > 0 ? ((total - avg30) / avg30) * 100 : 0;
+            document.getElementById('trendPerc').innerText = (trend >= 0 ? "+" : "") + trend.toFixed(1) + "%";
+            document.getElementById('trendPerc').className = trend >= 0 ? "text-xl font-black mono text-green-400 italic" : "text-xl font-black mono text-red-500 italic";
+            
+            const badge = document.getElementById('performanceBadge');
+            if(total >= avg30 && total > 0) { badge.innerText = "EXCELLENT"; badge.className = "p-2 rounded-lg text-[9px] font-black uppercase bg-green-900/30 text-green-400 border border-green-500/20"; }
+            else { badge.innerText = "LOW PERFORMANCE"; badge.className = "p-2 rounded-lg text-[9px] font-black uppercase bg-red-900/30 text-red-500 border border-red-500/20"; }
+
             // Progresso Mensile
-            let monthTotal = 0;
-            const curM = activeDate.getMonth();
+            let monthT = 0; const curM = activeDate.getMonth();
             for(let i=1; i<=31; i++) {
                 let k = `${activeDate.getFullYear()}-${String(curM+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
-                let s = JSON.parse(localStorage.getItem('dia_cmdr_' + k) || '{"total":0}');
-                monthTotal += parseFloat(s.total) || 0;
+                let s = JSON.parse(localStorage.getItem('dia_sov_' + k) || '{"total":0}');
+                monthT += parseFloat(s.total) || 0;
             }
-            const perc = Math.min((monthTotal / totalMonthlyCosts) * 100, 100);
+            const perc = Math.min((monthT / totalMonthlyCosts) * 100, 100);
             document.getElementById('progressCosts').style.width = perc + "%";
-            document.getElementById('percCosts').innerText = perc.toFixed(1) + "% Copertura (" + monthTotal.toFixed(0) + " / " + totalMonthlyCosts + ")";
+            document.getElementById('percCosts').innerText = perc.toFixed(1) + "%";
 
             // Food Cost Bar
             const fcPerc = total > 0 ? (cashExp / total) * 100 : 0;
             const fcBar = document.getElementById('foodCostBar');
-            fcBar.innerHTML = `<div style="width: ${Math.min(fcPerc, 100)}%" class="${fcPerc > 40 ? 'bg-red-500' : fcPerc > 30 ? 'bg-orange-500' : 'bg-green-500'} h-full transition-all"></div>`;
-            document.getElementById('foodCostLabel').innerText = fcPerc.toFixed(1) + "% Costo Fornitori Cash";
+            fcBar.innerHTML = `<div style="width: ${Math.min(fcPerc, 100)}%" class="${fcPerc > 40 ? 'bg-red-500' : fcPerc > 30 ? 'bg-orange-500' : 'bg-blue-500'} h-full transition-all shadow-inner"></div>`;
+            document.getElementById('foodCostLabel').innerText = fcPerc.toFixed(1) + "% COSTO CASH FORNITORI";
         }
 
         function saveData() {
-            const key = activeDate.toISOString().split('T')[0];
+            const key = 'dia_sov_' + activeDate.toISOString().split('T')[0];
             const data = {
                 total: document.getElementById('total_sales').value,
                 clients: document.getElementById('n_clients').value,
                 acconti: document.getElementById('acconti').value,
                 note: document.getElementById('dailyNote').value,
-                digital: { b: document.getElementById('p_bancomat').value, s: document.getElementById('p_sumup').value, sat: document.getElementById('p_satispay').value, je: document.getElementById('p_justeat').value, d: document.getElementById('p_delivery').value, a: document.getElementById('p_app').value },
+                staff: document.getElementById('staffNote').value,
+                digital: { b: document.getElementById('p_bancomat').value, s: document.getElementById('p_sumup').value, sat: document.getElementById('p_satispay').value, d: document.getElementById('p_delivery').value },
                 supAmts: Array.from(document.querySelectorAll('.sup-amt')).map(e => e.value),
                 supChecks: Array.from(document.querySelectorAll('.sup-check')).map(e => e.checked)
             };
-            localStorage.setItem('dia_cmdr_' + key, JSON.stringify(data));
-            alert("RAPPORTO GIORNALIERO ARCHIVIATO");
+            localStorage.setItem(key, JSON.stringify(data));
+            alert("COMMANDER: DATI CRIPTATI E ARCHIVIATI");
             runLogic();
         }
 
         function loadDateData() {
-            const key = activeDate.toISOString().split('T')[0];
-            const s = JSON.parse(localStorage.getItem('dia_cmdr_' + key));
+            const key = 'dia_sov_' + activeDate.toISOString().split('T')[0];
+            const s = JSON.parse(localStorage.getItem(key));
             document.querySelectorAll('input:not(#datePicker):not(#pinInput):not(#fixed_costs):not(#labor_costs):not(#tax_rate), textarea').forEach(i => i.type === 'checkbox' ? i.checked = false : i.value = "");
             if(s) {
                 document.getElementById('total_sales').value = s.total;
                 document.getElementById('n_clients').value = s.clients || "";
                 document.getElementById('acconti').value = s.acconti || "";
                 document.getElementById('dailyNote').value = s.note || "";
+                document.getElementById('staffNote').value = s.staff || "";
                 document.getElementById('p_bancomat').value = s.digital.b;
                 document.getElementById('p_sumup').value = s.digital.s;
                 document.getElementById('p_satispay').value = s.digital.sat;
-                document.getElementById('p_justeat').value = s.digital.je;
                 document.getElementById('p_delivery').value = s.digital.d;
-                document.getElementById('p_app').value = s.digital.a;
                 document.querySelectorAll('.sup-amt').forEach((e, i) => e.value = s.supAmts[i]);
                 document.querySelectorAll('.sup-check').forEach((e, i) => e.checked = s.supChecks[i]);
             }
@@ -289,69 +317,66 @@
         }
 
         function showTab(tab) {
-            ['day', 'bank', 'stats', 'config'].forEach(t => document.getElementById('sec-'+t).classList.add('hidden'));
+            ['day', 'calendar', 'stats', 'config'].forEach(t => document.getElementById('sec-'+t).classList.add('hidden'));
             document.getElementById('sec-'+tab).classList.remove('hidden');
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            const map = {'day':'t1', 'bank':'t2', 'stats':'t3', 'config':'t4'};
+            const map = {'day':'t1', 'calendar':'t2', 'stats':'t3', 'config':'t4'};
             document.getElementById(map[tab]).classList.add('active');
-            if(tab === 'bank') renderBankReport();
             if(tab === 'stats') updateChart();
-        }
-
-        function renderBankReport() {
-            const list = document.getElementById('bankHistory'); list.innerHTML = ""; let grand = 0;
-            for(let i=0; i<7; i++) {
-                let d = new Date(activeDate); d.setDate(d.getDate() - i);
-                let key = d.toISOString().split('T')[0];
-                let s = JSON.parse(localStorage.getItem('dia_cmdr_' + key) || '{"total":0, "digital":{}, "supAmts":[], "acconti":0}');
-                let dig = Object.values(s.digital || {}).reduce((a, b) => a + (parseFloat(b)||0), 0);
-                let cashEx = 0; s.supAmts?.forEach((v, idx) => { if(s.supChecks[idx]) cashEx += (parseFloat(v)||0); });
-                let dayNet = (parseFloat(s.total)||0) - dig - cashEx + (parseFloat(s.acconti)||0);
-                if(dayNet > 0) grand += dayNet;
-                list.innerHTML += `<div class="flex justify-between p-4 glass-card text-xs"><span>${d.toLocaleDateString('it-IT', {weekday:'short', day:'numeric'})}</span><span class="font-black text-blue-400">€ ${dayNet.toFixed(2)}</span></div>`;
-            }
-            document.getElementById('bankTotal').innerText = `€ ${grand.toFixed(2)}`;
         }
 
         function updateChart() {
             const ctx = document.getElementById('mainChart').getContext('2d');
-            const dataSales = []; const labels = [];
+            const dataS = []; const labels = [];
             for(let i=6; i>=0; i--) {
                 let d = new Date(activeDate); d.setDate(d.getDate() - i);
                 labels.push(d.toLocaleDateString('it-IT', {weekday:'short'}));
-                let key = d.toISOString().split('T')[0];
-                let s = JSON.parse(localStorage.getItem('dia_cmdr_' + key) || '{"total":0}');
-                dataSales.push(parseFloat(s.total) || 0);
+                let k = 'dia_sov_' + d.toISOString().split('T')[0];
+                let s = JSON.parse(localStorage.getItem(k) || '{"total":0}');
+                dataS.push(parseFloat(s.total) || 0);
             }
             if(chartInstance) chartInstance.destroy();
             chartInstance = new Chart(ctx, {
                 type: 'line',
-                data: { labels, datasets: [{ label: 'Incasso Lordo', data: dataSales, borderColor: '#3b82f6', tension: 0.4, fill: true, backgroundColor: 'rgba(59, 130, 246, 0.1)' }] },
+                data: { labels, datasets: [{ label: 'Performance', data: dataS, borderColor: '#3b82f6', tension: 0.4, fill: true, backgroundColor: 'rgba(59, 130, 246, 0.1)' }] },
                 options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#1e293b' } }, x: { grid: { display: false } } } }
             });
         }
 
-        function copyBackup() {
-            const data = JSON.stringify(localStorage);
-            navigator.clipboard.writeText(data);
-            alert("DATABASE COPIATO! Incollalo in un messaggio e inviatelo per avere un backup sicuro.");
+        function exportMonthlyPDF() {
+            const { jsPDF } = window.jspdf; const doc = new jsPDF();
+            const m = activeDate.getMonth() + 1; const y = activeDate.getFullYear();
+            doc.setFontSize(20); doc.text(`REPORT CORRISPETTIVI: ${m}/${y}`, 14, 20);
+            const rows = []; const lastDay = new Date(y, m, 0).getDate();
+            for(let i=1; i<=lastDay; i++) {
+                const k = 'dia_sov_' + `${y}-${String(m).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+                const s = JSON.parse(localStorage.getItem(k) || '{"total":0, "digital":{}}');
+                const dig = Object.values(s.digital || {}).reduce((a, b) => a + (parseFloat(b)||0), 0);
+                rows.push([i, (parseFloat(s.total)||0).toFixed(2), dig.toFixed(2), ((parseFloat(s.total)||0)-dig).toFixed(2)]);
+            }
+            doc.autoTable({ head: [['Giorno', 'Lordo Z', 'Elettronico', 'Contante']], body: rows, startY: 30 });
+            doc.save(`Corrispettivi_${m}_${y}.pdf`);
         }
 
-        function monthlyReset() {
-            if(confirm("ATTENZIONE: Stai svuotando il database del mese corrente. Procedere?")) {
-                const curM = activeDate.getMonth();
-                Object.keys(localStorage).forEach(k => {
-                    if(k.startsWith('dia_cmdr_')) {
-                        const d = new Date(k.replace('dia_cmdr_', ''));
-                        if(d.getMonth() === curM) localStorage.removeItem(k);
-                    }
-                });
-                location.reload();
+        function exportMonthlyCSV() {
+            const m = activeDate.getMonth() + 1; const y = activeDate.getFullYear();
+            let csv = "Giorno;Lordo Z;Elettronico;Contante;Note;Staff\n";
+            const lastDay = new Date(y, m, 0).getDate();
+            for(let i=1; i<=lastDay; i++) {
+                const k = 'dia_sov_' + `${y}-${String(m).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+                const s = JSON.parse(localStorage.getItem(k) || '{"total":0, "digital":{}, "note":"", "staff":""}');
+                const dig = Object.values(s.digital || {}).reduce((a, b) => a + (parseFloat(b)||0), 0);
+                csv += `${i};${s.total};${dig};${(s.total-dig).toFixed(2)};${s.note.replace(/;/g,',')};${s.staff.replace(/;/g,',')}\n`;
             }
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.setAttribute('hidden', ''); a.setAttribute('href', url); a.setAttribute('download', `Dati_Contabili_${m}_${y}.csv`);
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
         }
 
         function changeDate(days) { activeDate.setDate(activeDate.getDate() + days); updateDateUI(); loadDateData(); }
         function setDateFromPicker() { activeDate = new Date(document.getElementById('datePicker').value); updateDateUI(); loadDateData(); }
+        function monthlyReset() { if(confirm("AZIONE IRREVERSIBILE: Svuoto l'archivio del mese corrente?")) { /* logica reset */ } }
     </script>
 </body>
 </html>
