@@ -20,18 +20,13 @@
         .nav-item { display: flex; flex-direction: column; align-items: center; color: #94a3b8; font-size: 10px; font-weight: bold; }
         .nav-item.active { color: var(--primary); }
         #lock-screen { position: fixed; inset: 0; background: #1e293b; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
-        @media print { 
-            .no-print { display: none !important; } 
-            .page { display: block !important; }
-            body { background: white; }
-            .card { box-shadow: none; border: 1px solid #eee; }
-        }
+        @media print { .no-print { display: none !important; } .page { display: block !important; } }
     </style>
 </head>
 <body>
 
     <div id="lock-screen">
-        <h1 class="text-3xl font-black mb-8 text-blue-400">COMMANDER ELITE</h1>
+        <h1 class="text-3xl font-black mb-8 text-blue-400 uppercase tracking-tighter">Commander Elite</h1>
         <div class="w-64">
             <p class="text-center mb-4 text-slate-400 uppercase text-xs tracking-widest">Inserire PIN di Accesso</p>
             <input type="password" id="pin-input" class="text-center text-2xl tracking-[1em] text-slate-900 mb-4" maxlength="4" placeholder="****">
@@ -41,7 +36,7 @@
     </div>
 
     <header class="bg-white border-b sticky top-0 z-50 p-4 no-print flex justify-between items-center">
-        <h1 class="font-black text-blue-600 italic uppercase">Commander <span class="text-slate-800">Elite</span></h1>
+        <h1 class="font-black text-blue-600 italic">COMMANDER<span class="text-slate-800">ELITE</span></h1>
         <button onclick="lockApp()" class="text-slate-400"><i class="fa-solid fa-lock"></i></button>
     </header>
 
@@ -56,7 +51,7 @@
             <div class="card">
                 <h3 class="font-bold text-slate-800 mb-4 border-b pb-2">Entrate Giornaliere</h3>
                 <div class="space-y-3">
-                    <div><label class="text-[10px] font-bold text-slate-400">CORRISPETTIVI TOTALI</label>
+                    <div><label class="text-[10px] font-bold text-slate-400 uppercase">Corrispettivi Totali Z</label>
                     <input type="number" id="inp-tot" placeholder="0.00" class="text-xl font-black" oninput="calcola()"></div>
                     <div class="grid grid-cols-2 gap-2">
                         <input type="number" class="val-elettr" id="inp-pos" placeholder="Bancomat" oninput="calcola()">
@@ -72,29 +67,37 @@
                     <h3 class="font-bold">Uscite Fornitori</h3>
                     <button onclick="addFornitore()" class="text-blue-600 font-bold text-xs">+ AGGIUNGI</button>
                 </div>
-                <div id="fornitori-list" class="space-y-2"></div>
+                <div id="fornitori-list" class="space-y-3">
+                    </div>
             </div>
 
             <div class="card bg-slate-900 text-white">
                 <div class="space-y-2 text-sm">
                     <div class="flex justify-between text-slate-400"><span>Elettronici Totali:</span> <span id="res-elettr">€ 0.00</span></div>
                     <div class="flex justify-between text-slate-400"><span>Contanti Teorici:</span> <span id="res-teor">€ 0.00</span></div>
-                    <div class="flex justify-between text-orange-400 font-bold border-b border-slate-700 pb-2"><span>Pagati Cash (Spunta):</span> <span id="res-cash-uscita">€ 0.00</span></div>
+                    <div class="flex justify-between text-orange-400 font-bold border-b border-slate-700 pb-2"><span>Uscite Cash:</span> <span id="res-cash-uscita">€ 0.00</span></div>
                     <div class="flex justify-between text-xl font-black text-green-400 pt-1"><span>NETTO DA VERSARE:</span> <span id="res-netto">€ 0.00</span></div>
                 </div>
-                <button onclick="salvaTutto()" class="w-full mt-4 bg-blue-600 py-3 rounded-xl font-bold">SALVA GIORNATA</button>
+                <button onclick="salvaTutto()" class="w-full mt-4 bg-blue-600 py-3 rounded-xl font-bold active:bg-blue-700">SALVA GIORNATA</button>
             </div>
         </section>
 
         <section id="page-riepilogo" class="page">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="font-bold text-lg">Statistiche</h2>
-                <input type="month" id="filter-month" onchange="updateStats()" class="w-auto p-1 text-sm">
-            </div>
+            <h2 class="font-bold text-xl mb-4 text-slate-800">Riepilogo Business</h2>
             
-            <div class="grid grid-cols-2 gap-3 mb-4">
-                <div class="card text-center"><p class="text-[10px] text-slate-400">Mese Corrente</p><p id="stat-month" class="text-lg font-bold">€ 0</p></div>
-                <div class="card text-center"><p class="text-[10px] text-slate-400">Uscite Mese</p><p id="stat-usc" class="text-lg font-bold text-red-500">€ 0</p></div>
+            <div class="grid grid-cols-1 gap-3 mb-6">
+                <div class="card flex justify-between items-center border-l-4 border-blue-500">
+                    <div><p class="text-[10px] text-slate-400 uppercase font-bold">Questa Settimana</p><p id="stat-week" class="text-xl font-black">€ 0.00</p></div>
+                    <i class="fa-solid fa-chart-simple text-blue-100 text-2xl"></i>
+                </div>
+                <div class="card flex justify-between items-center border-l-4 border-green-500">
+                    <div><p class="text-[10px] text-slate-400 uppercase font-bold">Mese Corrente</p><p id="stat-month" class="text-xl font-black">€ 0.00</p></div>
+                    <i class="fa-solid fa-calendar-check text-green-100 text-2xl"></i>
+                </div>
+                <div class="card flex justify-between items-center border-l-4 border-orange-500">
+                    <div><p class="text-[10px] text-slate-400 uppercase font-bold">Totale Annuale</p><p id="stat-year" class="text-xl font-black">€ 0.00</p></div>
+                    <i class="fa-solid fa-gem text-orange-100 text-2xl"></i>
+                </div>
             </div>
 
             <div class="card">
@@ -103,20 +106,21 @@
                     <input type="date" id="search-date">
                     <button onclick="cercaGiorno()" class="bg-slate-800 text-white px-4 rounded-lg"><i class="fa-solid fa-search"></i></button>
                 </div>
-                <div id="search-result" class="mt-4 hidden p-3 bg-slate-50 rounded-lg text-sm"></div>
+                <div id="search-result" class="mt-4 hidden p-3 bg-slate-50 rounded-lg text-sm border border-slate-200"></div>
             </div>
         </section>
 
         <section id="page-stampa" class="page">
             <div class="card no-print">
-                <h3 class="font-bold mb-4">Esporta Dati Commercialista</h3>
+                <h3 class="font-bold mb-4">Esporta Dati Ragioniere</h3>
                 <div class="space-y-4">
                     <div class="grid grid-cols-2 gap-2">
                         <input type="date" id="p-from">
                         <input type="date" id="p-to">
                     </div>
                     <select id="p-mode">
-                        <option value="tutto">Report Completo Corrispettivi</option>
+                        <option value="tutto">Report Completo</option>
+                        <option value="solo-corr">Solo Corrispettivi Z</option>
                         <option value="solo-ele">Solo Pagamenti Elettronici</option>
                     </select>
                     <button onclick="generaReportRagioniere()" class="w-full bg-slate-800 text-white py-3 rounded-lg font-bold">GENERA DOCUMENTO</button>
@@ -134,8 +138,8 @@
     </nav>
 
     <script>
-        const PIN_CORRETTO = "1234";
-        let database = JSON.parse(localStorage.getItem('erjon_pro_db') || '[]');
+        const PIN_CORRETTO = "1234"; 
+        let database = JSON.parse(localStorage.getItem('commander_elite_db') || '[]');
 
         function checkPin() {
             if(document.getElementById('pin-input').value === PIN_CORRETTO) {
@@ -152,22 +156,28 @@
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             document.getElementById('page-'+p).classList.add('active-page');
             document.getElementById('btn-'+p).classList.add('active');
-            if(p === 'riepilogo') updateStats();
+            if(p === 'riepilogo') updateAdvancedStats();
         }
 
-        // --- Logica Calcoli ---
         function addFornitore() {
             const container = document.getElementById('fornitori-list');
             const div = document.createElement('div');
-            div.className = "flex items-center gap-2 bg-slate-50 p-2 rounded-lg";
+            div.className = "space-y-2 bg-slate-50 p-3 rounded-xl border border-slate-200";
             div.innerHTML = `
-                <input type="text" placeholder="Fornitore" class="flex-1 !p-1 text-sm">
-                <input type="number" placeholder="€" class="w-20 !p-1 text-sm val-usc" oninput="calcola()">
-                <div class="flex flex-col items-center">
-                    <span class="text-[8px] font-bold">CASH?</span>
-                    <input type="checkbox" class="check-cash w-5 h-5" onchange="calcola()">
+                <div class="flex gap-2">
+                    <input type="text" placeholder="Nome Fornitore (es. Coca Cola, Macelleria...)" class="flex-1 !p-2 text-sm font-bold">
+                    <button onclick="this.parentElement.parentElement.remove(); calcola()" class="text-red-500 bg-red-50 px-3 rounded-lg">×</button>
                 </div>
-                <button onclick="this.parentElement.remove(); calcola()" class="text-red-400 ml-1">×</button>
+                <div class="flex items-center justify-between gap-4">
+                    <div class="flex-1 flex items-center gap-2">
+                         <span class="text-xs font-bold text-slate-400">€</span>
+                         <input type="number" placeholder="0.00" class="!p-2 text-sm val-usc" oninput="calcola()">
+                    </div>
+                    <div class="flex items-center gap-2 bg-white px-3 py-1 rounded-lg border">
+                        <span class="text-[10px] font-bold text-slate-500">PAGATO CONTANTI?</span>
+                        <input type="checkbox" class="check-cash w-5 h-5 accent-red-500" onchange="calcola()">
+                    </div>
+                </div>
             `;
             container.appendChild(div);
         }
@@ -176,14 +186,18 @@
             const tot = parseFloat(document.getElementById('inp-tot').value) || 0;
             let ele = 0;
             document.querySelectorAll('.val-elettr').forEach(i => ele += parseFloat(i.value) || 0);
+            
             let uscCash = 0;
             document.querySelectorAll('#fornitori-list > div').forEach(div => {
+                const val = parseFloat(div.querySelector('.val-usc').value) || 0;
                 if(div.querySelector('.check-cash').checked) {
-                    uscCash += parseFloat(div.querySelector('.val-usc').value) || 0;
+                    uscCash += val;
                 }
             });
+
             const teorico = tot - ele;
             const netto = teorico - uscCash;
+
             document.getElementById('res-elettr').innerText = `€ ${ele.toFixed(2)}`;
             document.getElementById('res-teor').innerText = `€ ${teorico.toFixed(2)}`;
             document.getElementById('res-cash-uscita').innerText = `€ ${uscCash.toFixed(2)}`;
@@ -192,7 +206,8 @@
 
         function salvaTutto() {
             const data = document.getElementById('data-lavoro').value;
-            if(!data) return alert("Inserisci una data!");
+            if(!data) return alert("Inserisci una data valida");
+            
             const record = {
                 data,
                 totale: parseFloat(document.getElementById('inp-tot').value) || 0,
@@ -204,70 +219,34 @@
             };
             database = database.filter(r => r.data !== data);
             database.push(record);
-            localStorage.setItem('erjon_pro_db', JSON.stringify(database));
-            alert("Giornata Salvata!");
+            localStorage.setItem('commander_elite_db', JSON.stringify(database));
+            alert("✅ Dati salvati con successo!");
         }
 
-        // --- Logica Stampa & Ragioniere ---
-        function getNomeMese(dataString) {
-            const mesi = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
-            const d = new Date(dataString);
-            return mesi[d.getMonth()];
-        }
+        function updateAdvancedStats() {
+            const now = new Date();
+            const currentMonth = now.toISOString().substring(0, 7); // YYYY-MM
+            const currentYear = now.getFullYear().toString();
+            
+            // Calcolo Settimana (Ultimi 7 giorni)
+            const oneWeekAgo = new Date();
+            oneWeekAgo.setDate(now.getDate() - 7);
+            
+            let sWeek = 0, sMonth = 0, sYear = 0;
 
-        function generaReportRagioniere() {
-            const from = document.getElementById('p-from').value;
-            const to = document.getElementById('p-to').value;
-            const mode = document.getElementById('p-mode').value;
-            
-            if(!from || !to) { alert("Seleziona le date"); return; }
-
-            let filtrati = database.filter(r => r.data >= from && r.data <= to).sort((a,b) => a.data.localeCompare(b.data));
-            
-            // Determina se è un mese intero per il titolo
-            let titoloMese = "";
-            if(from.slice(-2) === "01") {
-                titoloMese = `CORRISPETTIVI MESE DI ${getNomeMese(from).toUpperCase()}`;
-            } else {
-                titoloMese = `PROSPETTO DAL ${from} AL ${to}`;
-            }
-
-            let h = `<div class="card text-sm">`;
-            h += `<div class="text-center mb-6 border-b-2 border-slate-800 pb-2">`;
-            h += `<h1 class="text-xl font-black">COMMANDER ELITE</h1>`;
-            h += `<h2 class="text-lg font-bold text-blue-700">${titoloMese}</h2>`;
-            h += `</div>`;
-            
-            h += `<table class="w-full border-collapse">`;
-            h += `<thead><tr class="bg-slate-100 text-left"><th class="p-2 border">Data</th><th class="p-2 border text-right">Importo €</th></tr></thead><tbody>`;
-            
-            let totaleSomma = 0;
-            filtrati.forEach(r => {
-                let val = (mode === 'solo-ele') ? (r.pos + r.sat + r.del + r.tap) : r.totale;
-                totaleSomma += val;
-                h += `<tr><td class="p-2 border">${new Date(r.data).toLocaleDateString('it-IT')}</td><td class="p-2 border text-right font-mono font-bold">${val.toFixed(2)}</td></tr>`;
-            });
-            
-            h += `<tr class="bg-slate-50 font-black"><td class="p-2 border">TOTALE GENERALE</td><td class="p-2 border text-right text-lg">€ ${totaleSomma.toFixed(2)}</td></tr>`;
-            h += `</tbody></table>`;
-            
-            h += `<div class="mt-8 text-[10px] text-slate-400 italic">Documento generato da Commander Elite - Ad uso contabile interno</div>`;
-            h += `<button onclick="window.print()" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold mt-4 no-print">STAMPA PDF / CARTA</button></div>`;
-            
-            document.getElementById('area-stampa').innerHTML = h;
-        }
-
-        function updateStats() {
-            const filter = document.getElementById('filter-month').value;
-            let mTot = 0, mUsc = 0;
             database.forEach(r => {
-                if(r.data.startsWith(filter)) {
-                    mTot += r.totale;
-                    mUsc += r.usc_cash;
-                }
+                const rDate = new Date(r.data);
+                // Settimanale
+                if(rDate >= oneWeekAgo && rDate <= now) sWeek += r.totale;
+                // Mensile
+                if(r.data.startsWith(currentMonth)) sMonth += r.totale;
+                // Annuale
+                if(r.data.startsWith(currentYear)) sYear += r.totale;
             });
-            document.getElementById('stat-month').innerText = `€ ${mTot.toFixed(2)}`;
-            document.getElementById('stat-usc').innerText = `€ ${mUsc.toFixed(2)}`;
+
+            document.getElementById('stat-week').innerText = `€ ${sWeek.toFixed(2)}`;
+            document.getElementById('stat-month').innerText = `€ ${sMonth.toFixed(2)}`;
+            document.getElementById('stat-year').innerText = `€ ${sYear.toFixed(2)}`;
         }
 
         function cercaGiorno() {
@@ -276,10 +255,54 @@
             const div = document.getElementById('search-result');
             div.classList.remove('hidden');
             if(res) {
-                div.innerHTML = `<strong>Data: ${res.data}</strong><br>Incasso: €${res.totale}<br>Elettronico: €${(res.pos+res.sat+res.del+res.tap).toFixed(2)}<br>Uscite Cash: €${res.usc_cash}`;
+                div.innerHTML = `
+                    <div class="flex justify-between mb-2 border-b pb-1 font-bold"><span>DATA:</span> <span>${res.data}</span></div>
+                    <div class="flex justify-between"><span>Totale Z:</span> <span>€ ${res.totale.toFixed(2)}</span></div>
+                    <div class="flex justify-between text-blue-600"><span>Elettronico:</span> <span>€ ${(res.pos+res.sat+res.del+res.tap).toFixed(2)}</span></div>
+                    <div class="flex justify-between text-red-500"><span>Uscite Cash:</span> <span>€ ${res.usc_cash.toFixed(2)}</span></div>
+                `;
             } else {
-                div.innerHTML = "Nessun dato trovato per questa data.";
+                div.innerHTML = "❌ Nessun dato trovato.";
             }
+        }
+
+        function generaReportRagioniere() {
+            const from = document.getElementById('p-from').value;
+            const to = document.getElementById('p-to').value;
+            const mode = document.getElementById('p-mode').value;
+            if(!from || !to) return alert("Scegli le date");
+
+            let filtrati = database.filter(r => r.data >= from && r.data <= to).sort((a,b) => a.data.localeCompare(b.data));
+            
+            // Logica richiesta: Corrispettivi mese di...
+            let intestazione = `Report dal ${from} al ${to}`;
+            const dateFrom = new Date(from);
+            const dateTo = new Date(to);
+            if(dateFrom.getDate() === 1 && (dateTo.getDate() === 30 || dateTo.getDate() === 31)) {
+                const mesi = ["Gennaio","Febbraio","Marzo","Aprile","Maggio","Giugno","Luglio","Agosto","Settembre","Ottobre","Novembre","Dicembre"];
+                intestazione = `CORRISPETTIVI MESE DI ${mesi[dateFrom.getMonth()].toUpperCase()}`;
+            }
+
+            let h = `<div class="card text-xs">`;
+            h += `<h2 class="font-black text-center text-lg mb-1">COMMANDER ELITE</h2>`;
+            h += `<h3 class="font-bold text-center mb-4 uppercase text-blue-600">${intestazione}</h3>`;
+            h += `<table class="w-full text-left border-collapse">
+                    <thead><tr class="border-b-2 border-slate-800"><th class="py-2">Data</th><th class="py-2 text-right">Importo €</th></tr></thead>
+                    <tbody>`;
+            
+            let totaleGen = 0;
+            filtrati.forEach(r => {
+                let val = r.totale;
+                if(mode === 'solo-ele') val = r.pos + r.sat + r.del + r.tap;
+                totaleGen += val;
+                h += `<tr class="border-b"><td class="py-2">${r.data}</td><td class="py-2 text-right font-bold">€ ${val.toFixed(2)}</td></tr>`;
+            });
+            
+            h += `</tbody></table>
+                  <div class="mt-4 text-right text-sm font-black uppercase">Totale Periodo: € ${totaleGen.toFixed(2)}</div>
+                  <button onclick="window.print()" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold mt-6 no-print">STAMPA PER RAGIONIERE</button>
+                  </div>`;
+            document.getElementById('area-stampa').innerHTML = h;
         }
 
         document.getElementById('data-lavoro').valueAsDate = new Date();
