@@ -18,7 +18,15 @@
         @keyframes scan { from { top: 0; } to { top: 100%; } }
         .glow-text { text-shadow: 0 0 10px rgba(59, 130, 246, 0.5); }
         .hidden { display: none !important; }
-        @media print { .no-print { display: none !important; } #printArea { color: black; background: white; } }
+        
+        /* Stili specifici per il report commercialista */
+        @media print { 
+            .no-print { display: none !important; } 
+            body { background: white !important; color: black !important; padding: 0 !important; }
+            .glass-card { border: none !important; box-shadow: none !important; background: white !important; color: black !important; }
+            #fiscalReportTable { color: black !important; width: 100%; border-collapse: collapse; }
+            #fiscalReportTable td, #fiscalReportTable th { border: 1px solid #ddd; padding: 8px; }
+        }
     </style>
 </head>
 <body class="pb-56">
@@ -39,7 +47,7 @@
     </div>
 
     <div id="mainUI" class="hidden">
-        <nav class="sticky top-0 z-50 bg-[#020617]/95 border-b border-slate-800 p-4 backdrop-blur-xl">
+        <nav class="sticky top-0 z-50 bg-[#020617]/95 border-b border-slate-800 p-4 backdrop-blur-xl no-print">
             <div class="flex justify-between items-center max-w-4xl mx-auto">
                 <div>
                     <div class="flex items-center gap-2">
@@ -56,35 +64,49 @@
         </nav>
 
         <div class="p-4 space-y-4 max-w-4xl mx-auto">
-            <div class="glass-card p-6 border-l-4 border-blue-500 relative overflow-hidden">
+            <div class="glass-card p-6 border-l-4 border-blue-500 relative overflow-hidden no-print">
                 <div class="flex justify-between items-start mb-2">
                     <div>
                         <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Liquidità in Cassetta</p>
                         <h3 id="walletToDeposit" class="text-5xl font-black text-white mono glow-text italic">€ 0</h3>
                     </div>
-                    <div class="text-right">
-                        <p id="forecastTag" class="text-[9px] font-black bg-blue-500/20 text-blue-400 px-2 py-1 rounded-lg uppercase">Analisi: In attesa...</p>
-                        <p id="deadlineAlert" class="hidden text-red-500 text-[9px] font-black mt-2 animate-bounce uppercase">⚠️ SCADENZA RILEVATA</p>
-                    </div>
                 </div>
-                
                 <div class="grid grid-cols-2 gap-4 mt-8 pt-6 border-t border-slate-800/50">
                     <div>
                         <p class="text-[9px] font-bold text-slate-500 uppercase italic">Netto Odierno</p>
                         <p id="netCashDisplay" class="text-2xl font-black text-green-400 mono">€ 0.00</p>
                     </div>
-                    <div class="text-right">
-                        <p class="text-[9px] font-bold text-slate-500 uppercase italic">Settimana (L-D)</p>
-                        <p id="weeklyCash" class="text-2xl font-black text-white mono">€ 0</p>
-                    </div>
                 </div>
             </div>
 
-            <div class="flex gap-1 p-1.5 bg-slate-900/50 rounded-2xl border border-slate-800">
+            <div class="flex gap-1 p-1.5 bg-slate-900/50 rounded-2xl border border-slate-800 no-print">
                 <button onclick="showTab('day')" id="btn-day" class="tab-btn active italic">Tactical</button>
                 <button onclick="showTab('bank')" id="btn-bank" class="tab-btn italic">Banca</button>
-                <button onclick="showTab('deadlines')" id="btn-deadlines" class="tab-btn italic">Scadenze</button>
+                <button onclick="showTab('fiscal')" id="btn-fiscal" class="tab-btn italic text-amber-400">Report Fiscale</button>
                 <button onclick="showTab('config')" id="btn-config" class="tab-btn italic text-blue-400">Settings</button>
+            </div>
+
+            <div id="sec-fiscal" class="hidden space-y-4">
+                <div class="glass-card p-6 border-t-4 border-amber-600">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xs font-black text-amber-500 uppercase italic">Archivio Fiscale Mensile</h3>
+                        <div class="flex gap-2 no-print">
+                            <select id="reportMonth" class="bg-slate-800 text-white text-[10px] px-3 py-2 rounded-lg font-bold outline-none border border-slate-700"></select>
+                            <button onclick="generateFiscalReport()" class="bg-amber-600 text-white px-4 py-2 rounded-lg font-black text-[10px] uppercase">Genera</button>
+                        </div>
+                    </div>
+
+                    <div id="fiscalReportArea" class="space-y-6">
+                        <div class="text-center py-10 text-slate-500 text-xs italic">
+                            Seleziona un mese per generare il report per il commercialista.
+                        </div>
+                    </div>
+                    
+                    <div id="fiscalActions" class="hidden flex gap-2 mt-6 pt-6 border-t border-slate-800 no-print">
+                        <button onclick="window.print()" class="flex-1 bg-slate-800 py-3 rounded-xl font-black text-[10px] uppercase text-white">🖨️ Stampa PDF</button>
+                        <button onclick="exportFiscalCSV()" class="flex-1 bg-slate-800 py-3 rounded-xl font-black text-[10px] uppercase text-white">📊 Esporta CSV</button>
+                    </div>
+                </div>
             </div>
 
             <div id="sec-day" class="space-y-4">
@@ -98,63 +120,19 @@
                     <div class="text-center">
                         <p class="text-[10px] font-black text-blue-500 uppercase tracking-[0.4em] mb-2 italic">Ingresso Fiscale (Z)</p>
                         <input type="number" id="total_sales" class="bg-transparent text-7xl font-black text-white w-full text-center outline-none mono mb-4" placeholder="0.00" oninput="runLogic()">
-                        
-                        <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden mb-8 border border-slate-700">
-                            <div id="missionProgress" class="h-full bg-blue-600 transition-all duration-500" style="width: 0%"></div>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="text-[9px] font-black text-slate-500 uppercase ml-1">Clienti Serviti</label>
-                            <input type="number" id="n_clients" placeholder="0" class="input-commander text-center text-xl" oninput="runLogic()">
-                        </div>
-                        <div>
-                            <label class="text-[9px] font-black text-slate-500 uppercase ml-1">Acconti Ricevuti</label>
-                            <input type="number" id="acconti" placeholder="€ 0" class="input-commander text-center text-xl" oninput="runLogic()">
-                        </div>
-                    </div>
+                        <div id="digitalInputs" class="grid grid-cols-2 gap-4 mt-4"></div>
+                        <input type="number" id="acconti" placeholder="Acconti €" class="hidden"> </div>
                 </div>
-
-                <div class="glass-card p-6">
-                    <h4 class="text-[10px] font-black text-slate-400 uppercase mb-6 tracking-widest flex items-center gap-2">
-                        <span>💳</span> Metodi Elettronici
-                    </h4>
-                    <div id="digitalInputs" class="grid grid-cols-2 gap-4"></div>
-                </div>
-
                 <div class="glass-card p-6 border-l-4 border-red-900">
-                    <h4 class="text-[10px] font-black text-red-500 uppercase mb-6 tracking-widest flex items-center gap-2">
-                        <span>📦</span> Logistica Uscite (Cash)
-                    </h4>
+                    <h4 class="text-[10px] font-black text-red-500 uppercase mb-6 tracking-widest flex items-center gap-2">📦 Logistica Uscite (Cash)</h4>
                     <div id="supList" class="space-y-3"></div>
                 </div>
             </div>
 
             <div id="sec-bank" class="hidden space-y-4">
-                <div class="glass-card p-6 border-t-4 border-green-600 bg-gradient-to-b from-green-900/10 to-transparent">
-                    <h3 class="text-xs font-black text-green-500 uppercase mb-6 italic">Extraction Mode (Versamenti)</h3>
-                    <div class="grid grid-cols-2 gap-4 mb-4">
-                        <input type="date" id="searchFrom" class="input-commander text-xs">
-                        <input type="date" id="searchTo" class="input-commander text-xs">
-                    </div>
-                    <button onclick="calculatePeriod()" class="w-full bg-slate-800 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-700 transition">1. Scansiona Periodo</button>
-                    
-                    <div id="resultPeriod" class="mt-6 p-6 bg-black/40 rounded-3xl border border-green-900/30 hidden text-center animate-pulse">
-                        <p class="text-[10px] text-green-500 uppercase font-black mb-2">Totale Pronto per il Versamento</p>
-                        <h2 id="periodCashResult" class="text-5xl font-black text-white mono mb-6">€ 0.00</h2>
-                        <button onclick="confirmDeposit()" class="w-full bg-green-600 py-5 rounded-2xl font-black text-xs uppercase shadow-[0_0_20px_rgba(22,163,74,0.4)]">2. Conferma Versamento</button>
-                    </div>
-                </div>
-
-                <div class="glass-card overflow-hidden">
-                    <div class="p-4 bg-slate-900/50 border-b border-slate-800">
-                        <p class="text-[10px] font-black uppercase tracking-widest">Storico Operazioni</p>
-                    </div>
-                    <table class="w-full text-[11px] text-left">
-                        <thead class="bg-slate-900 text-slate-500 uppercase font-bold">
-                            <tr><th class="p-4">Data</th><th class="p-4">Cash</th><th class="p-4 text-right">Status</th></tr>
-                        </thead>
+                <div class="glass-card p-4">
+                    <p class="text-xs text-slate-500 font-bold uppercase mb-4">Storico per Versamenti</p>
+                    <table class="w-full text-left text-[11px]" id="accountingTable">
                         <tbody id="accountingTableBody"></tbody>
                     </table>
                 </div>
@@ -162,58 +140,15 @@
 
             <div id="sec-config" class="hidden space-y-4">
                 <div class="glass-card p-6">
-                    <h3 class="text-xs font-black text-blue-500 uppercase mb-6 italic">Configurazione Flussi</h3>
-                    <div class="space-y-4">
-                        <div class="p-4 bg-slate-900/50 rounded-2xl border border-slate-800">
-                            <p class="text-[10px] font-bold text-slate-500 mb-2 uppercase">Nuovo Metodo Digitale</p>
-                            <div class="flex gap-2">
-                                <input type="text" id="newDigitalName" class="input-commander text-xs" placeholder="Nome">
-                                <input type="number" id="newDigitalFee" class="input-commander text-xs w-20" placeholder="%">
-                                <button onclick="addDigitalMethod()" class="bg-blue-600 px-4 rounded-xl font-bold">+</button>
-                            </div>
-                            <div id="digitalMethodsList" class="mt-4 space-y-1"></div>
-                        </div>
-
-                        <div class="p-4 bg-slate-900/50 rounded-2xl border border-slate-800">
-                            <p class="text-[10px] font-bold text-slate-500 mb-2 uppercase">Fornitore Recurrente</p>
-                            <div class="flex gap-2">
-                                <input type="text" id="newSupName" class="input-commander text-xs" placeholder="Nome">
-                                <button onclick="addSupplier()" class="bg-blue-600 px-4 rounded-xl font-bold">+</button>
-                            </div>
-                            <div id="supConfigList" class="mt-4 space-y-1"></div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="glass-card p-6 bg-black border border-slate-800">
-                    <h3 class="text-[10px] font-black text-slate-500 uppercase mb-4 mono italic">System Log</h3>
-                    <div id="terminalLog" class="h-32 overflow-y-auto text-[10px] mono text-blue-400 space-y-1">
-                        <div>[SYSTEM] Inizializzazione protocollo Commander...</div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="sec-deadlines" class="hidden space-y-4">
-                <div class="glass-card p-6">
-                    <h3 class="text-xs font-black text-orange-500 uppercase mb-6 italic">Pianificazione Scadenze</h3>
-                    <div class="flex gap-2 mb-6">
-                        <input type="text" id="deadName" class="input-commander text-xs flex-1" placeholder="Nome">
-                        <input type="number" id="deadDay" class="input-commander text-xs w-16" placeholder="GG">
-                        <input type="number" id="deadAmt" class="input-commander text-xs w-24" placeholder="Importo €">
-                        <button onclick="addDeadline()" class="bg-orange-600 px-5 rounded-xl font-black">+</button>
-                    </div>
-                    <div id="deadlineList" class="space-y-2"></div>
+                    <button onclick="backupAndReset()" class="w-full bg-red-900/30 text-red-500 py-4 rounded-xl font-bold uppercase text-[10px]">Wipe All Data</button>
                 </div>
             </div>
         </div>
 
         <div class="fixed bottom-0 left-0 right-0 p-6 bg-[#020617]/95 border-t border-slate-800 backdrop-blur-xl z-[100] no-print">
             <div class="max-w-4xl mx-auto flex justify-between items-center">
-                <div>
-                    <p class="text-[9px] font-black text-slate-500 uppercase tracking-tighter mb-1">Cassa Reale Attuale</p>
-                    <div id="theoCash" class="text-4xl font-black text-white mono italic glow-text">€ 0.00</div>
-                </div>
-                <button onclick="saveData()" class="bg-blue-600 text-white font-black px-12 py-5 rounded-3xl shadow-[0_0_30px_rgba(59,130,246,0.5)] uppercase text-xs tracking-widest hover:scale-105 active:scale-95 transition-all">Archivia Operazione</button>
+                <div id="theoCash" class="text-4xl font-black text-white mono italic glow-text">€ 0.00</div>
+                <button onclick="saveData()" class="bg-blue-600 text-white font-black px-12 py-5 rounded-3xl shadow-[0_0_30px_rgba(59,130,246,0.5)] uppercase text-xs tracking-widest">Salva</button>
             </div>
         </div>
     </div>
@@ -221,209 +156,215 @@
     <script>
         let activeDate = new Date();
         const pin = "1234";
-        let suppliers = JSON.parse(localStorage.getItem('om_suppliers_v8')) || ["Pane", "Beverage", "Utenze"];
+        let suppliers = JSON.parse(localStorage.getItem('om_suppliers_v8')) || ["Fornitore 1", "Spese Varie"];
         let digitalMethods = JSON.parse(localStorage.getItem('om_digital_v8')) || [{name:"POS", fee:1.2}, {name:"Satispay", fee:0.5}];
-        let deadlines = JSON.parse(localStorage.getItem('om_deadlines_v8')) || [];
 
+        // --- AUTH & CORE ---
         function checkAuth() {
             if(document.getElementById('pinInput').value === pin) {
                 document.getElementById('authScreen').classList.add('hidden');
                 document.getElementById('mainUI').classList.remove('hidden');
-                addLog("ACCESSO AUTORIZZATO. COMANDANTE ONLINE.");
                 init();
             } else { alert("ACCESSO NEGATO."); }
         }
 
         function init() {
-            updateDateUI(); loadSettings(); renderSuppliers(); renderDigitalInputs();
-            renderDeadlines(); loadDateData(); updateSetupLists(); checkTodayDeadlines();
+            populateMonthSelector();
+            updateDateUI();
+            renderDigitalInputs();
+            renderSuppliers();
+            loadDateData();
         }
 
-        function addLog(msg) {
-            const log = document.getElementById('terminalLog');
-            const time = new Date().toLocaleTimeString();
-            log.innerHTML += `<div>[${time}] - ${msg}</div>`;
-            log.scrollTop = log.scrollHeight;
-        }
-
-        function playBeep(freq = 440, type = 'sine') {
-            const context = new (window.AudioContext || window.webkitAudioContext)();
-            const osc = context.createOscillator();
-            const gain = context.createGain();
-            osc.type = type; osc.frequency.setValueAtTime(freq, context.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.00001, context.currentTime + 0.3);
-            osc.connect(gain); gain.connect(context.destination);
-            osc.start(); osc.stop(context.currentTime + 0.3);
-        }
-
+        // --- LOGICA DI CALCOLO ---
         function runLogic() {
             const total = parseFloat(document.getElementById('total_sales').value) || 0;
-            const target = 1000; // Impostabile in futuro nel setup
-            const progress = Math.min((total / target) * 100, 100);
-            
-            document.getElementById('missionProgress').style.width = progress + "%";
-            const status = document.getElementById('opStatus');
-            if(total > target) {
-                status.innerText = "OBIETTIVO COMPLETATO";
-                status.className = "text-[9px] font-black text-green-500 animate-pulse uppercase";
-            } else if(total > 0) {
-                status.innerText = "MISSIONE IN CORSO";
-                status.className = "text-[9px] font-black text-blue-500 uppercase";
-            }
-
             let totalDig = 0;
             document.querySelectorAll('.dig-amt').forEach(el => totalDig += parseFloat(el.value) || 0);
+            
             let cashExp = 0;
-            document.querySelectorAll('.sup-amt').forEach((el, i) => { if(document.querySelectorAll('.sup-check')[i].checked) cashExp += parseFloat(el.value) || 0; });
+            document.querySelectorAll('.sup-amt').forEach((el, i) => { 
+                if(document.querySelectorAll('.sup-check')[i].checked) cashExp += parseFloat(el.value) || 0; 
+            });
 
-            const netCash = (total - totalDig - cashExp) + (parseFloat(document.getElementById('acconti').value) || 0);
+            const netCash = (total - totalDig - cashExp);
             document.getElementById('theoCash').innerText = `€ ${netCash.toFixed(2)}`;
             document.getElementById('netCashDisplay').innerText = `€ ${netCash.toFixed(2)}`;
-            
             calculateGlobalCash();
-            calculateForecasting(total);
         }
 
         function calculateGlobalCash() {
-            let totalWallet = 0; let weekly = 0;
+            let totalWallet = 0;
             for (let i = 0; i < localStorage.length; i++){
                 let key = localStorage.key(i);
                 if(key.startsWith('om_v8_')) {
                     let d = JSON.parse(localStorage.getItem(key));
-                    if(!d.isVersato) {
-                        let dig = d.digitalVals.reduce((a,b)=>parseFloat(a||0)+parseFloat(b||0),0);
-                        let exp = d.supAmts.reduce((acc, v, idx) => acc + (d.supChecks[idx] ? parseFloat(v||0) : 0), 0);
-                        totalWallet += (parseFloat(d.total)||0) - dig - exp + (parseFloat(d.acconti)||0);
-                    }
+                    let dig = (d.digitalVals || []).reduce((a,b)=>parseFloat(a||0)+parseFloat(b||0),0);
+                    let exp = (d.supAmts || []).reduce((acc, v, idx) => acc + (d.supChecks[idx] ? parseFloat(v||0) : 0), 0);
+                    totalWallet += (parseFloat(d.total)||0) - dig - exp;
                 }
             }
             document.getElementById('walletToDeposit').innerText = `€ ${totalWallet.toFixed(0)}`;
-            for(let i=0; i<7; i++){
-                let d = new Date(); d.setDate(d.getDate()-i);
-                let data = JSON.parse(localStorage.getItem('om_v8_'+d.toISOString().split('T')[0]));
-                if(data){
-                    let dig = data.digitalVals.reduce((a,b)=>parseFloat(a||0)+parseFloat(b||0),0);
-                    let exp = data.supAmts.reduce((acc, v, idx) => acc + (data.supChecks[idx] ? parseFloat(v||0) : 0), 0);
-                    weekly += (parseFloat(data.total)||0) - dig - exp + (parseFloat(data.acconti)||0);
-                }
-            }
-            document.getElementById('weeklyCash').innerText = `€ ${weekly.toFixed(0)}`;
         }
 
-        function calculateForecasting(curr) {
-            let tot = 0; let c = 0; const m = activeDate.getMonth();
-            for(let i=1; i<=31; i++){
-                let v = JSON.parse(localStorage.getItem('om_v8_'+`${activeDate.getFullYear()}-${String(m+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`));
-                if(v) { tot += parseFloat(v.total); c++; }
-            }
-            let avg = c > 0 ? (tot/c) : curr;
-            document.getElementById('forecastTag').innerText = `STIMA MESE: € ${(avg*30).toFixed(0)}`;
-        }
-
+        // --- GESTIONE DATI ---
         function saveData() {
             const key = 'om_v8_' + activeDate.toISOString().split('T')[0];
-            const old = JSON.parse(localStorage.getItem(key)) || {};
             const data = {
                 total: document.getElementById('total_sales').value,
-                acconti: document.getElementById('acconti').value,
                 digitalVals: Array.from(document.querySelectorAll('.dig-amt')).map(e => e.value),
                 supAmts: Array.from(document.querySelectorAll('.sup-amt')).map(e => e.value),
-                supChecks: Array.from(document.querySelectorAll('.sup-check')).map(e => e.checked),
-                isVersato: old.isVersato || false
+                supChecks: Array.from(document.querySelectorAll('.sup-check')).map(e => e.checked)
             };
             localStorage.setItem(key, JSON.stringify(data));
-            playBeep(880);
-            addLog(`DATABASE AGGIORNATO: ${activeDate.toLocaleDateString()}`);
-            alert("PROTOCOLLO DI ARCHIVIAZIONE COMPLETATO.");
+            alert("DATI ARCHIVIATI.");
             runLogic();
         }
 
-        // Recupero funzioni integrate precedenti
         function loadDateData() {
             const key = 'om_v8_' + activeDate.toISOString().split('T')[0];
             const s = JSON.parse(localStorage.getItem(key));
-            document.querySelectorAll('input[type="number"]').forEach(i => { if(!['tax_rate','fixed_costs'].includes(i.id)) i.value = ""; });
-            document.querySelectorAll('.sup-check').forEach(c => c.checked = false);
-            if(s) {
-                document.getElementById('total_sales').value = s.total;
-                document.getElementById('acconti').value = s.acconti || "";
-                s.digitalVals?.forEach((v, i) => { if(document.querySelectorAll('.dig-amt')[i]) document.querySelectorAll('.dig-amt')[i].value = v; });
-                s.supAmts?.forEach((v, i) => { if(document.querySelectorAll('.sup-amt')[i]) document.querySelectorAll('.sup-amt')[i].value = v; });
-                s.supChecks?.forEach((v, i) => { if(document.querySelectorAll('.sup-check')[i]) document.querySelectorAll('.sup-check')[i].checked = v; });
-            }
+            document.getElementById('total_sales').value = s ? s.total : "";
+            document.querySelectorAll('.dig-amt').forEach((el, i) => el.value = (s && s.digitalVals) ? s.digitalVals[i] : "");
+            document.querySelectorAll('.sup-amt').forEach((el, i) => el.value = (s && s.supAmts) ? s.supAmts[i] : "");
+            document.querySelectorAll('.sup-check').forEach((el, i) => el.checked = (s && s.supChecks) ? s.supChecks[i] : false);
             runLogic();
         }
 
-        function calculatePeriod() {
-            const from = document.getElementById('searchFrom').value;
-            const to = document.getElementById('searchTo').value;
-            if(!from || !to) return;
-            let periodTotal = 0;
-            let start = new Date(from); let end = new Date(to);
-            for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-                let data = JSON.parse(localStorage.getItem('om_v8_' + d.toISOString().split('T')[0]));
-                if(data && !data.isVersato) {
-                    let dig = data.digitalVals.reduce((a,b)=>parseFloat(a||0)+parseFloat(b||0), 0);
-                    let exp = data.supAmts.reduce((acc, v, idx) => acc + (data.supChecks[idx] ? parseFloat(v||0) : 0), 0);
-                    periodTotal += (parseFloat(data.total)||0) - dig - exp + (parseFloat(data.acconti)||0);
+        // --- REPORT COMMERCIALISTA (LOGICA DEDICATA) ---
+        function populateMonthSelector() {
+            const sel = document.getElementById('reportMonth');
+            const months = ["Gennaio","Febbraio","Marzo","Aprile","Maggio","Giugno","Luglio","Agosto","Settembre","Ottobre","Novembre","Dicembre"];
+            const currentMonth = new Date().getMonth();
+            months.forEach((m, i) => {
+                let opt = document.createElement('option');
+                opt.value = i;
+                opt.text = m;
+                if(i === currentMonth) opt.selected = true;
+                sel.add(opt);
+            });
+        }
+
+        function generateFiscalReport() {
+            const month = parseInt(document.getElementById('reportMonth').value);
+            const year = new Date().getFullYear();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            
+            let totalMonthZ = 0;
+            let totalMonthCash = 0;
+            let totalMonthElec = 0;
+            let opDays = 0;
+
+            let tableHtml = `
+                <div class="bg-white text-black p-8 rounded-xl" id="printableReport">
+                    <div class="border-b-2 border-black pb-4 mb-6">
+                        <h2 class="text-2xl font-black uppercase">Report Corrispettivi</h2>
+                        <p class="text-sm font-bold">Periodo: ${document.getElementById('reportMonth').options[month].text} ${year}</p>
+                    </div>
+                    <table class="w-full text-left mb-8" id="fiscalReportTable">
+                        <thead>
+                            <tr class="bg-gray-100"><th class="p-2">Data</th><th class="p-2">Tot. Z (Lordo)</th><th class="p-2">Elettronico</th><th class="p-2">Cash</th></tr>
+                        </thead>
+                        <tbody>`;
+
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                const dayData = JSON.parse(localStorage.getItem('om_v8_' + dateKey));
+                
+                if (dayData && parseFloat(dayData.total) > 0) {
+                    opDays++;
+                    const z = parseFloat(dayData.total) || 0;
+                    const elec = (dayData.digitalVals || []).reduce((acc, v) => acc + (parseFloat(v) || 0), 0);
+                    const cash = z - elec;
+                    
+                    totalMonthZ += z;
+                    totalMonthElec += elec;
+                    totalMonthCash += cash;
+
+                    tableHtml += `<tr><td class="p-2 border-b">${d}/${month+1}</td><td class="p-2 border-b">€ ${z.toFixed(2)}</td><td class="p-2 border-b">€ ${elec.toFixed(2)}</td><td class="p-2 border-b">€ ${cash.toFixed(2)}</td></tr>`;
                 }
             }
-            document.getElementById('resultPeriod').classList.remove('hidden');
-            document.getElementById('periodCashResult').innerText = `€ ${periodTotal.toFixed(2)}`;
-            addLog(`SCANSIONE PERIODO COMPLETATA: € ${periodTotal.toFixed(2)}`);
+
+            tableHtml += `</tbody></table>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="p-4 bg-gray-50 border">
+                        <p class="text-[10px] uppercase font-bold text-gray-500">Totale Corrispettivi</p>
+                        <p class="text-xl font-black">€ ${totalMonthZ.toFixed(2)}</p>
+                    </div>
+                    <div class="p-4 bg-gray-50 border">
+                        <p class="text-[10px] uppercase font-bold text-gray-500">Giorni Operativi</p>
+                        <p class="text-xl font-black">${opDays}</p>
+                    </div>
+                    <div class="p-4 bg-gray-50 border">
+                        <p class="text-[10px] uppercase font-bold text-gray-500">Totale Elettronico</p>
+                        <p class="text-xl font-black text-blue-700">€ ${totalMonthElec.toFixed(2)}</p>
+                    </div>
+                    <div class="p-4 bg-gray-50 border">
+                        <p class="text-[10px] uppercase font-bold text-gray-500">Totale Cash</p>
+                        <p class="text-xl font-black text-green-700">€ ${totalMonthCash.toFixed(2)}</p>
+                    </div>
+                </div>
+                <p class="mt-8 text-[9px] text-gray-400 italic font-mono uppercase">Generato da Commander V8 - Documento ad uso contabile interno</p>
+            </div>`;
+
+            document.getElementById('fiscalReportArea').innerHTML = tableHtml;
+            document.getElementById('fiscalActions').classList.remove('hidden');
         }
 
-        function confirmDeposit() {
-            if(!confirm("CONFERMI TRASFERIMENTO FONDI IN BANCA?")) return;
-            let start = new Date(document.getElementById('searchFrom').value); let end = new Date(document.getElementById('searchTo').value);
-            for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-                let k = 'om_v8_' + d.toISOString().split('T')[0];
-                let data = JSON.parse(localStorage.getItem(k));
-                if(data) { data.isVersato = true; localStorage.setItem(k, JSON.stringify(data)); }
+        function exportFiscalCSV() {
+            const rows = [["Data", "Corrispettivo Z", "Elettronico", "Cash"]];
+            const month = parseInt(document.getElementById('reportMonth').value);
+            const year = new Date().getFullYear();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                const data = JSON.parse(localStorage.getItem('om_v8_' + dateKey));
+                if(data) {
+                    const z = parseFloat(data.total) || 0;
+                    const elec = (data.digitalVals || []).reduce((acc, v) => acc + (parseFloat(v) || 0), 0);
+                    rows.push([`${d}/${month+1}/${year}`, z, elec, z-elec]);
+                }
             }
-            addLog("VERSAMENTO BANCA REGISTRATO.");
-            location.reload();
+
+            let csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
+            const link = document.createElement("a");
+            link.setAttribute("href", encodeURI(csvContent));
+            link.setAttribute("download", `Report_Fiscale_${month+1}_${year}.csv`);
+            document.body.appendChild(link);
+            link.click();
         }
 
+        // --- NAVIGAZIONE ---
         function showTab(t) { 
-            ['day','bank','deadlines','config'].forEach(s => {document.getElementById('sec-'+s).classList.add('hidden'); document.getElementById('btn-'+s).classList.remove('active');}); 
-            document.getElementById('sec-'+t).classList.remove('hidden'); document.getElementById('btn-'+t).classList.add('active'); 
-            playBeep(220, 'square');
-            if(t==='bank') updateAccountingTable(); 
+            ['day','bank','fiscal','config'].forEach(s => {
+                document.getElementById('sec-'+s).classList.add('hidden'); 
+                document.getElementById('btn-'+s).classList.remove('active');
+            }); 
+            document.getElementById('sec-'+t).classList.remove('hidden'); 
+            document.getElementById('btn-'+t).classList.add('active'); 
         }
 
-        function updateAccountingTable() {
-            const body = document.getElementById('accountingTableBody'); body.innerHTML = "";
-            const m = activeDate.getMonth();
-            for(let i=31; i>=1; i--) {
-                const k = `${activeDate.getFullYear()}-${String(m+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
-                const d = JSON.parse(localStorage.getItem('om_v8_' + k));
-                if(d) {
-                    let dig = d.digitalVals.reduce((a,b)=>parseFloat(a||0)+parseFloat(b||0),0);
-                    let exp = d.supAmts.reduce((acc, v, idx) => acc + (d.supChecks[idx] ? parseFloat(v||0) : 0), 0);
-                    let cash = (parseFloat(d.total)||0) - dig - exp + (parseFloat(d.acconti)||0);
-                    body.innerHTML += `<tr class="border-b border-slate-800/50"><td class="p-4 mono">${i}/${m+1}</td><td class="p-4 text-green-400 font-bold">€ ${cash.toFixed(0)}</td><td class="p-4 text-right">${d.isVersato ? '🔱' : '⏳'}</td></tr>`;
-                }
-            }
+        function updateDateUI() { 
+            document.getElementById('datePicker').value = activeDate.toISOString().split('T')[0]; 
+            document.getElementById('topDate').innerText = activeDate.toLocaleDateString('it-IT', { weekday:'long', day:'numeric', month:'long' }); 
         }
 
-        function loadSettings() { ['fixed_costs', 'tax_rate'].forEach(k => { if(localStorage.getItem('set_'+k)) document.getElementById(k).value = localStorage.getItem('set_'+k); }); }
-        function renderDigitalInputs() { document.getElementById('digitalInputs').innerHTML = digitalMethods.map(m => `<div class="space-y-1"><label class="text-[8px] text-slate-500 uppercase font-black">${m.name}</label><input type="number" class="dig-amt input-commander text-sm" data-fee="${m.fee}" oninput="runLogic()"></div>`).join(''); }
-        function renderSuppliers() { document.getElementById('supList').innerHTML = suppliers.map(s => `<div class="flex items-center gap-3 bg-slate-800/20 p-4 rounded-2xl border border-slate-800/50 hover:border-blue-500/50 transition"><span class="text-[10px] font-black text-slate-400 flex-1 uppercase">${s}</span><input type="number" class="sup-amt bg-transparent text-right text-sm font-black text-white w-20 outline-none" placeholder="0.00" oninput="runLogic()"><input type="checkbox" class="sup-check w-6 h-6 accent-blue-600 rounded" onchange="runLogic()"></div>`).join(''); }
-        function addDigitalMethod() { const n = document.getElementById('newDigitalName').value; const f = document.getElementById('newDigitalFee').value; if(n && f) { digitalMethods.push({name: n, fee: parseFloat(f)}); localStorage.setItem('om_digital_v8', JSON.stringify(digitalMethods)); location.reload(); } }
-        function addSupplier() { const n = document.getElementById('newSupName').value; if(n) { suppliers.push(n); localStorage.setItem('om_suppliers_v8', JSON.stringify(suppliers)); location.reload(); } }
-        function updateSetupLists() {
-            document.getElementById('digitalMethodsList').innerHTML = digitalMethods.map((m,i)=>`<div class="flex justify-between p-3 bg-slate-900 border border-slate-800 rounded-xl mb-1 text-[10px]"><span>${m.name}</span><button onclick="digitalMethods.splice(${i},1);localStorage.setItem('om_digital_v8',JSON.stringify(digitalMethods));location.reload();" class="text-red-500 font-bold">ELIMINA</button></div>`).join('');
-            document.getElementById('supConfigList').innerHTML = suppliers.map((s,i)=>`<div class="flex justify-between p-3 bg-slate-900 border border-slate-800 rounded-xl mb-1 text-[10px]"><span>${s.toUpperCase()}</span><button onclick="suppliers.splice(${i},1);localStorage.setItem('om_suppliers_v8',JSON.stringify(suppliers));location.reload();" class="text-red-500 font-bold">ELIMINA</button></div>`).join('');
+        function changeDate(v) { activeDate.setDate(activeDate.getDate()+v); updateDateUI(); loadDateData(); }
+        function setDateFromPicker() { activeDate = new Date(document.getElementById('datePicker').value); updateDateUI(); loadDateData(); }
+
+        function renderDigitalInputs() { 
+            document.getElementById('digitalInputs').innerHTML = digitalMethods.map(m => `<div class="space-y-1"><label class="text-[8px] text-slate-500 uppercase font-black">${m.name}</label><input type="number" class="dig-amt input-commander text-center text-sm" oninput="runLogic()"></div>`).join(''); 
         }
-        function addDeadline() { deadlines.push({name:document.getElementById('deadName').value, day:document.getElementById('deadDay').value, amt:document.getElementById('deadAmt').value}); localStorage.setItem('om_deadlines_v8', JSON.stringify(deadlines)); renderDeadlines(); addLog("SCADENZA AGGIUNTA."); }
-        function renderDeadlines() { document.getElementById('deadlineList').innerHTML = deadlines.map((d,i)=>`<div class="flex justify-between bg-slate-900 p-3 border border-slate-800 rounded-xl text-[10px]"><span>GG ${d.day} - ${d.name} (€${d.amt})</span><button onclick="deadlines.splice(${i},1);localStorage.setItem('om_deadlines_v8', JSON.stringify(deadlines));renderDeadlines();" class="text-red-500 font-bold">X</button></div>`).join(''); }
-        function checkTodayDeadlines() { const d = deadlines.find(x => parseInt(x.day) === activeDate.getDate()); if(d) document.getElementById('deadlineAlert').classList.remove('hidden'); else document.getElementById('deadlineAlert').classList.add('hidden'); }
-        function updateDateUI() { document.getElementById('datePicker').value = activeDate.toISOString().split('T')[0]; document.getElementById('topDate').innerText = activeDate.toLocaleDateString('it-IT', { weekday:'long', day:'numeric', month:'long' }); }
-        function changeDate(v) { activeDate.setDate(activeDate.getDate()+v); updateDateUI(); loadDateData(); checkTodayDeadlines(); }
-        function setDateFromPicker() { activeDate = new Date(document.getElementById('datePicker').value); updateDateUI(); loadDateData(); checkTodayDeadlines(); }
-        function shareWhatsApp() { const t = `*COMMANDER SEAL REPORT*\n📅 ${document.getElementById('topDate').innerText}\n💵 Cash Oggi: ${document.getElementById('netCashDisplay').innerText}\n🏦 Totale In Cassa: ${document.getElementById('walletToDeposit').innerText}`; window.open(`https://wa.me/?text=${encodeURIComponent(t)}`); }
-        function backupAndReset() { if(confirm("CANCELLARE TUTTO? OPERAZIONE IRREVERSIBILE.")) { localStorage.clear(); location.reload(); } }
+
+        function renderSuppliers() { 
+            document.getElementById('supList').innerHTML = suppliers.map(s => `<div class="flex items-center gap-3 bg-slate-800/20 p-4 rounded-2xl border border-slate-800/50"><span class="text-[10px] font-black text-slate-400 flex-1 uppercase">${s}</span><input type="number" class="sup-amt bg-transparent text-right text-sm font-black text-white w-20 outline-none" placeholder="0.00" oninput="runLogic()"><input type="checkbox" class="sup-check w-6 h-6 accent-blue-600 rounded" onchange="runLogic()"></div>`).join(''); 
+        }
+
+        function shareWhatsApp() { 
+            const t = `*REPORT ${document.getElementById('topDate').innerText}*\n💰 Cash: ${document.getElementById('netCashDisplay').innerText}`; 
+            window.open(`https://wa.me/?text=${encodeURIComponent(t)}`); 
+        }
     </script>
 </body>
 </html>
