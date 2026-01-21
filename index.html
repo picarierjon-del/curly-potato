@@ -106,7 +106,7 @@
             <i class="fa-solid fa-truck-ramp-box"></i>
             <h3 class="font-black uppercase text-xs text-slate-700">Fornitori e Fatture</h3>
           </div>
-          <button onclick="addFornitore()" class="bg-red-500 text-white px-4 py-2 rounded-xl text-[10px] font-black shadow-sm">+ AGGIUNGI SPESA</button>
+          <button type="button" onclick="addFornitore()" class="bg-red-500 text-white px-4 py-2 rounded-xl text-[10px] font-black shadow-sm">+ AGGIUNGI SPESA</button>
         </div>
         <div id="fornitori-list" class="space-y-4"></div>
       </div>
@@ -128,8 +128,7 @@
           <span id="res-netto" class="text-3xl font-black text-green-400 tracking-tighter">€ 0,00</span>
         </div>
 
-        <!-- FIX: passo this -->
-        <button onclick="salvaData(this)" class="w-full mt-6 bg-blue-600 hover:bg-blue-500 py-5 rounded-2xl font-black uppercase text-sm tracking-widest shadow-lg shadow-blue-900/20 active:scale-95 transition-all">
+        <button type="button" onclick="salvaData(this)" class="w-full mt-6 bg-blue-600 hover:bg-blue-500 py-5 rounded-2xl font-black uppercase text-sm tracking-widest shadow-lg shadow-blue-900/20 active:scale-95 transition-all">
           Archivia e Salva
         </button>
       </div>
@@ -171,7 +170,7 @@
             <input type="date" id="s-to">
           </div>
         </div>
-        <button onclick="cercaPeriodo()" class="w-full bg-slate-800 hover:bg-slate-700 text-white py-4 rounded-xl font-black uppercase text-xs transition-all">
+        <button type="button" onclick="cercaPeriodo()" class="w-full bg-slate-800 hover:bg-slate-700 text-white py-4 rounded-xl font-black uppercase text-xs transition-all">
           Elabora Analisi
         </button>
         <div id="s-res" class="mt-6 hidden"></div>
@@ -192,19 +191,44 @@
             <input type="date" id="p-to">
           </div>
         </div>
-        <button onclick="generaReportProfessionale()" class="w-full bg-blue-700 hover:bg-blue-600 text-white py-5 rounded-2xl font-black uppercase shadow-lg shadow-blue-200 transition-all">
+        <button type="button" onclick="generaReportProfessionale()" class="w-full bg-blue-700 hover:bg-blue-600 text-white py-5 rounded-2xl font-black uppercase shadow-lg shadow-blue-200 transition-all">
           Genera Documentazione Ragioniere
         </button>
       </div>
+
+      <!-- SETUP: cancellazione range per alleggerire localStorage -->
+      <div class="card no-print border-l-4 border-slate-800">
+        <div class="flex items-center gap-2 mb-4 border-b pb-2">
+          <i class="fa-solid fa-gear text-slate-800"></i>
+          <h3 class="font-black text-slate-700 uppercase text-xs">Setup - Pulizia Archivio</h3>
+        </div>
+        <div class="grid grid-cols-2 gap-3 mb-4">
+          <div class="space-y-1">
+            <label class="text-[9px] font-bold px-1">CANCELLA DAL</label>
+            <input type="date" id="d-from">
+          </div>
+          <div class="space-y-1">
+            <label class="text-[9px] font-bold px-1">CANCELLA AL</label>
+            <input type="date" id="d-to">
+          </div>
+        </div>
+        <button type="button" onclick="cancellaPeriodo()" class="w-full bg-slate-900 hover:bg-slate-800 text-white py-4 rounded-xl font-black uppercase text-xs transition-all">
+          Cancella Dati dal/al
+        </button>
+        <p class="mt-3 text-[11px] text-slate-500 leading-4">
+          Elimina dal dispositivo i record compresi tra le due date (inclusi) per ridurre lo spazio occupato.
+        </p>
+      </div>
+
       <div id="area-stampa"></div>
     </section>
 
   </main>
 
   <nav class="nav-bottom no-print">
-    <button onclick="showPage('oggi')" class="nav-item active" id="btn-oggi"><i class="fa-solid fa-cash-register text-2xl mb-1"></i>Cassa</button>
-    <button onclick="showPage('riepilogo')" class="nav-item" id="btn-riepilogo"><i class="fa-solid fa-chart-line text-2xl mb-1"></i>Analisi</button>
-    <button onclick="showPage('stampa')" class="nav-item" id="btn-stampa"><i class="fa-solid fa-file-invoice-dollar text-2xl mb-1"></i>Fisco</button>
+    <button type="button" onclick="showPage('oggi')" class="nav-item active" id="btn-oggi"><i class="fa-solid fa-cash-register text-2xl mb-1"></i>Cassa</button>
+    <button type="button" onclick="showPage('riepilogo')" class="nav-item" id="btn-riepilogo"><i class="fa-solid fa-chart-line text-2xl mb-1"></i>Analisi</button>
+    <button type="button" onclick="showPage('stampa')" class="nav-item" id="btn-stampa"><i class="fa-solid fa-file-invoice-dollar text-2xl mb-1"></i>Fisco</button>
   </nav>
 
   <script>
@@ -213,7 +237,13 @@
     const euro = (n) => `€ ${fix(n).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
     // DB
-    let db = JSON.parse(localStorage.getItem('ce_v3_top')) || [];
+    const LS_KEY = 'ce_v3_top';
+    let db = JSON.parse(localStorage.getItem(LS_KEY)) || [];
+
+    function persistDB() {
+      db.sort((a, b) => (a.data || '').localeCompare(b.data || ''));
+      localStorage.setItem(LS_KEY, JSON.stringify(db));
+    }
 
     function checkPin() {
       if (document.getElementById('pin-input').value === "1234") {
@@ -245,6 +275,7 @@
             <select class="r-iva !p-2 text-[10px] font-bold" onchange="calcola()">
               <option value="22">IVA 22%</option>
               <option value="10" selected>IVA 10%</option>
+              <option value="5">IVA 5%</option>
               <option value="4">IVA 4%</option>
               <option value="0">Esente</option>
             </select>
@@ -275,6 +306,7 @@
         <select class="r-iva !p-2 text-[10px] font-bold" onchange="calcola()">
           <option value="22">22%</option>
           <option value="10" selected>10%</option>
+          <option value="5">5%</option>
           <option value="4">4%</option>
           <option value="0">0%</option>
         </select>
@@ -356,7 +388,6 @@
       if (!data) return alert("⚠️ Seleziona la data prima di salvare!");
 
       const dati = calcola();
-
       const haSpese = (dati.detFornitori || []).some(f => (f.lordo || 0) > 0 || (f.iva || 0) > 0);
       if (dati.lordoZ === 0 && !haSpese) return alert("⚠️ Non ci sono dati da salvare.");
 
@@ -388,8 +419,7 @@
 
       db = db.filter(r => r.data !== data);
       db.push(rec);
-      db.sort((a, b) => a.data.localeCompare(b.data));
-      localStorage.setItem('ce_v3_top', JSON.stringify(db));
+      persistDB();
 
       if (btnEl) {
         btnEl.innerText = "✅ GIORNATA SALVATA";
@@ -436,10 +466,7 @@
         .sort((a, b) => a.data.localeCompare(b.data));
 
       let totL = 0, totE = 0, totC = 0, tIvaD = 0, tIvaC = 0;
-      let tPos = 0, tSat = 0, tDel = 0, tTap = 0;
-
-      let fornCash = 0, fornTr = 0, fornIva = 0;
-      const fornByName = {};
+      let entCash = 0, diffCash = 0;
 
       fil.forEach(r => {
         totL += (r.lordoZ || 0);
@@ -448,122 +475,44 @@
         tIvaD += (r.ivaV || 0);
         tIvaC += (r.totIvaA || 0);
 
-        tPos += (r.pos || 0);
-        tSat += (r.sat || 0);
-        tDel += (r.del || 0);
-        tTap += (r.tap || 0);
-
-        (r.detFornitori || []).forEach(ff => {
-          const nome = ff.nome || "Senza Nome";
-          if (!fornByName[nome]) fornByName[nome] = { lordo: 0, iva: 0, cashLordo: 0, trLordo: 0 };
-
-          fornByName[nome].lordo += (ff.lordo || 0);
-          fornByName[nome].iva += (ff.iva || 0);
-
-          fornIva += (ff.iva || 0);
-          if (ff.cash) {
-            fornCash += (ff.lordo || 0);
-            fornByName[nome].cashLordo += (ff.lordo || 0);
-          } else {
-            fornTr += (ff.lordo || 0);
-            fornByName[nome].trLordo += (ff.lordo || 0);
-          }
-        });
+        // Entrate contanti (lordo - elettronico)
+        entCash += (r.lordoZ || 0) - (r.totEle || 0);
       });
+
+      diffCash = entCash - totC;
 
       const res = document.getElementById('s-res');
       res.classList.remove('hidden');
 
-      const fornRows = Object.entries(fornByName)
-        .sort((a, b) => (b[1].lordo - a[1].lordo))
-        .map(([nome, v]) => `
-          <tr class="border-b border-white/10">
-            <td class="py-2 text-left font-bold">${nome}</td>
-            <td class="py-2 text-right">${euro(v.lordo)}</td>
-            <td class="py-2 text-right text-green-300">${euro(v.iva)}</td>
-            <td class="py-2 text-right text-red-300">${euro(v.cashLordo)}</td>
-            <td class="py-2 text-right text-blue-200">${euro(v.trLordo)}</td>
-          </tr>
-        `).join("");
-
-      const dayBlocks = fil.map(r => {
-        const forn = (r.detFornitori || [])
-          .filter(x => (x.lordo || 0) > 0)
-          .map(x => `• <span class="font-bold">${x.nome}</span> — ${euro(x.lordo)} <span class="text-[10px] ${x.cash ? 'text-red-300' : 'text-blue-200'}">(${x.cash ? 'CONTANTI' : 'TRACCIABILE'})</span>`)
-          .join("<br>") || `<span class="text-slate-300">Nessuna spesa fornitori</span>`;
-
-        return `
-          <div class="p-4 rounded-2xl bg-white/5 border border-white/10">
-            <div class="flex justify-between items-center mb-2">
-              <div class="font-black text-blue-200">${r.data}</div>
-              <div class="text-[10px] font-bold text-slate-300 uppercase">
-                Lordo ${euro(r.lordoZ || 0)} • Elettr. ${euro(r.totEle || 0)} • Usc. Cash ${euro(r.uscCash || 0)}
-              </div>
-            </div>
-            <div class="text-[11px] leading-5">${forn}</div>
-          </div>
-        `;
-      }).join("");
-
       res.innerHTML = `
-        <div class="p-5 bg-slate-900 text-white rounded-3xl space-y-6 shadow-xl">
-          <h4 class="text-center font-black text-blue-400 text-xs uppercase">Report Dettagliato per Periodo</h4>
+        <div class="p-5 bg-slate-900 text-white rounded-3xl space-y-3 shadow-xl">
+          <h4 class="text-center font-black text-blue-400 text-xs uppercase mb-2">Risultati Intervallo</h4>
 
-          <div class="space-y-2">
-            <div class="flex justify-between border-b border-white/10 pb-2">
-              <span>Totale Lordo Z</span> <strong class="text-lg">${euro(totL)}</strong>
-            </div>
-            <div class="flex justify-between text-blue-300"><span>Totale Elettronico</span><span>${euro(totE)}</span></div>
-            <div class="flex justify-between text-red-300"><span>Uscite Contanti (Fornitori Cash)</span><span>${euro(totC)}</span></div>
-
-            <div class="pt-3 flex justify-between font-black text-orange-400 border-t border-white/20">
-              <span>IVA DA VERSARE</span><span>${euro(fix(tIvaD - tIvaC))}</span>
-            </div>
+          <div class="flex justify-between border-b border-white/10 pb-2">
+            <span>Entrate (Lordo Z)</span>
+            <strong class="text-lg">${euro(totL)}</strong>
           </div>
 
-          <div class="p-4 rounded-2xl bg-white/5 border border-white/10">
-            <div class="font-black text-[11px] uppercase text-slate-200 mb-3">Categorie Pagamenti (Elettronico)</div>
-            <div class="grid grid-cols-2 gap-2 text-[11px]">
-              <div class="flex justify-between"><span>POS</span><span class="font-bold">${euro(tPos)}</span></div>
-              <div class="flex justify-between"><span>Satispay</span><span class="font-bold">${euro(tSat)}</span></div>
-              <div class="flex justify-between"><span>Delivery</span><span class="font-bold">${euro(tDel)}</span></div>
-              <div class="flex justify-between"><span>App/Web</span><span class="font-bold">${euro(tTap)}</span></div>
-            </div>
+          <div class="flex justify-between text-slate-200">
+            <span>Entrate Contanti (Lordo - Elettronico)</span>
+            <span>${euro(entCash)}</span>
           </div>
 
-          <div class="p-4 rounded-2xl bg-white/5 border border-white/10">
-            <div class="font-black text-[11px] uppercase text-slate-200 mb-3">Categorie Spese Fornitori</div>
-            <div class="grid grid-cols-2 gap-2 text-[11px]">
-              <div class="flex justify-between"><span>Fornitori Contanti</span><span class="font-bold text-red-300">${euro(fornCash)}</span></div>
-              <div class="flex justify-between"><span>Fornitori Tracciabile</span><span class="font-bold text-blue-200">${euro(fornTr)}</span></div>
-              <div class="flex justify-between col-span-2"><span>IVA a Credito Totale (Acquisti)</span><span class="font-bold text-green-300">${euro(fornIva)}</span></div>
-            </div>
+          <div class="flex justify-between text-red-400">
+            <span>Uscite Contanti</span>
+            <span>${euro(totC)}</span>
           </div>
 
-          <div class="p-4 rounded-2xl bg-white/5 border border-white/10 overflow-x-auto">
-            <div class="font-black text-[11px] uppercase text-slate-200 mb-3">Fornitori Raggruppati</div>
-            <table class="w-full text-[11px] min-w-[560px]">
-              <thead class="text-slate-200">
-                <tr class="border-b border-white/10">
-                  <th class="py-2 text-left">Fornitore</th>
-                  <th class="py-2 text-right">Totale</th>
-                  <th class="py-2 text-right">IVA</th>
-                  <th class="py-2 text-right">Contanti</th>
-                  <th class="py-2 text-right">Tracciabile</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${fornRows || `<tr><td colspan="5" class="py-3 text-center text-slate-300">Nessun fornitore nel periodo</td></tr>`}
-              </tbody>
-            </table>
+          <div class="flex justify-between font-black text-green-300">
+            <span>Differenza Contanti</span>
+            <span>${euro(diffCash)}</span>
           </div>
 
-          <div class="space-y-3">
-            <div class="font-black text-[11px] uppercase text-slate-200">Dettaglio Giornaliero</div>
-            ${dayBlocks || `<div class="text-slate-300">Nessun dato nel periodo</div>`}
+          <div class="pt-3 flex justify-between font-black text-orange-400 border-t border-white/20">
+            <span>IVA DA VERSARE</span>
+            <span>${euro(fix(tIvaD - tIvaC))}</span>
           </div>
-        </div>
-      `;
+        </div>`;
     }
 
     function generaReportProfessionale() {
@@ -572,7 +521,9 @@
       if (!f || !t) return alert("Seleziona il periodo fiscale!");
       if (f > t) return alert("⚠️ Intervallo non valido: DATA INIZIO è dopo DATA FINE.");
 
-      const dataFil = db.filter(r => r.data >= f && r.data <= t).sort((a, b) => a.data.localeCompare(b.data));
+      const dataFil = db
+        .filter(r => r.data >= f && r.data <= t)
+        .sort((a, b) => a.data.localeCompare(b.data));
 
       const mesi = ["GENNAIO","FEBBRAIO","MARZO","APRILE","MAGGIO","GIUGNO","LUGLIO","AGOSTO","SETTEMBRE","OTTOBRE","NOVEMBRE","DICEMBRE"];
       let titolo = `REPORT FISCALE DAL ${f} AL ${t}`;
@@ -657,7 +608,6 @@
             <td class="border p-2 text-center text-[9px] font-bold">${fx.cash ? 'CONTANTI' : 'TRACCIABILE'}</td>
           </tr>`;
 
-          // righe IVA se presenti
           if (Array.isArray(fx.righe) && fx.righe.length) {
             h += `<tr>
               <td class="border p-2" colspan="5" style="text-align:left;">
@@ -698,6 +648,31 @@
       </div>`;
 
       document.getElementById('area-stampa').innerHTML = h;
+    }
+
+    // Setup: cancella record dal/al
+    function cancellaPeriodo() {
+      const f = document.getElementById('d-from').value;
+      const t = document.getElementById('d-to').value;
+      if (!f || !t) return alert("Seleziona le date DAL/AL per cancellare.");
+      if (f > t) return alert("⚠️ Intervallo non valido: DAL è dopo AL.");
+
+      const prima = db.length;
+      const rimossi = db.filter(r => (r.data >= f && r.data <= t)).length;
+      if (rimossi === 0) return alert("Nessun dato da cancellare nel periodo selezionato.");
+
+      const ok = confirm(`Confermi la cancellazione di ${rimossi} record dal ${f} al ${t}?`);
+      if (!ok) return;
+
+      db = db.filter(r => !(r.data >= f && r.data <= t));
+      persistDB();
+
+      // aggiorna dashboard se aperta e svuota eventuali report in analisi
+      aggiornaStatsDash();
+      const sr = document.getElementById('s-res');
+      if (sr) { sr.classList.add('hidden'); sr.innerHTML = ""; }
+
+      alert(`Cancellazione completata. Rimasti ${db.length} record (prima: ${prima}).`);
     }
 
     // init data default
