@@ -3,216 +3,259 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ErjonPro Business</title>
+    <title>ErjonPro Business v2.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        :root { --primary: #2563eb; --secondary: #64748b; --success: #10b981; --danger: #ef4444; }
-        body { background-color: #f8fafc; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
-        .page { display: none; padding-bottom: 80px; }
-        .active-page { display: block; animation: fadeIn 0.3s ease-in; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        :root { --primary: #2563eb; --success: #10b981; --danger: #ef4444; }
+        body { background-color: #f1f5f9; font-family: 'Segoe UI', Roboto, sans-serif; }
+        .page { display: none; padding-bottom: 100px; animation: fadeIn 0.2s ease-out; }
+        .active-page { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        .card { background: white; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); padding: 1.25rem; margin-bottom: 1rem; border: 1px solid #e2e8f0; }
-        input, select, textarea { width: 100%; border: 1px solid #cbd5e1; border-radius: 10px; padding: 12px; font-size: 16px; transition: all 0.2s; }
-        input:focus { border-color: var(--primary); outline: none; ring: 2px solid #bfdbfe; }
+        .card { background: white; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); padding: 1rem; margin-bottom: 1rem; border: 1px solid #e2e8f0; }
+        .btn-primary { background: var(--primary); color: white; padding: 12px; border-radius: 8px; font-weight: 600; width: 100%; transition: 0.2s; }
+        .btn-primary:active { transform: scale(0.98); }
         
-        .nav-bottom { position: fixed; bottom: 0; width: 100%; background: white; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-around; padding: 10px 0; z-index: 100; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; color: #94a3b8; font-size: 10px; font-weight: 500; transition: 0.3s; }
+        .nav-bottom { position: fixed; bottom: 0; width: 100%; background: white; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-around; padding: 8px 0; z-index: 1000; padding-bottom: calc(8px + env(safe-area-inset-bottom)); }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; color: #94a3b8; font-size: 11px; }
         .nav-item.active { color: var(--primary); }
-        .nav-item i { font-size: 20px; margin-bottom: 4px; }
+        .nav-item i { font-size: 20px; margin-bottom: 2px; }
+
+        input { border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 12px; width: 100%; font-size: 16px; }
+        label { font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 4px; display: block; }
 
         @media print {
-            .nav-bottom, button, .no-print { display: none !important; }
-            .page { display: block !important; padding: 0 !important; }
-            .card { box-shadow: none !important; border: 1px solid #eee !important; }
+            .no-print { display: none !important; }
+            .page { display: block !important; }
+            .card { border: 1px solid #000 !important; box-shadow: none !important; }
             body { background: white; }
         }
     </style>
 </head>
 <body>
 
-    <header class="bg-white border-b sticky top-0 z-50 p-4 no-print">
-        <div class="flex justify-between items-center max-w-md mx-auto">
-            <h1 class="text-xl font-extrabold text-blue-600 tracking-tight">Erjon<span class="text-slate-800">Pro</span></h1>
-            <div id="status-save" class="text-[10px] uppercase font-bold text-gray-400">Dati Sincronizzati <i class="fa-solid fa-check-circle"></i></div>
-        </div>
+    <header class="bg-white p-4 border-b sticky top-0 z-50 flex justify-between items-center no-print">
+        <h1 class="text-xl font-black text-blue-600">ERJON<span class="text-slate-700">PRO</span></h1>
+        <span id="save-indicator" class="text-[10px] bg-green-100 text-green-700 px-2 py-1 rounded-full font-bold">SINCRO OK</span>
     </header>
 
-    <main class="max-w-md mx-auto p-4">
+    <main class="max-w-xl mx-auto p-4">
 
         <section id="page-oggi" class="page active-page">
-            <div class="card bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-100 text-center">
-                <label class="text-blue-600 font-bold uppercase text-xs">Data di Lavoro</label>
-                <input type="date" id="data-lavoro" class="text-center font-bold text-lg bg-transparent border-none focus:ring-0">
+            <div class="card bg-blue-600 text-white flex justify-between items-center">
+                <div>
+                    <label class="text-blue-100">Data Lavoro</label>
+                    <input type="date" id="data-lavoro" class="bg-transparent border-none text-white font-bold text-lg p-0 focus:ring-0">
+                </div>
+                <i class="fa-solid fa-calendar-check text-2xl opacity-50"></i>
             </div>
 
             <div class="card">
-                <h3 class="font-bold text-slate-800 mb-4 flex items-center"><i class="fa-solid fa-cash-register mr-2 text-blue-500"></i>Vendite</h3>
+                <h3 class="font-bold mb-3 border-b pb-2 flex items-center"><i class="fa-solid fa-cash-register mr-2 text-blue-500"></i>Incassi</h3>
                 <div class="space-y-4">
                     <div>
-                        <label>Corrispettivi Totali (Z)</label>
-                        <input type="number" id="inp-tot" placeholder="0.00" class="font-bold text-blue-600 text-xl" oninput="aggiornaCalcoli()">
+                        <label>Totale Corrispettivi Lordi (Z)</label>
+                        <input type="number" id="inp-tot" placeholder="0.00" class="text-2xl font-bold text-blue-600" oninput="calcolaTutto()">
                     </div>
                     <div class="grid grid-cols-2 gap-3">
-                        <div><label>Bancomat/POS</label><input type="number" class="val-elettr" id="inp-pos" oninput="aggiornaCalcoli()"></div>
-                        <div><label>Satispay</label><input type="number" class="val-elettr" id="inp-sat" oninput="aggiornaCalcoli()"></div>
-                        <div><label>Glovo/Deliveroo</label><input type="number" class="val-elettr" id="inp-del" oninput="aggiornaCalcoli()"></div>
-                        <div><label>Altro (App/Web)</label><input type="number" class="val-elettr" id="inp-app" oninput="aggiornaCalcoli()"></div>
+                        <div><label>POS / Carte</label><input type="number" class="val-elettr" id="inp-pos" oninput="calcolaTutto()"></div>
+                        <div><label>Satispay</label><input type="number" class="val-elettr" id="inp-sat" oninput="calcolaTutto()"></div>
+                        <div><label>Delivery (Glovo/ecc)</label><input type="number" class="val-elettr" id="inp-del" oninput="calcolaTutto()"></div>
+                        <div><label>Tap to Pay / Altro</label><input type="number" class="val-elettr" id="inp-tap" oninput="calcolaTutto()"></div>
                     </div>
                 </div>
             </div>
 
-            <div class="card border-l-4 border-l-red-500">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="font-bold text-slate-800"><i class="fa-solid fa-truck-ramp-box mr-2 text-red-500"></i>Uscite Cash</h3>
-                    <button onclick="aggiungiFornitore()" class="text-blue-600 text-xs font-bold">+ AGGIUNGI</button>
+            <div class="card">
+                <div class="flex justify-between mb-2">
+                    <h3 class="font-bold">Uscite Cash</h3>
+                    <button onclick="addUscita()" class="text-blue-600 font-bold text-xs">+ AGGIUNGI</button>
                 </div>
-                <div id="fornitori-container" class="space-y-2">
+                <div id="uscite-list" class="space-y-2"></div>
+            </div>
+
+            <div class="card bg-slate-800 text-white">
+                <div class="grid grid-cols-2 gap-4 text-center">
+                    <div class="border-r border-slate-700">
+                        <p class="text-[10px] text-slate-400">TOT. ELETTRONICO</p>
+                        <p id="res-elettr" class="text-lg font-bold">€ 0.00</p>
                     </div>
-            </div>
-
-            <div class="card bg-slate-900 text-white">
-                <h3 class="text-sm font-medium text-slate-400 mb-3">Riconciliazione Finale</h3>
-                <div class="space-y-3">
-                    <div class="flex justify-between"><span>Elettronici:</span> <span id="res-elettr" class="font-mono">€ 0.00</span></div>
-                    <div class="flex justify-between border-b border-slate-700 pb-2"><span>Contanti Teorici:</span> <span id="res-cont-teor" class="font-mono">€ 0.00</span></div>
-                    <div class="flex justify-between text-green-400 font-bold text-lg"><span>NETTO CASSA:</span> <span id="res-netto" class="font-mono">€ 0.00</span></div>
+                    <div>
+                        <p class="text-[10px] text-slate-400">CONTANTE NETTO</p>
+                        <p id="res-netto" class="text-lg font-bold text-green-400">€ 0.00</p>
+                    </div>
                 </div>
-                <button onclick="salvaDatiGiorno()" class="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition">
-                    SALVA GIORNATA
-                </button>
+                <button onclick="salvaGiorno()" class="btn-primary mt-4 bg-blue-500">SALVA IN REGISTRO</button>
             </div>
         </section>
 
-        <section id="page-registro" class="page">
-            <h2 class="text-xl font-bold mb-4">Registro Storico</h2>
-            <div id="lista-storico" class="space-y-2">
+        <section id="page-dash" class="page px-2">
+            <h2 class="font-bold text-lg mb-4 text-slate-700">Riepiloghi Automatici</h2>
+            
+            <div class="card border-l-4 border-blue-500">
+                <p class="text-xs font-bold text-slate-500">QUESTA SETTIMANA</p>
+                <div class="flex justify-between items-end mt-2">
+                    <span id="dash-week-val" class="text-2xl font-black text-slate-800">€ 0.00</span>
+                    <span class="text-[10px] text-blue-500">Settimana Corrente</span>
                 </div>
-        </section>
-
-        <section id="page-dash" class="page">
-            <h2 class="text-xl font-bold mb-4 text-center">Analisi Performance</h2>
-            <div class="grid grid-cols-2 gap-3">
-                <div class="card text-center"><p class="text-xs text-slate-500">Totale Mese</p><p id="dash-tot" class="text-xl font-bold text-blue-600">€ 0</p></div>
-                <div class="card text-center"><p class="text-xs text-slate-500">Contanti Tot.</p><p id="dash-cash" class="text-xl font-bold text-green-600">€ 0</p></div>
             </div>
-            <div class="card mt-2">
-                <p class="text-xs text-slate-500 mb-2">Incidenza Pagamenti</p>
-                <div class="w-full bg-gray-200 rounded-full h-4">
-                    <div id="bar-pos" class="bg-blue-500 h-4 rounded-full" style="width: 50%"></div>
+
+            <div class="card border-l-4 border-green-500">
+                <p class="text-xs font-bold text-slate-500">MESE CORRENTE</p>
+                <div class="flex justify-between items-end mt-2">
+                    <span id="dash-month-val" class="text-2xl font-black text-slate-800">€ 0.00</span>
+                    <span class="text-[10px] text-green-500">Totale Lordo</span>
                 </div>
-                <div class="flex justify-between text-[10px] mt-1 font-bold"><span>ELETTRONICO</span><span>CONTANTE</span></div>
+            </div>
+
+            <div class="card bg-slate-100">
+                <p class="text-xs font-bold text-slate-500 uppercase">Proiezione Annuale</p>
+                <div id="dash-year-val" class="text-xl font-bold text-slate-700 mt-1">€ 0.00</div>
             </div>
         </section>
 
         <section id="page-print" class="page">
-            <h2 class="text-xl font-bold mb-4">Centro Stampe</h2>
-            <div class="card text-center">
-                <i class="fa-solid fa-file-pdf text-4xl text-red-500 mb-4"></i>
-                <p class="text-sm text-slate-600 mb-4">Genera un documento professionale della giornata corrente da inviare al commercialista o salvare.</p>
-                <button onclick="window.print()" class="w-full bg-slate-800 text-white py-3 rounded-xl font-bold">
-                    <i class="fa-solid fa-print mr-2"></i> STAMPA ORA
-                </button>
+            <div class="card no-print">
+                <h3 class="font-bold mb-3"><i class="fa-solid fa-file-export mr-2"></i>Esporta per Ragioniere</h3>
+                <div class="space-y-3">
+                    <div class="grid grid-cols-2 gap-2">
+                        <div><label>Dal</label><input type="date" id="print-from"></div>
+                        <div><label>Al</label><input type="date" id="print-to"></div>
+                    </div>
+                    <div>
+                        <label>Tipo Documento</label>
+                        <select id="print-type" class="w-full border rounded-lg p-2">
+                            <option value="all">Report Completo (Tutti i movimenti)</option>
+                            <option value="corr">Solo Corrispettivi (Z)</option>
+                            <option value="ele">Solo Pagamenti Elettronici</option>
+                        </select>
+                    </div>
+                    <button onclick="generaReport()" class="btn-primary mt-2">GENERA ANTEPRIMA</button>
+                </div>
             </div>
+
+            <div id="print-area" class="bg-white p-4 hidden border rounded shadow-inner">
+                </div>
         </section>
 
     </main>
 
     <nav class="nav-bottom no-print">
-        <button onclick="showPage('oggi')" id="nav-oggi" class="nav-item active">
-            <i class="fa-solid fa-calendar-day"></i>Oggi
-        </button>
-        <button onclick="showPage('registro')" id="nav-registro" class="nav-item">
-            <i class="fa-solid fa-list-ul"></i>Registro
-        </button>
-        <button onclick="showPage('dash')" id="nav-dash" class="nav-item">
-            <i class="fa-solid fa-chart-line"></i>Dashboard
-        </button>
-        <button onclick="showPage('print')" id="nav-print" class="nav-item">
-            <i class="fa-solid fa-print"></i>Stampa
-        </button>
+        <button onclick="showPage('oggi')" id="nav-oggi" class="nav-item active"><i class="fa-solid fa-plus-circle"></i>Inserimento</button>
+        <button onclick="showPage('dash')" id="nav-dash" class="nav-item"><i class="fa-solid fa-chart-pie"></i>Riepilogo</button>
+        <button onclick="showPage('print')" id="nav-print" class="nav-item"><i class="fa-solid fa-file-invoice-dollar"></i>Stampa/Filtri</button>
     </nav>
 
     <script>
-        // Carica data odierna
-        document.getElementById('data-lavoro').valueAsDate = new Date();
+        let db = JSON.parse(localStorage.getItem('erjon_v2_db') || '[]');
 
-        // Navigazione
-        function showPage(pageId) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.getElementById('page-' + pageId).classList.add('active-page');
-            document.getElementById('nav-' + pageId).classList.add('active');
-            if(pageId === 'registro') caricaRegistro();
-            if(pageId === 'dash') aggiornaDashboard();
+        function showPage(p) {
+            document.querySelectorAll('.page').forEach(el => el.classList.remove('active-page'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            document.getElementById('page-'+p).classList.add('active-page');
+            document.getElementById('nav-'+p).classList.add('active');
+            if(p === 'dash') updateDash();
         }
 
-        // Gestione Fornitori
-        function aggiungiFornitore() {
+        function addUscita() {
+            const container = document.getElementById('uscite-list');
             const div = document.createElement('div');
-            div.className = "flex gap-2 items-center mb-2";
-            div.innerHTML = `
-                <input type="text" placeholder="Chi?" class="flex-1 text-sm p-2">
-                <input type="number" placeholder="€" class="w-24 text-sm p-2 fornitore-val" oninput="aggiornaCalcoli()">
-                <button onclick="this.parentElement.remove(); aggiornaCalcoli()" class="text-red-400 px-2"><i class="fa-solid fa-trash"></i></button>
-            `;
-            document.getElementById('fornitori-container').appendChild(div);
+            div.className = "flex gap-2 mb-2 no-print";
+            div.innerHTML = `<input type="text" placeholder="Fornitore" class="flex-1 text-sm"><input type="number" placeholder="€" class="w-20 val-uscita text-sm" oninput="calcolaTutto()"><button onclick="this.parentElement.remove();calcolaTutto()" class="text-red-500">×</button>`;
+            container.appendChild(div);
         }
 
-        // Logica Calcoli
-        function aggiornaCalcoli() {
-            const totVendite = parseFloat(document.getElementById('inp-tot').value) || 0;
-            let totElettr = 0;
-            document.querySelectorAll('.val-elettr').forEach(i => totElettr += parseFloat(i.value) || 0);
-
-            let totUscite = 0;
-            document.querySelectorAll('.fornitore-val').forEach(i => totUscite += parseFloat(i.value) || 0);
-
-            const contTeorici = totVendite - totElettr;
-            const nettoCassa = contTeorici - totUscite;
-
-            document.getElementById('res-elettr').innerText = `€ ${totElettr.toFixed(2)}`;
-            document.getElementById('res-cont-teor').innerText = `€ ${contTeorici.toFixed(2)}`;
+        function calcolaTutto() {
+            const tot = parseFloat(document.getElementById('inp-tot').value) || 0;
+            let ele = 0;
+            document.querySelectorAll('.val-elettr').forEach(i => ele += parseFloat(i.value) || 0);
+            let usc = 0;
+            document.querySelectorAll('.val-uscita').forEach(i => usc += parseFloat(i.value) || 0);
+            
+            const nettoCassa = (tot - ele) - usc;
+            document.getElementById('res-elettr').innerText = `€ ${ele.toFixed(2)}`;
             document.getElementById('res-netto').innerText = `€ ${nettoCassa.toFixed(2)}`;
         }
 
-        // Salvataggio (LocalStorage)
-        function salvaDatiGiorno() {
+        function salvaGiorno() {
             const data = document.getElementById('data-lavoro').value;
-            const entry = {
-                totale: document.getElementById('inp-tot').value,
-                netto: document.getElementById('res-netto').innerText,
-                timestamp: new Date().getTime()
+            const record = {
+                data: data,
+                totale: parseFloat(document.getElementById('inp-tot').value) || 0,
+                pos: parseFloat(document.getElementById('inp-pos').value) || 0,
+                satispay: parseFloat(document.getElementById('inp-sat').value) || 0,
+                delivery: parseFloat(document.getElementById('inp-del').value) || 0,
+                tap: parseFloat(document.getElementById('inp-tap').value) || 0,
+                uscite: Array.from(document.querySelectorAll('#uscite-list div')).map(d => ({
+                    desc: d.querySelector('input[type="text"]').value,
+                    val: parseFloat(d.querySelector('.val-uscita').value) || 0
+                }))
             };
             
-            let database = JSON.parse(localStorage.getItem('erjon_db') || '{}');
-            database[data] = entry;
-            localStorage.setItem('erjon_db', JSON.stringify(database));
+            db = db.filter(r => r.data !== data); // Evita duplicati
+            db.push(record);
+            localStorage.setItem('erjon_v2_db', JSON.stringify(db));
+            alert("✅ Dati archiviati!");
+        }
+
+        function updateDash() {
+            const now = new Date();
+            const currMonth = now.toISOString().substring(0, 7);
             
-            alert("Dati salvati correttamente!");
-        }
-
-        function caricaRegistro() {
-            const db = JSON.parse(localStorage.getItem('erjon_db') || '{}');
-            const container = document.getElementById('lista-storico');
-            container.innerHTML = "";
-            Object.keys(db).sort().reverse().forEach(date => {
-                container.innerHTML += `
-                    <div class="card flex justify-between items-center py-3">
-                        <span class="font-bold">${date}</span>
-                        <span class="text-blue-600 font-mono">${db[date].netto}</span>
-                    </div>
-                `;
+            let mTot = 0, yTot = 0, wTot = 0;
+            db.forEach(r => {
+                if(r.data.startsWith(currMonth)) mTot += r.totale;
+                if(r.data.startsWith(now.getFullYear().toString())) yTot += r.totale;
+                // Calcolo settimana semplificato
+                const rDate = new Date(r.data);
+                if(Math.abs(now - rDate) / (1000 * 60 * 60 * 24) < 7) wTot += r.totale;
             });
+
+            document.getElementById('dash-month-val').innerText = `€ ${mTot.toFixed(2)}`;
+            document.getElementById('dash-year-val').innerText = `€ ${yTot.toFixed(2)}`;
+            document.getElementById('dash-week-val').innerText = `€ ${wTot.toFixed(2)}`;
         }
 
-        function aggiornaDashboard() {
-            const db = JSON.parse(localStorage.getItem('erjon_db') || '{}');
-            let grandTotal = 0;
-            Object.values(db).forEach(v => grandTotal += parseFloat(v.totale) || 0);
-            document.getElementById('dash-tot').innerText = `€ ${grandTotal.toFixed(2)}`;
+        function generaReport() {
+            const from = document.getElementById('print-from').value;
+            const to = document.getElementById('print-to').value;
+            const type = document.getElementById('print-type').value;
+            const area = document.getElementById('print-area');
+            
+            if(!from || !to) return alert("Scegli le date");
+
+            let filtrati = db.filter(r => r.data >= from && r.data <= to).sort((a,b) => a.data.localeCompare(b.data));
+            
+            let html = `<div class="p-4"><h1 class="text-xl font-bold border-b-2 pb-2">Report Fiscale ErjonPro</h1>`;
+            html += `<p class="text-sm mb-4">Periodo: ${from} / ${to}</p>`;
+            html += `<table class="w-full text-left text-xs"><thead><tr class="bg-slate-100">`;
+            html += `<th class="p-1">Data</th>`;
+            if(type === 'all' || type === 'corr') html += `<th class="p-1">Corr. Lordi</th>`;
+            if(type === 'all' || type === 'ele') html += `<th class="p-1">Elettronici</th>`;
+            if(type === 'all') html += `<th class="p-1">Uscite Cash</th>`;
+            html += `</tr></thead><tbody>`;
+
+            filtrati.forEach(r => {
+                let totEle = r.pos + r.satispay + r.delivery + r.tap;
+                let totUsc = r.uscite.reduce((acc, curr) => acc + curr.val, 0);
+                html += `<tr class="border-b">`;
+                html += `<td class="p-1">${r.data}</td>`;
+                if(type === 'all' || type === 'corr') html += `<td class="p-1">€ ${r.totale.toFixed(2)}</td>`;
+                if(type === 'all' || type === 'ele') html += `<td class="p-1">€ ${totEle.toFixed(2)}</td>`;
+                if(type === 'all') html += `<td class="p-1">€ ${totUsc.toFixed(2)}</td>`;
+                html += `</tr>`;
+            });
+
+            html += `</tbody></table></div>`;
+            html += `<button onclick="window.print()" class="btn-primary no-print mt-4">STAMPA O SALVA PDF</button>`;
+            
+            area.innerHTML = html;
+            area.classList.remove('hidden');
         }
+
+        // Setup iniziale data
+        document.getElementById('data-lavoro').valueAsDate = new Date();
     </script>
 </body>
 </html>
