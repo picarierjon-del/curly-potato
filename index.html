@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ErjonPro Business Gold</title>
+    <title>Commander Elite</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -20,13 +20,18 @@
         .nav-item { display: flex; flex-direction: column; align-items: center; color: #94a3b8; font-size: 10px; font-weight: bold; }
         .nav-item.active { color: var(--primary); }
         #lock-screen { position: fixed; inset: 0; background: #1e293b; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
-        @media print { .no-print { display: none !important; } .page { display: block !important; } }
+        @media print { 
+            .no-print { display: none !important; } 
+            .page { display: block !important; }
+            body { background: white; }
+            .card { box-shadow: none; border: 1px solid #eee; }
+        }
     </style>
 </head>
 <body>
 
     <div id="lock-screen">
-        <h1 class="text-3xl font-black mb-8 text-blue-400">ERJON PRO</h1>
+        <h1 class="text-3xl font-black mb-8 text-blue-400">COMMANDER ELITE</h1>
         <div class="w-64">
             <p class="text-center mb-4 text-slate-400 uppercase text-xs tracking-widest">Inserire PIN di Accesso</p>
             <input type="password" id="pin-input" class="text-center text-2xl tracking-[1em] text-slate-900 mb-4" maxlength="4" placeholder="****">
@@ -36,7 +41,7 @@
     </div>
 
     <header class="bg-white border-b sticky top-0 z-50 p-4 no-print flex justify-between items-center">
-        <h1 class="font-black text-blue-600 italic">ERJON<span class="text-slate-800">PRO</span></h1>
+        <h1 class="font-black text-blue-600 italic uppercase">Commander <span class="text-slate-800">Elite</span></h1>
         <button onclick="lockApp()" class="text-slate-400"><i class="fa-solid fa-lock"></i></button>
     </header>
 
@@ -67,8 +72,7 @@
                     <h3 class="font-bold">Uscite Fornitori</h3>
                     <button onclick="addFornitore()" class="text-blue-600 font-bold text-xs">+ AGGIUNGI</button>
                 </div>
-                <div id="fornitori-list" class="space-y-2">
-                    </div>
+                <div id="fornitori-list" class="space-y-2"></div>
             </div>
 
             <div class="card bg-slate-900 text-white">
@@ -104,7 +108,7 @@
         </section>
 
         <section id="page-stampa" class="page">
-            <div class="card">
+            <div class="card no-print">
                 <h3 class="font-bold mb-4">Esporta Dati Commercialista</h3>
                 <div class="space-y-4">
                     <div class="grid grid-cols-2 gap-2">
@@ -112,8 +116,7 @@
                         <input type="date" id="p-to">
                     </div>
                     <select id="p-mode">
-                        [span_2](start_span)<option value="tutto">Report Completo[span_2](end_span)</option>
-                        <option value="solo-corr">Solo Corrispettivi Z</option>
+                        <option value="tutto">Report Completo Corrispettivi</option>
                         <option value="solo-ele">Solo Pagamenti Elettronici</option>
                     </select>
                     <button onclick="generaReportRagioniere()" class="w-full bg-slate-800 text-white py-3 rounded-lg font-bold">GENERA DOCUMENTO</button>
@@ -131,7 +134,7 @@
     </nav>
 
     <script>
-        const PIN_CORRETTO = "1234"; // Imposta qui il tuo PIN professionale
+        const PIN_CORRETTO = "1234";
         let database = JSON.parse(localStorage.getItem('erjon_pro_db') || '[]');
 
         function checkPin() {
@@ -152,6 +155,7 @@
             if(p === 'riepilogo') updateStats();
         }
 
+        // --- Logica Calcoli ---
         function addFornitore() {
             const container = document.getElementById('fornitori-list');
             const div = document.createElement('div');
@@ -172,17 +176,14 @@
             const tot = parseFloat(document.getElementById('inp-tot').value) || 0;
             let ele = 0;
             document.querySelectorAll('.val-elettr').forEach(i => ele += parseFloat(i.value) || 0);
-            
             let uscCash = 0;
             document.querySelectorAll('#fornitori-list > div').forEach(div => {
                 if(div.querySelector('.check-cash').checked) {
                     uscCash += parseFloat(div.querySelector('.val-usc').value) || 0;
                 }
             });
-
             const teorico = tot - ele;
             const netto = teorico - uscCash;
-
             document.getElementById('res-elettr').innerText = `€ ${ele.toFixed(2)}`;
             document.getElementById('res-teor').innerText = `€ ${teorico.toFixed(2)}`;
             document.getElementById('res-cash-uscita').innerText = `€ ${uscCash.toFixed(2)}`;
@@ -191,6 +192,7 @@
 
         function salvaTutto() {
             const data = document.getElementById('data-lavoro').value;
+            if(!data) return alert("Inserisci una data!");
             const record = {
                 data,
                 totale: parseFloat(document.getElementById('inp-tot').value) || 0,
@@ -206,16 +208,53 @@
             alert("Giornata Salvata!");
         }
 
-        function cercaGiorno() {
-            const d = document.getElementById('search-date').value;
-            const res = database.find(r => r.data === d);
-            const div = document.getElementById('search-result');
-            div.classList.remove('hidden');
-            if(res) {
-                div.innerHTML = `<strong>Data: ${res.data}</strong><br>Incasso: €${res.totale}<br>Elettronico: €${(res.pos+res.sat+res.del+res.tap).toFixed(2)}<br>Uscite Cash: €${res.usc_cash}`;
+        // --- Logica Stampa & Ragioniere ---
+        function getNomeMese(dataString) {
+            const mesi = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
+            const d = new Date(dataString);
+            return mesi[d.getMonth()];
+        }
+
+        function generaReportRagioniere() {
+            const from = document.getElementById('p-from').value;
+            const to = document.getElementById('p-to').value;
+            const mode = document.getElementById('p-mode').value;
+            
+            if(!from || !to) { alert("Seleziona le date"); return; }
+
+            let filtrati = database.filter(r => r.data >= from && r.data <= to).sort((a,b) => a.data.localeCompare(b.data));
+            
+            // Determina se è un mese intero per il titolo
+            let titoloMese = "";
+            if(from.slice(-2) === "01") {
+                titoloMese = `CORRISPETTIVI MESE DI ${getNomeMese(from).toUpperCase()}`;
             } else {
-                div.innerHTML = "Nessun dato trovato per questa data.";
+                titoloMese = `PROSPETTO DAL ${from} AL ${to}`;
             }
+
+            let h = `<div class="card text-sm">`;
+            h += `<div class="text-center mb-6 border-b-2 border-slate-800 pb-2">`;
+            h += `<h1 class="text-xl font-black">COMMANDER ELITE</h1>`;
+            h += `<h2 class="text-lg font-bold text-blue-700">${titoloMese}</h2>`;
+            h += `</div>`;
+            
+            h += `<table class="w-full border-collapse">`;
+            h += `<thead><tr class="bg-slate-100 text-left"><th class="p-2 border">Data</th><th class="p-2 border text-right">Importo €</th></tr></thead><tbody>`;
+            
+            let totaleSomma = 0;
+            filtrati.forEach(r => {
+                let val = (mode === 'solo-ele') ? (r.pos + r.sat + r.del + r.tap) : r.totale;
+                totaleSomma += val;
+                h += `<tr><td class="p-2 border">${new Date(r.data).toLocaleDateString('it-IT')}</td><td class="p-2 border text-right font-mono font-bold">${val.toFixed(2)}</td></tr>`;
+            });
+            
+            h += `<tr class="bg-slate-50 font-black"><td class="p-2 border">TOTALE GENERALE</td><td class="p-2 border text-right text-lg">€ ${totaleSomma.toFixed(2)}</td></tr>`;
+            h += `</tbody></table>`;
+            
+            h += `<div class="mt-8 text-[10px] text-slate-400 italic">Documento generato da Commander Elite - Ad uso contabile interno</div>`;
+            h += `<button onclick="window.print()" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold mt-4 no-print">STAMPA PDF / CARTA</button></div>`;
+            
+            document.getElementById('area-stampa').innerHTML = h;
         }
 
         function updateStats() {
@@ -231,22 +270,16 @@
             document.getElementById('stat-usc').innerText = `€ ${mUsc.toFixed(2)}`;
         }
 
-        function generaReportRagioniere() {
-            const from = document.getElementById('p-from').value;
-            const to = document.getElementById('p-to').value;
-            const mode = document.getElementById('p-mode').value;
-            let filtrati = database.filter(r => r.data >= from && r.data <= to).sort((a,b) => a.data.localeCompare(b.data));
-            
-            let h = `<div class="card text-xs">`;
-            h += `<h2 class="font-bold text-center mb-4 uppercase">Prospetto Contabile dal ${from} al ${to}</h2>`;
-            h += `<table class="w-full"><thead><tr class="border-b"><th>Data</th><th>Valore</th></tr></thead><tbody>`;
-            filtrati.forEach(r => {
-                let val = r.totale;
-                if(mode === 'solo-ele') val = r.pos + r.sat + r.del + r.tap;
-                h += `<tr class="border-b text-center"><td class="py-1">${r.data}</td><td class="py-1 font-bold">€ ${val.toFixed(2)}</td></tr>`;
-            });
-            h += `</tbody></table><button onclick="window.print()" class="btn-primary mt-4 no-print">STAMPA ORA</button></div>`;
-            document.getElementById('area-stampa').innerHTML = h;
+        function cercaGiorno() {
+            const d = document.getElementById('search-date').value;
+            const res = database.find(r => r.data === d);
+            const div = document.getElementById('search-result');
+            div.classList.remove('hidden');
+            if(res) {
+                div.innerHTML = `<strong>Data: ${res.data}</strong><br>Incasso: €${res.totale}<br>Elettronico: €${(res.pos+res.sat+res.del+res.tap).toFixed(2)}<br>Uscite Cash: €${res.usc_cash}`;
+            } else {
+                div.innerHTML = "Nessun dato trovato per questa data.";
+            }
         }
 
         document.getElementById('data-lavoro').valueAsDate = new Date();
