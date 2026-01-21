@@ -29,7 +29,6 @@
 </head>
 <body>
 
-  <!-- LOCK -->
   <div id="lock-screen">
     <div class="text-center mb-8">
       <i class="fa-solid fa-shield-halved text-5xl text-blue-500 mb-4"></i>
@@ -37,7 +36,7 @@
     </div>
     <div class="w-72 bg-slate-800 p-6 rounded-3xl shadow-2xl">
       <input type="password" id="pin-input" class="text-center text-3xl tracking-[0.5em] text-slate-900 mb-4 font-bold" maxlength="4" placeholder="****">
-      <button onclick="checkPin()" class="w-full bg-blue-600 hover:bg-blue-500 py-4 rounded-2xl font-black uppercase transition-all shadow-lg active:scale-95">Sblocca Sistema</button>
+      <button type="button" onclick="checkPin()" class="w-full bg-blue-600 hover:bg-blue-500 py-4 rounded-2xl font-black uppercase transition-all shadow-lg active:scale-95">Sblocca Sistema</button>
     </div>
   </div>
 
@@ -46,12 +45,12 @@
       <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-black italic">C</div>
       <h1 class="font-black text-slate-800 uppercase tracking-tight text-lg">Commander <span class="text-blue-600">Elite</span></h1>
     </div>
-    <button onclick="location.reload()" class="w-10 h-10 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center"><i class="fa-solid fa-lock"></i></button>
+    <button type="button" onclick="location.reload()" class="w-10 h-10 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center"><i class="fa-solid fa-lock"></i></button>
   </header>
 
   <main class="max-w-2xl mx-auto p-4">
 
-    <!-- PAGINA OGGI -->
+    <!-- OGGI -->
     <section id="page-oggi" class="page active-page">
       <div class="card bg-gradient-to-r from-blue-600 to-blue-800 border-none">
         <label class="text-[10px] font-black text-blue-100 uppercase mb-1 block">Data Operativa</label>
@@ -134,7 +133,7 @@
       </div>
     </section>
 
-    <!-- PAGINA RIEPILOGO -->
+    <!-- ANALISI -->
     <section id="page-riepilogo" class="page">
       <h2 class="font-black text-2xl text-slate-800 mb-6 flex items-center gap-2">
         <i class="fa-solid fa-chart-pie text-blue-600"></i> Analisi Business
@@ -177,7 +176,7 @@
       </div>
     </section>
 
-    <!-- PAGINA STAMPA -->
+    <!-- FISCO -->
     <section id="page-stampa" class="page">
       <div class="card no-print">
         <h3 class="font-black text-xs uppercase mb-4 text-slate-500 border-b pb-2">Configurazione Export Fiscale</h3>
@@ -196,7 +195,7 @@
         </button>
       </div>
 
-      <!-- SETUP: cancellazione range per alleggerire localStorage -->
+      <!-- SETUP: cancella range -->
       <div class="card no-print border-l-4 border-slate-800">
         <div class="flex items-center gap-2 mb-4 border-b pb-2">
           <i class="fa-solid fa-gear text-slate-800"></i>
@@ -232,11 +231,9 @@
   </nav>
 
   <script>
-    // precisione decimale
     const fix = (n) => Math.round((Number(n) + Number.EPSILON) * 100) / 100;
     const euro = (n) => `€ ${fix(n).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-    // DB
     const LS_KEY = 'ce_v3_top';
     let db = JSON.parse(localStorage.getItem(LS_KEY)) || [];
 
@@ -455,6 +452,7 @@
       document.getElementById('st-iva-saldo').innerText = euro(fix(tIV - tIA));
     }
 
+    // ANALISI COMPLETA (senza cambiare pagina/aggiungere elementi nuovi: scrive solo dentro #s-res)
     function cercaPeriodo() {
       const f = document.getElementById('s-from').value;
       const t = document.getElementById('s-to').value;
@@ -465,18 +463,51 @@
         .filter(r => r.data >= f && r.data <= t)
         .sort((a, b) => a.data.localeCompare(b.data));
 
-      let totL = 0, totE = 0, totC = 0, tIvaD = 0, tIvaC = 0;
+      let totL=0, totE=0, totC=0, tIvaD=0, tIvaC=0;
       let entCash = 0, diffCash = 0;
 
+      // dettaglio pagamenti
+      let tPos=0, tSat=0, tDel=0, tTap=0;
+
+      // fornitori (categorie e raggruppamento)
+      let fornCash=0, fornTr=0, fornIva=0;
+      const fornByName = {};
+
       fil.forEach(r => {
-        totL += (r.lordoZ || 0);
-        totE += (r.totEle || 0);
-        totC += (r.uscCash || 0);
+        const lordo = (r.lordoZ || 0);
+        const ele = (r.totEle || 0);
+        const usc = (r.uscCash || 0);
+
+        totL += lordo;
+        totE += ele;
+        totC += usc;
         tIvaD += (r.ivaV || 0);
         tIvaC += (r.totIvaA || 0);
 
-        // Entrate contanti (lordo - elettronico)
-        entCash += (r.lordoZ || 0) - (r.totEle || 0);
+        // Entrate contanti = lordo - elettronico (coerente col tuo modello)
+        entCash += (lordo - ele);
+
+        tPos += (r.pos || 0);
+        tSat += (r.sat || 0);
+        tDel += (r.del || 0);
+        tTap += (r.tap || 0);
+
+        (r.detFornitori || []).forEach(ff => {
+          const nome = ff.nome || "Senza Nome";
+          if (!fornByName[nome]) fornByName[nome] = { lordo:0, iva:0, cashLordo:0, trLordo:0 };
+
+          fornByName[nome].lordo += (ff.lordo || 0);
+          fornByName[nome].iva += (ff.iva || 0);
+
+          fornIva += (ff.iva || 0);
+          if (ff.cash) {
+            fornCash += (ff.lordo || 0);
+            fornByName[nome].cashLordo += (ff.lordo || 0);
+          } else {
+            fornTr += (ff.lordo || 0);
+            fornByName[nome].trLordo += (ff.lordo || 0);
+          }
+        });
       });
 
       diffCash = entCash - totC;
@@ -484,35 +515,116 @@
       const res = document.getElementById('s-res');
       res.classList.remove('hidden');
 
+      const fornRows = Object.entries(fornByName)
+        .sort((a,b) => (b[1].lordo - a[1].lordo))
+        .map(([nome, v]) => `
+          <tr class="border-b border-white/10">
+            <td class="py-2 text-left font-bold">${nome}</td>
+            <td class="py-2 text-right">${euro(v.lordo)}</td>
+            <td class="py-2 text-right text-green-300">${euro(v.iva)}</td>
+            <td class="py-2 text-right text-red-300">${euro(v.cashLordo)}</td>
+            <td class="py-2 text-right text-blue-200">${euro(v.trLordo)}</td>
+          </tr>
+        `).join("");
+
+      const dayBlocks = fil.map(r => {
+        const forn = (r.detFornitori || [])
+          .filter(x => (x.lordo || 0) > 0)
+          .map(x => `• <span class="font-bold">${x.nome}</span> — ${euro(x.lordo)} <span class="text-[10px] ${x.cash ? 'text-red-300' : 'text-blue-200'}">(${x.cash ? 'CONTANTI' : 'TRACCIABILE'})</span>`)
+          .join("<br>") || `<span class="text-slate-300">Nessuna spesa fornitori</span>`;
+
+        return `
+          <div class="p-4 rounded-2xl bg-white/5 border border-white/10">
+            <div class="flex justify-between items-center mb-2">
+              <div class="font-black text-blue-200">${r.data}</div>
+              <div class="text-[10px] font-bold text-slate-300 uppercase">
+                Lordo ${euro(r.lordoZ || 0)} • Elettr. ${euro(r.totEle || 0)} • Usc. Cash ${euro(r.uscCash || 0)}
+              </div>
+            </div>
+            <div class="text-[11px] leading-5">${forn}</div>
+          </div>
+        `;
+      }).join("");
+
       res.innerHTML = `
-        <div class="p-5 bg-slate-900 text-white rounded-3xl space-y-3 shadow-xl">
-          <h4 class="text-center font-black text-blue-400 text-xs uppercase mb-2">Risultati Intervallo</h4>
+        <div class="p-5 bg-slate-900 text-white rounded-3xl space-y-6 shadow-xl">
+          <h4 class="text-center font-black text-blue-400 text-xs uppercase">Report Dettagliato per Periodo</h4>
 
-          <div class="flex justify-between border-b border-white/10 pb-2">
-            <span>Entrate (Lordo Z)</span>
-            <strong class="text-lg">${euro(totL)}</strong>
+          <!-- Sintesi (entrate/uscite/differenza/da versare) -->
+          <div class="space-y-2">
+            <div class="flex justify-between border-b border-white/10 pb-2">
+              <span>Entrate (Lordo Z)</span>
+              <strong class="text-lg">${euro(totL)}</strong>
+            </div>
+
+            <div class="flex justify-between text-slate-200">
+              <span>Entrate Contanti (Lordo - Elettronico)</span>
+              <span>${euro(entCash)}</span>
+            </div>
+
+            <div class="flex justify-between text-red-300">
+              <span>Uscite Contanti</span>
+              <span>${euro(totC)}</span>
+            </div>
+
+            <div class="flex justify-between font-black text-green-300">
+              <span>Differenza Contanti</span>
+              <span>${euro(diffCash)}</span>
+            </div>
+
+            <div class="pt-3 flex justify-between font-black text-orange-400 border-t border-white/20">
+              <span>IVA DA VERSARE</span>
+              <span>${euro(fix(tIvaD - tIvaC))}</span>
+            </div>
           </div>
 
-          <div class="flex justify-between text-slate-200">
-            <span>Entrate Contanti (Lordo - Elettronico)</span>
-            <span>${euro(entCash)}</span>
+          <!-- Categorie pagamenti -->
+          <div class="p-4 rounded-2xl bg-white/5 border border-white/10">
+            <div class="font-black text-[11px] uppercase text-slate-200 mb-3">Categorie Pagamenti (Elettronico)</div>
+            <div class="grid grid-cols-2 gap-2 text-[11px]">
+              <div class="flex justify-between"><span>POS</span><span class="font-bold">${euro(tPos)}</span></div>
+              <div class="flex justify-between"><span>Satispay</span><span class="font-bold">${euro(tSat)}</span></div>
+              <div class="flex justify-between"><span>Delivery</span><span class="font-bold">${euro(tDel)}</span></div>
+              <div class="flex justify-between"><span>App/Web</span><span class="font-bold">${euro(tTap)}</span></div>
+            </div>
           </div>
 
-          <div class="flex justify-between text-red-400">
-            <span>Uscite Contanti</span>
-            <span>${euro(totC)}</span>
+          <!-- Categorie spese fornitori -->
+          <div class="p-4 rounded-2xl bg-white/5 border border-white/10">
+            <div class="font-black text-[11px] uppercase text-slate-200 mb-3">Categorie Spese Fornitori</div>
+            <div class="grid grid-cols-2 gap-2 text-[11px]">
+              <div class="flex justify-between"><span>Fornitori Contanti</span><span class="font-bold text-red-300">${euro(fornCash)}</span></div>
+              <div class="flex justify-between"><span>Fornitori Tracciabile</span><span class="font-bold text-blue-200">${euro(fornTr)}</span></div>
+              <div class="flex justify-between col-span-2"><span>IVA a Credito Totale (Acquisti)</span><span class="font-bold text-green-300">${euro(fornIva)}</span></div>
+            </div>
           </div>
 
-          <div class="flex justify-between font-black text-green-300">
-            <span>Differenza Contanti</span>
-            <span>${euro(diffCash)}</span>
+          <!-- Fornitori raggruppati -->
+          <div class="p-4 rounded-2xl bg-white/5 border border-white/10 overflow-x-auto">
+            <div class="font-black text-[11px] uppercase text-slate-200 mb-3">Fornitori Raggruppati</div>
+            <table class="w-full text-[11px] min-w-[560px]">
+              <thead class="text-slate-200">
+                <tr class="border-b border-white/10">
+                  <th class="py-2 text-left">Fornitore</th>
+                  <th class="py-2 text-right">Totale</th>
+                  <th class="py-2 text-right">IVA</th>
+                  <th class="py-2 text-right">Contanti</th>
+                  <th class="py-2 text-right">Tracciabile</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${fornRows || `<tr><td colspan="5" class="py-3 text-center text-slate-300">Nessun fornitore nel periodo</td></tr>`}
+              </tbody>
+            </table>
           </div>
 
-          <div class="pt-3 flex justify-between font-black text-orange-400 border-t border-white/20">
-            <span>IVA DA VERSARE</span>
-            <span>${euro(fix(tIvaD - tIvaC))}</span>
+          <!-- Dettaglio giornaliero -->
+          <div class="space-y-3">
+            <div class="font-black text-[11px] uppercase text-slate-200">Dettaglio Giornaliero</div>
+            ${dayBlocks || `<div class="text-slate-300">Nessun dato nel periodo</div>`}
           </div>
-        </div>`;
+        </div>
+      `;
     }
 
     function generaReportProfessionale() {
@@ -543,7 +655,6 @@
           </div>
         </div>`;
 
-      // VENDITE
       h += `<div class="mb-10">
         <h3 class="bg-slate-900 text-white text-[10px] px-3 py-1 font-black uppercase mb-3 inline-block">1. Registro Corrispettivi</h3>
         <table class="w-full text-[11px]">
@@ -580,7 +691,6 @@
         <td class="border p-2">€${(sZ - sE).toFixed(2)}</td>
       </tr></tbody></table></div>`;
 
-      // ACQUISTI DETTAGLIATI
       h += `<div class="mb-10">
         <h3 class="bg-slate-900 text-white text-[10px] px-3 py-1 font-black uppercase mb-3 inline-block">2. Registro Acquisti e Fornitori (Dettaglio)</h3>
         <table class="w-full text-[11px]">
@@ -626,7 +736,6 @@
         <td class="border p-2"></td>
       </tr></tbody></table></div>`;
 
-      // SINTESI
       h += `<div class="grid grid-cols-2 gap-8 items-center border-t-2 border-slate-900 pt-8 mt-12">
         <div>
           <p class="text-[9px] text-slate-500 uppercase font-black mb-1">Dichiarazione Liquidazione IVA</p>
@@ -650,14 +759,12 @@
       document.getElementById('area-stampa').innerHTML = h;
     }
 
-    // Setup: cancella record dal/al
     function cancellaPeriodo() {
       const f = document.getElementById('d-from').value;
       const t = document.getElementById('d-to').value;
       if (!f || !t) return alert("Seleziona le date DAL/AL per cancellare.");
       if (f > t) return alert("⚠️ Intervallo non valido: DAL è dopo AL.");
 
-      const prima = db.length;
       const rimossi = db.filter(r => (r.data >= f && r.data <= t)).length;
       if (rimossi === 0) return alert("Nessun dato da cancellare nel periodo selezionato.");
 
@@ -667,15 +774,13 @@
       db = db.filter(r => !(r.data >= f && r.data <= t));
       persistDB();
 
-      // aggiorna dashboard se aperta e svuota eventuali report in analisi
       aggiornaStatsDash();
       const sr = document.getElementById('s-res');
       if (sr) { sr.classList.add('hidden'); sr.innerHTML = ""; }
 
-      alert(`Cancellazione completata. Rimasti ${db.length} record (prima: ${prima}).`);
+      alert(`Cancellazione completata. Rimasti ${db.length} record.`);
     }
 
-    // init data default
     document.getElementById('data-lavoro').valueAsDate = new Date();
   </script>
 </body>
