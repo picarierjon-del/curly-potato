@@ -6,18 +6,28 @@
   <title>Commander Elite Pro - Top Edition</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
   <style>
     body { background-color: #f1f5f9; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
     .page { display: none; padding-bottom: 120px; }
     .active-page { display: block; animation: fadeIn 0.15s ease-out; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
     .card { background: white; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); padding: 1.5rem; margin-bottom: 1.25rem; border: 1px solid #e2e8f0; }
-    input, select { border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 12px; width: 100%; font-size: 16px; transition: border-color 0.2s; }
-    input:focus { border-color: #2563eb; outline: none; background-color: #f8fafc; }
+    input, select, textarea { border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 12px; width: 100%; font-size: 16px; transition: border-color 0.2s; }
+    input:focus, select:focus, textarea:focus { border-color: #2563eb; outline: none; background-color: #f8fafc; }
+
+    /* Tastiere "grandi" */
+    .big-pin { font-size: 42px !important; padding: 18px !important; border-radius: 18px !important; }
+    .big-num { font-size: 20px !important; padding: 14px !important; border-radius: 14px !important; }
+
     .nav-bottom { position: fixed; bottom: 0; width: 100%; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border-top: 1px solid #e2e8f0; display: flex; justify-content: space-around; padding: 15px 0; z-index: 1000; }
     .nav-item { display: flex; flex-direction: column; align-items: center; color: #64748b; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
     .nav-item.active { color: #2563eb; }
-    #lock-screen { position: fixed; inset: 0; background: #0f172a; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
+
+    #lock-screen { position: fixed; inset: 0; background: #0f172a; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; padding: 16px; }
+    .lock-card { width: min(360px, 92vw); background: #1e293b; padding: 22px; border-radius: 28px; box-shadow: 0 30px 60px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.06); }
+
     @media print {
       .no-print { display: none !important; }
       .page { display: block !important; }
@@ -27,34 +37,63 @@
     }
   </style>
 </head>
+
 <body>
 
+  <!-- LOCK SCREEN -->
   <div id="lock-screen">
     <div class="text-center mb-8">
       <i class="fa-solid fa-shield-halved text-5xl text-blue-500 mb-4"></i>
       <h1 class="text-2xl font-black tracking-tighter uppercase">Commander Elite <span class="text-blue-500">PRO</span></h1>
+      <p class="text-slate-300 text-xs mt-2 font-bold uppercase tracking-wider">Accesso protetto</p>
     </div>
-    <div class="w-72 bg-slate-800 p-6 rounded-3xl shadow-2xl">
-      <input type="password" id="pin-input" class="text-center text-3xl tracking-[0.5em] text-slate-900 mb-4 font-bold" maxlength="4" placeholder="****">
-      <button type="button" onclick="checkPin()" class="w-full bg-blue-600 hover:bg-blue-500 py-4 rounded-2xl font-black uppercase transition-all shadow-lg active:scale-95">Sblocca Sistema</button>
+
+    <div class="lock-card">
+      <label class="text-[10px] font-black text-slate-300 uppercase mb-2 block">PIN</label>
+      <input
+        type="password"
+        id="pin-input"
+        class="big-pin text-center tracking-[0.35em] text-slate-900 mb-4 font-black bg-white"
+        maxlength="6"
+        placeholder="••••"
+        inputmode="numeric"
+        autocomplete="one-time-code"
+      >
+
+      <button type="button" onclick="checkPin()" class="w-full bg-blue-600 hover:bg-blue-500 py-4 rounded-2xl font-black uppercase transition-all shadow-lg active:scale-95">
+        Sblocca
+      </button>
+
+      <button type="button" id="btn-passkey-login" onclick="loginPasskey()" class="mt-3 w-full bg-slate-900 hover:bg-slate-800 py-4 rounded-2xl font-black uppercase transition-all shadow-lg active:scale-95 hidden">
+        Sblocca con Face ID / Touch ID
+      </button>
+
+      <p id="lock-hint" class="mt-4 text-[11px] text-slate-300 leading-4">
+        Suggerimento: su iPhone/Android usa la tastiera numerica. (Il pulsante Face ID appare solo se attivato nel Setup.)
+      </p>
     </div>
   </div>
 
+  <!-- HEADER -->
   <header class="bg-white/80 backdrop-blur-md border-b sticky top-0 z-50 p-4 no-print flex justify-between items-center">
     <div class="flex items-center gap-2">
       <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-black italic">C</div>
       <h1 class="font-black text-slate-800 uppercase tracking-tight text-lg">Commander <span class="text-blue-600">Elite</span></h1>
     </div>
-    <button type="button" onclick="location.reload()" class="w-10 h-10 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center"><i class="fa-solid fa-lock"></i></button>
+    <button type="button" onclick="location.reload()" class="w-10 h-10 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center">
+      <i class="fa-solid fa-lock"></i>
+    </button>
   </header>
 
   <main class="max-w-2xl mx-auto p-4">
 
     <!-- OGGI -->
     <section id="page-oggi" class="page active-page">
+
       <div class="card bg-gradient-to-r from-blue-600 to-blue-800 border-none">
         <label class="text-[10px] font-black text-blue-100 uppercase mb-1 block">Data Operativa</label>
-        <input type="date" id="data-lavoro" class="bg-white/10 border-none text-white font-bold text-lg cursor-pointer" onchange="calcola()">
+        <input type="date" id="data-lavoro" class="bg-white/10 border-none text-white font-bold text-lg cursor-pointer" onchange="onChangeData()">
+        <p id="badge-loaded" class="mt-2 text-[10px] font-black uppercase tracking-widest text-blue-100 hidden">Giornata caricata</p>
       </div>
 
       <div class="card">
@@ -66,34 +105,33 @@
         <div class="space-y-4">
           <div>
             <label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Totale Chiusura Z (Lordo)</label>
-            <input type="number" id="inp-tot" placeholder="0.00" class="text-3xl font-black text-slate-800" oninput="calcola()">
+            <input type="number" id="inp-tot" placeholder="0.00" class="big-num font-black text-slate-800" inputmode="decimal" step="0.01" min="0" oninput="calcola()">
           </div>
 
-          <div class="grid grid-cols-2 gap-3">
-            <div class="col-span-2">
-              <label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Aliquota IVA Vendite</label>
-              <select id="iva-v-base" onchange="calcola()" class="font-bold bg-slate-50">
-                <option value="10">IVA 10% (Ristorazione)</option>
-                <option value="22">IVA 22% (Bevande/Servizi)</option>
-                <option value="4">IVA 4% (Alimentari)</option>
-              </select>
+          <div>
+            <label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Aliquota IVA Vendite</label>
+            <select id="iva-v-base" onchange="calcola()" class="font-bold bg-slate-50 big-num">
+              <option value="10">IVA 10% (Ristorazione)</option>
+              <option value="22">IVA 22% (Bevande/Servizi)</option>
+              <option value="4">IVA 4% (Alimentari)</option>
+            </select>
+          </div>
+
+          <!-- Pagamenti elettronici dinamici -->
+          <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+            <div class="flex justify-between items-center mb-3">
+              <div class="flex items-center gap-2">
+                <i class="fa-solid fa-credit-card text-slate-700"></i>
+                <h4 class="font-black text-slate-700 uppercase text-[11px]">Pagamenti Elettronici</h4>
+              </div>
+              <button type="button" onclick="addPayRow()" class="bg-slate-900 text-white px-4 py-2 rounded-xl text-[10px] font-black shadow-sm">+ AGGIUNGI</button>
             </div>
 
-            <div>
-              <label class="text-[9px] font-bold text-slate-500 uppercase">Bancomat/POS</label>
-              <input type="number" class="val-e" id="inp-pos" placeholder="0.00" oninput="calcola()">
-            </div>
-            <div>
-              <label class="text-[9px] font-bold text-slate-500 uppercase">Satispay</label>
-              <input type="number" class="val-e" id="inp-sat" placeholder="0.00" oninput="calcola()">
-            </div>
-            <div>
-              <label class="text-[9px] font-bold text-slate-500 uppercase">Just Eat/Glovo</label>
-              <input type="number" class="val-e" id="inp-del" placeholder="0.00" oninput="calcola()">
-            </div>
-            <div>
-              <label class="text-[9px] font-bold text-slate-500 uppercase">App/Web</label>
-              <input type="number" class="val-e" id="inp-tap" placeholder="0.00" oninput="calcola()">
+            <div id="pay-list" class="space-y-2"></div>
+
+            <div class="mt-3 text-[10px] font-bold uppercase text-slate-500 flex justify-between border-t border-slate-200 pt-3">
+              <span>Totale elettronico</span>
+              <span id="pay-total">€ 0,00</span>
             </div>
           </div>
         </div>
@@ -176,8 +214,9 @@
       </div>
     </section>
 
-    <!-- FISCO -->
+    <!-- FISCO + SETUP -->
     <section id="page-stampa" class="page">
+
       <div class="card no-print">
         <h3 class="font-black text-xs uppercase mb-4 text-slate-500 border-b pb-2">Configurazione Export Fiscale</h3>
         <div class="grid grid-cols-2 gap-3 mb-6">
@@ -195,10 +234,59 @@
         </button>
       </div>
 
-      <!-- SETUP: cancella range -->
+      <!-- SETUP: PASSKEY (Face ID / Touch ID) -->
+      <div class="card no-print border-l-4 border-slate-800">
+        <div class="flex items-center gap-2 mb-4 border-b pb-2">
+          <i class="fa-solid fa-fingerprint text-slate-800"></i>
+          <h3 class="font-black text-slate-700 uppercase text-xs">Setup - Face ID / Touch ID (Passkey)</h3>
+        </div>
+
+        <p class="text-[11px] text-slate-600 leading-4 mb-4">
+          Funziona su dispositivi compatibili (iPhone/Android) e richiede HTTPS / dominio (non file locale).
+          Crea una passkey sul dispositivo per sbloccare senza PIN.
+        </p>
+
+        <div class="grid grid-cols-2 gap-3">
+          <button type="button" onclick="enablePasskey()" class="w-full bg-slate-900 hover:bg-slate-800 text-white py-4 rounded-xl font-black uppercase text-xs transition-all">
+            Attiva Face ID
+          </button>
+          <button type="button" onclick="disablePasskey()" class="w-full bg-red-600 hover:bg-red-500 text-white py-4 rounded-xl font-black uppercase text-xs transition-all">
+            Disattiva
+          </button>
+        </div>
+        <p id="passkey-status" class="mt-3 text-[11px] text-slate-500"></p>
+      </div>
+
+      <!-- SETUP: LISTE -->
       <div class="card no-print border-l-4 border-slate-800">
         <div class="flex items-center gap-2 mb-4 border-b pb-2">
           <i class="fa-solid fa-gear text-slate-800"></i>
+          <h3 class="font-black text-slate-700 uppercase text-xs">Setup - Liste Base</h3>
+        </div>
+
+        <div class="space-y-5">
+          <div>
+            <label class="text-[10px] font-black text-slate-500 uppercase block mb-2">Pagamenti elettronici (uno per riga)</label>
+            <textarea id="setup-payments" rows="5" class="font-bold bg-slate-50" placeholder="Es: POS&#10;Satispay&#10;JustEat&#10;Glovo&#10;App/Web"></textarea>
+            <button type="button" onclick="savePaymentsSettings()" class="mt-3 w-full bg-slate-900 hover:bg-slate-800 text-white py-3 rounded-xl font-black uppercase text-xs transition-all">
+              Salva pagamenti
+            </button>
+          </div>
+
+          <div>
+            <label class="text-[10px] font-black text-slate-500 uppercase block mb-2">Fornitori fissi (uno per riga)</label>
+            <textarea id="setup-suppliers" rows="6" class="font-bold bg-slate-50" placeholder="Es: Metro&#10;Carrefour&#10;Acqua e Bevande SRL&#10;Servizi Tecnici"></textarea>
+            <button type="button" onclick="saveSuppliersSettings()" class="mt-3 w-full bg-slate-900 hover:bg-slate-800 text-white py-3 rounded-xl font-black uppercase text-xs transition-all">
+              Salva fornitori
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SETUP: CANCELLA RANGE -->
+      <div class="card no-print border-l-4 border-slate-800">
+        <div class="flex items-center gap-2 mb-4 border-b pb-2">
+          <i class="fa-solid fa-trash text-slate-800"></i>
           <h3 class="font-black text-slate-700 uppercase text-xs">Setup - Pulizia Archivio</h3>
         </div>
         <div class="grid grid-cols-2 gap-3 mb-4">
@@ -230,53 +318,185 @@
     <button type="button" onclick="showPage('stampa')" class="nav-item" id="btn-stampa"><i class="fa-solid fa-file-invoice-dollar text-2xl mb-1"></i>Fisco</button>
   </nav>
 
+  <!-- Datalist fornitori -->
+  <datalist id="dl-fornitori"></datalist>
+
   <script>
+    // ===== Utils =====
     const fix = (n) => Math.round((Number(n) + Number.EPSILON) * 100) / 100;
     const euro = (n) => `€ ${fix(n).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    const normalizeLines = (txt) => (txt || "").split(/\r?\n/).map(s => (s || "").trim()).filter(Boolean);
 
-    const LS_KEY = 'ce_v3_top';
-    let db = JSON.parse(localStorage.getItem(LS_KEY)) || [];
-
-    function persistDB() {
-      db.sort((a, b) => (a.data || '').localeCompare(b.data || ''));
-      localStorage.setItem(LS_KEY, JSON.stringify(db));
+    function escapeHtml(str) {
+      return String(str || "")
+        .replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;").replaceAll("'", "&#039;");
     }
 
+    function normName(s) {
+      // trim + collapse spaces
+      return String(s || "").trim().replace(/\s+/g, " ");
+    }
+
+    // ===== Storage keys =====
+    const LS_DB = 'ce_v3_top';
+    const LS_PAYMENTS = 'ce_payments_list';
+    const LS_SUPPLIERS = 'ce_suppliers_list';
+
+    // Passkey keys
+    const LS_PASSKEY_ID = 'ce_passkey_cred_id'; // base64url
+    const LS_PASSKEY_ON = 'ce_passkey_enabled';
+
+    // ===== DB =====
+    let db = JSON.parse(localStorage.getItem(LS_DB)) || [];
+    function persistDB() {
+      db.sort((a, b) => (a.data || '').localeCompare(b.data || ''));
+      localStorage.setItem(LS_DB, JSON.stringify(db));
+    }
+
+    // ===== Settings =====
+    function getPaymentNames() {
+      const raw = JSON.parse(localStorage.getItem(LS_PAYMENTS) || '[]');
+      return Array.isArray(raw) ? raw.map(x => normName(x)).filter(Boolean) : [];
+    }
+    function setPaymentNames(arr) {
+      const clean = Array.from(new Set((arr || []).map(s => normName(s)).filter(Boolean))).sort((a,b)=>a.localeCompare(b,'it'));
+      localStorage.setItem(LS_PAYMENTS, JSON.stringify(clean));
+    }
+
+    function getSupplierNames() {
+      const raw = JSON.parse(localStorage.getItem(LS_SUPPLIERS) || '[]');
+      return Array.isArray(raw) ? raw.map(x => normName(x)).filter(Boolean) : [];
+    }
+    function setSupplierNames(arr) {
+      const clean = Array.from(new Set((arr || []).map(s => normName(s)).filter(Boolean))).sort((a,b)=>a.localeCompare(b,'it'));
+      localStorage.setItem(LS_SUPPLIERS, JSON.stringify(clean));
+    }
+
+    function refreshDatalistSuppliers() {
+      const dl = document.getElementById('dl-fornitori');
+      const names = getSupplierNames();
+      dl.innerHTML = names.map(n => `<option value="${escapeHtml(n)}"></option>`).join('');
+    }
+
+    function loadSetupUI() {
+      document.getElementById('setup-payments').value = getPaymentNames().join('\n');
+      document.getElementById('setup-suppliers').value = getSupplierNames().join('\n');
+      refreshDatalistSuppliers();
+      refreshPasskeyStatusUI();
+    }
+
+    function savePaymentsSettings() {
+      setPaymentNames(normalizeLines(document.getElementById('setup-payments').value));
+      alert("Pagamenti salvati.");
+    }
+
+    function saveSuppliersSettings() {
+      setSupplierNames(normalizeLines(document.getElementById('setup-suppliers').value));
+      refreshDatalistSuppliers();
+      alert("Fornitori salvati.");
+    }
+
+    // ===== Lock / PIN =====
     function checkPin() {
-      if (document.getElementById('pin-input').value === "1234") {
+      const pin = (document.getElementById('pin-input').value || '').trim();
+      if (pin === "1234") {
         document.getElementById('lock-screen').style.display = 'none';
+      } else {
+        alert("PIN errato.");
       }
     }
 
+    // ===== Navigation =====
     function showPage(p) {
       document.querySelectorAll('.page').forEach(el => el.classList.remove('active-page'));
       document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
       document.getElementById('page-' + p).classList.add('active-page');
       document.getElementById('btn-' + p).classList.add('active');
       if (p === 'riepilogo') aggiornaStatsDash();
+      if (p === 'stampa') loadSetupUI();
     }
 
-    function addFornitore() {
+    // ===== Electronic Payments (dynamic rows) =====
+    function addPayRow(name = "", value = "") {
+      const container = document.getElementById('pay-list');
+      const div = document.createElement('div');
+      div.className = "bg-white p-3 rounded-2xl border border-slate-200 pay-row";
+
+      const payNames = getPaymentNames();
+      const hasList = payNames.length > 0;
+
+      div.innerHTML = `
+        <div class="grid grid-cols-12 gap-2 items-center">
+          <div class="col-span-7">
+            ${hasList ? `
+              <select class="pay-name font-bold bg-slate-50 !p-2 big-num" onchange="calcola()">
+                ${payNames.map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('')}
+              </select>
+            ` : `
+              <input type="text" class="pay-name font-bold text-sm bg-white border-slate-200 !p-2 big-num" placeholder="Nome pagamento..." oninput="calcola()">
+            `}
+          </div>
+          <div class="col-span-4">
+            <input type="number" class="pay-val font-bold text-sm !p-2 big-num" placeholder="0.00" inputmode="decimal" step="0.01" min="0" oninput="calcola()">
+          </div>
+          <div class="col-span-1 flex justify-end">
+            <button type="button" class="w-9 h-9 bg-red-50 text-red-500 rounded-full font-black" onclick="this.closest('.pay-row').remove(); calcola()">✕</button>
+          </div>
+        </div>
+      `;
+
+      container.appendChild(div);
+
+      const nameEl = div.querySelector('.pay-name');
+      const valEl = div.querySelector('.pay-val');
+
+      if (nameEl.tagName === 'SELECT') {
+        if (name && payNames.includes(name)) nameEl.value = name;
+      } else {
+        nameEl.value = name || "";
+      }
+      valEl.value = value !== undefined && value !== null ? value : "";
+      if (nameEl.tagName === 'SELECT' && !nameEl.value) nameEl.value = payNames[0];
+
+      calcola();
+    }
+
+    function readPayDet() {
+      const rows = Array.from(document.querySelectorAll('.pay-row'));
+      const out = [];
+      rows.forEach(r => {
+        const nameEl = r.querySelector('.pay-name');
+        const valEl = r.querySelector('.pay-val');
+        const nome = normName(nameEl?.value || "");
+        const valore = fix(parseFloat(valEl?.value) || 0);
+        if (nome && valore > 0) out.push({ nome, valore });
+      });
+      return out;
+    }
+
+    // ===== Suppliers =====
+    function addFornitore(prefill = null) {
       const container = document.getElementById('fornitori-list');
       const div = document.createElement('div');
       div.className = "bg-slate-50 p-4 rounded-2xl border border-slate-200 forn-block";
       div.innerHTML = `
         <div class="flex gap-2 mb-3">
-          <input type="text" placeholder="Ragione Sociale Fornitore..." class="flex-1 font-bold text-sm f-name bg-white border-slate-200">
+          <input type="text" list="dl-fornitori" placeholder="Ragione Sociale Fornitore..." class="flex-1 font-bold text-sm f-name bg-white border-slate-200 big-num" oninput="calcola()">
           <button type="button" onclick="this.parentElement.parentElement.remove(); calcola()" class="w-10 h-10 bg-red-50 text-red-500 rounded-full">✕</button>
         </div>
 
         <div class="space-y-2 r-cont">
           <div class="grid grid-cols-3 gap-2 r-item">
-            <input type="number" placeholder="Valore" class="r-val !p-2 text-sm font-bold" oninput="calcola()">
-            <select class="r-iva !p-2 text-[10px] font-bold" onchange="calcola()">
+            <input type="number" placeholder="Valore" class="r-val !p-2 text-sm font-bold big-num" inputmode="decimal" step="0.01" min="0" oninput="calcola()">
+            <select class="r-iva !p-2 text-[10px] font-bold big-num" onchange="calcola()">
               <option value="22">IVA 22%</option>
               <option value="10" selected>IVA 10%</option>
               <option value="5">IVA 5%</option>
               <option value="4">IVA 4%</option>
               <option value="0">Esente</option>
             </select>
-            <select class="r-tipo !p-2 text-[10px] font-bold bg-blue-50 border-blue-100" onchange="calcola()">
+            <select class="r-tipo !p-2 text-[10px] font-bold bg-blue-50 border-blue-100 big-num" onchange="calcola()">
               <option value="L">LORDO</option>
               <option value="N">NETTO +</option>
             </select>
@@ -293,14 +513,40 @@
         </div>
       `;
       container.appendChild(div);
+
+      if (prefill && typeof prefill === 'object') {
+        div.querySelector('.f-name').value = prefill.nome || "";
+        div.querySelector('.f-cash').checked = !!prefill.cash;
+
+        const firstRow = div.querySelector('.r-item');
+        const righe = Array.isArray(prefill.righe) ? prefill.righe : [];
+        if (firstRow && righe.length) {
+          const [r0, ...rest] = righe;
+          firstRow.querySelector('.r-val').value = r0.valore ?? "";
+          firstRow.querySelector('.r-iva').value = String(r0.ivaPerc ?? 10);
+          firstRow.querySelector('.r-tipo').value = (r0.tipo === 'N') ? 'N' : 'L';
+
+          rest.forEach(rr => {
+            const btn = div.querySelector('button[onclick^="addRowIVA"]');
+            addRowIVA(btn);
+            const last = div.querySelector('.r-cont .r-item:last-child');
+            if (last) {
+              last.querySelector('.r-val').value = rr.valore ?? "";
+              last.querySelector('.r-iva').value = String(rr.ivaPerc ?? 10);
+            }
+          });
+        }
+      }
+
+      calcola();
     }
 
     function addRowIVA(btn) {
       const row = document.createElement('div');
       row.className = "grid grid-cols-3 gap-2 r-item mt-2";
       row.innerHTML = `
-        <input type="number" placeholder="Valore" class="r-val !p-2 text-sm font-bold" oninput="calcola()">
-        <select class="r-iva !p-2 text-[10px] font-bold" onchange="calcola()">
+        <input type="number" placeholder="Valore" class="r-val !p-2 text-sm font-bold big-num" inputmode="decimal" step="0.01" min="0" oninput="calcola()">
+        <select class="r-iva !p-2 text-[10px] font-bold big-num" onchange="calcola()">
           <option value="22">22%</option>
           <option value="10" selected>10%</option>
           <option value="5">5%</option>
@@ -314,12 +560,17 @@
       btn.parentElement.previousElementSibling.appendChild(row);
     }
 
+    // ===== Calc =====
     function calcola() {
       const lordoZ = fix(parseFloat(document.getElementById('inp-tot').value) || 0);
       const ivaVperc = parseFloat(document.getElementById('iva-v-base').value || "10");
 
+      // electronic payments
+      const payDet = readPayDet();
       let totEle = 0;
-      document.querySelectorAll('.val-e').forEach(i => totEle += fix(parseFloat(i.value) || 0));
+      payDet.forEach(p => totEle += fix(p.valore || 0));
+      totEle = fix(totEle);
+      document.getElementById('pay-total').innerText = euro(totEle);
 
       const impV = fix(lordoZ / (1 + (ivaVperc / 100)));
       const ivaV = fix(lordoZ - impV);
@@ -331,14 +582,12 @@
       document.querySelectorAll('.forn-block').forEach(b => {
         let fLordo = 0;
         let fIva = 0;
-
         const righe = [];
 
         b.querySelectorAll('.r-item').forEach(r => {
           const v = fix(parseFloat(r.querySelector('.r-val')?.value) || 0);
           const i = parseFloat(r.querySelector('.r-iva')?.value) || 0;
           const t = r.querySelector('.r-tipo')?.value || 'L';
-
           if (v > 0) righe.push({ valore: v, ivaPerc: i, tipo: t });
 
           if (t === 'L') {
@@ -351,72 +600,102 @@
           }
         });
 
-        totIvaA += fix(fIva);
         const isCash = !!b.querySelector('.f-cash')?.checked;
+        const nome = normName(b.querySelector('.f-name')?.value || "");
+
+        const hasRows = righe.some(x => (x.valore || 0) > 0);
+        if (!hasRows) return;
+
+        totIvaA += fix(fIva);
         if (isCash) uscCash += fix(fLordo);
 
         detFornitori.push({
-          nome: b.querySelector('.f-name')?.value || "Senza Nome",
+          nome: nome || "Senza Nome",
           lordo: fix(fLordo),
           iva: fix(fIva),
           cash: isCash,
-          righe
+          righe: righe.map(x => ({
+            valore: fix(x.valore || 0),
+            ivaPerc: Number(x.ivaPerc || 0),
+            tipo: x.tipo === 'N' ? 'N' : 'L'
+          }))
         });
       });
 
+      totIvaA = fix(totIvaA);
+      uscCash = fix(uscCash);
+
+      // netto contanti: (lordo - elettronico) - uscite contanti
       const netto = fix((lordoZ - totEle) - uscCash);
 
       document.getElementById('res-ele').innerText = euro(totEle);
       document.getElementById('res-ivav').innerText = euro(ivaV);
       document.getElementById('res-netto').innerText = euro(netto);
 
-      return {
-        lordoZ, ivaV, impV,
-        totEle, uscCash, totIvaA, detFornitori,
-        pos: fix(parseFloat(document.getElementById('inp-pos').value) || 0),
-        sat: fix(parseFloat(document.getElementById('inp-sat').value) || 0),
-        del: fix(parseFloat(document.getElementById('inp-del').value) || 0),
-        tap: fix(parseFloat(document.getElementById('inp-tap').value) || 0)
-      };
+      return { lordoZ, ivaV, impV, ivaVperc, totEle, uscCash, totIvaA, payDet, detFornitori };
     }
 
+    // ===== Save (auto-add supplier names) =====
     function salvaData(btnEl) {
       const data = document.getElementById('data-lavoro').value;
       if (!data) return alert("⚠️ Seleziona la data prima di salvare!");
 
       const dati = calcola();
-      const haSpese = (dati.detFornitori || []).some(f => (f.lordo || 0) > 0 || (f.iva || 0) > 0);
-      if (dati.lordoZ === 0 && !haSpese) return alert("⚠️ Non ci sono dati da salvare.");
+
+      if (dati.totEle > dati.lordoZ) {
+        const ok = confirm("⚠️ Il totale elettronico è maggiore del Lordo Z. Vuoi salvare comunque?");
+        if (!ok) return;
+      }
+
+      const entrateCash = fix(dati.lordoZ - dati.totEle);
+      if (dati.uscCash > entrateCash) {
+        const ok = confirm("⚠️ Uscite contanti maggiori delle entrate contanti. Vuoi salvare comunque?");
+        if (!ok) return;
+      }
+
+      const haSpese = (dati.detFornitori || []).some(f => (f.lordo || 0) > 0);
+      const haIncasso = (dati.lordoZ || 0) > 0;
+      const haEle = (dati.payDet || []).some(p => (p.valore || 0) > 0);
+      if (!haIncasso && !haSpese && !haEle) return alert("⚠️ Non ci sono dati da salvare.");
 
       const rec = {
         data,
-        ...dati,
+        ivaVperc: Number(dati.ivaVperc || 10),
         lordoZ: fix(dati.lordoZ),
         ivaV: fix(dati.ivaV),
         impV: fix(dati.impV),
         totEle: fix(dati.totEle),
         uscCash: fix(dati.uscCash),
         totIvaA: fix(dati.totIvaA),
-        pos: fix(dati.pos),
-        sat: fix(dati.sat),
-        del: fix(dati.del),
-        tap: fix(dati.tap),
-        detFornitori: (dati.detFornitori || []).map(x => ({
-          nome: x.nome || "Senza Nome",
-          lordo: fix(x.lordo || 0),
-          iva: fix(x.iva || 0),
-          cash: !!x.cash,
-          righe: Array.isArray(x.righe) ? x.righe.map(rr => ({
+        payDet: (dati.payDet || []).map(p => ({ nome: normName(p.nome), valore: fix(p.valore || 0) })).filter(p => p.nome && p.valore > 0),
+        detFornitori: (dati.detFornitori || []).map(f => ({
+          nome: normName(f.nome) || "Senza Nome",
+          lordo: fix(f.lordo || 0),
+          iva: fix(f.iva || 0),
+          cash: !!f.cash,
+          righe: (f.righe || []).map(rr => ({
             valore: fix(rr.valore || 0),
             ivaPerc: Number(rr.ivaPerc || 0),
             tipo: rr.tipo === 'N' ? 'N' : 'L'
-          })) : []
-        }))
+          })).filter(rr => rr.valore > 0)
+        })).filter(f => (f.lordo || 0) > 0 || (f.iva || 0) > 0)
       };
+
+      // auto-add supplier names to fixed list (only real names)
+      const existingSup = getSupplierNames();
+      const toAdd = rec.detFornitori
+        .map(x => normName(x.nome))
+        .filter(n => n && n !== "Senza Nome");
+      if (toAdd.length) {
+        setSupplierNames(existingSup.concat(toAdd));
+        refreshDatalistSuppliers();
+      }
 
       db = db.filter(r => r.data !== data);
       db.push(rec);
       persistDB();
+
+      document.getElementById('badge-loaded').classList.add('hidden');
 
       if (btnEl) {
         btnEl.innerText = "✅ GIORNATA SALVATA";
@@ -430,6 +709,72 @@
       }
     }
 
+    // ===== Load by date =====
+    function clearDayUI(seedPayRow = true) {
+      document.getElementById('inp-tot').value = "";
+      document.getElementById('iva-v-base').value = "10";
+      document.getElementById('fornitori-list').innerHTML = "";
+      document.getElementById('pay-list').innerHTML = "";
+      document.getElementById('badge-loaded').classList.add('hidden');
+
+      if (seedPayRow) {
+        const payNames = getPaymentNames();
+        if (payNames.length) addPayRow(payNames[0], "");
+      }
+
+      calcola();
+    }
+
+    function onChangeData() {
+      const data = document.getElementById('data-lavoro').value;
+      if (!data) return;
+
+      clearDayUI(true);
+
+      const rec = db.find(r => r.data === data);
+      if (!rec) return;
+
+      document.getElementById('badge-loaded').classList.remove('hidden');
+      document.getElementById('inp-tot').value = rec.lordoZ ?? "";
+      if (rec.ivaVperc) document.getElementById('iva-v-base').value = String(rec.ivaVperc);
+
+      // payments
+      const pd = Array.isArray(rec.payDet) ? rec.payDet : legacyPayDet(rec);
+      document.getElementById('pay-list').innerHTML = "";
+      if (pd.length) pd.forEach(p => addPayRow(normName(p.nome || ""), p.valore ?? ""));
+      else {
+        const payNames = getPaymentNames();
+        if (payNames.length) addPayRow(payNames[0], "");
+      }
+
+      // suppliers
+      const fl = Array.isArray(rec.detFornitori) ? rec.detFornitori : [];
+      fl.forEach(f => addFornitore({
+        nome: normName(f.nome || ""),
+        cash: !!f.cash,
+        righe: Array.isArray(f.righe) && f.righe.length ? f.righe : [{
+          valore: f.lordo || 0, ivaPerc: 10, tipo: 'L'
+        }]
+      }));
+
+      calcola();
+    }
+
+    // ===== Legacy support (old records with pos/sat/del/tap) =====
+    function legacyPayDet(rec) {
+      const out = [];
+      const add = (nome, val) => {
+        const v = fix(parseFloat(val) || 0);
+        if (nome && v > 0) out.push({ nome, valore: v });
+      };
+      add("POS", rec.pos);
+      add("Satispay", rec.sat);
+      add("Delivery", rec.del);
+      add("App/Web", rec.tap);
+      return out;
+    }
+
+    // ===== Dashboard =====
     function aggiornaStatsDash() {
       const now = new Date();
       const m = now.toISOString().substring(0, 7);
@@ -452,144 +797,156 @@
       document.getElementById('st-iva-saldo').innerText = euro(fix(tIV - tIA));
     }
 
-    // ANALISI COMPLETA (senza cambiare pagina/aggiungere elementi nuovi: scrive solo dentro #s-res)
+    // ===== Analisi periodo =====
     function cercaPeriodo() {
       const f = document.getElementById('s-from').value;
       const t = document.getElementById('s-to').value;
       if (!f || !t) return alert("Scegli le date!");
       if (f > t) return alert("⚠️ Intervallo non valido: DAL è dopo AL.");
 
-      const fil = db
-        .filter(r => r.data >= f && r.data <= t)
-        .sort((a, b) => a.data.localeCompare(b.data));
+      const fil = db.filter(r => r.data >= f && r.data <= t).sort((a, b) => a.data.localeCompare(b.data));
 
-      let totL=0, totE=0, totC=0, tIvaD=0, tIvaC=0;
-      let entCash = 0, diffCash = 0;
+      let totL = 0, totEle = 0, totUscCash = 0, tIvaD = 0, tIvaC = 0;
+      let entCash = 0;
 
-      // dettaglio pagamenti
-      let tPos=0, tSat=0, tDel=0, tTap=0;
-
-      // fornitori (categorie e raggruppamento)
-      let fornCash=0, fornTr=0, fornIva=0;
+      const payByName = {};
       const fornByName = {};
+      let fornCash = 0, fornTr = 0, fornIva = 0;
 
       fil.forEach(r => {
-        const lordo = (r.lordoZ || 0);
-        const ele = (r.totEle || 0);
-        const usc = (r.uscCash || 0);
+        const lordo = fix(r.lordoZ || 0);
+        const ele = fix(r.totEle || 0);
+        const usc = fix(r.uscCash || 0);
 
-        totL += lordo;
-        totE += ele;
-        totC += usc;
-        tIvaD += (r.ivaV || 0);
-        tIvaC += (r.totIvaA || 0);
+        totL += lordo; totEle += ele; totUscCash += usc;
+        tIvaD += fix(r.ivaV || 0);
+        tIvaC += fix(r.totIvaA || 0);
 
-        // Entrate contanti = lordo - elettronico (coerente col tuo modello)
-        entCash += (lordo - ele);
+        entCash += fix(lordo - ele);
 
-        tPos += (r.pos || 0);
-        tSat += (r.sat || 0);
-        tDel += (r.del || 0);
-        tTap += (r.tap || 0);
+        const pd = Array.isArray(r.payDet) ? r.payDet : legacyPayDet(r);
+        pd.forEach(p => {
+          const nome = normName(p.nome || "") || "Senza Nome";
+          const val = fix(p.valore || 0);
+          payByName[nome] = fix((payByName[nome] || 0) + val);
+        });
 
         (r.detFornitori || []).forEach(ff => {
-          const nome = ff.nome || "Senza Nome";
-          if (!fornByName[nome]) fornByName[nome] = { lordo:0, iva:0, cashLordo:0, trLordo:0 };
+          const nome = normName(ff.nome || "Senza Nome") || "Senza Nome";
+          if (!fornByName[nome]) fornByName[nome] = { lordo: 0, iva: 0, cashLordo: 0, trLordo: 0 };
 
-          fornByName[nome].lordo += (ff.lordo || 0);
-          fornByName[nome].iva += (ff.iva || 0);
+          const lord = fix(ff.lordo || 0);
+          const iva = fix(ff.iva || 0);
 
-          fornIva += (ff.iva || 0);
+          fornByName[nome].lordo = fix(fornByName[nome].lordo + lord);
+          fornByName[nome].iva   = fix(fornByName[nome].iva + iva);
+          fornIva = fix(fornIva + iva);
+
           if (ff.cash) {
-            fornCash += (ff.lordo || 0);
-            fornByName[nome].cashLordo += (ff.lordo || 0);
+            fornCash = fix(fornCash + lord);
+            fornByName[nome].cashLordo = fix(fornByName[nome].cashLordo + lord);
           } else {
-            fornTr += (ff.lordo || 0);
-            fornByName[nome].trLordo += (ff.lordo || 0);
+            fornTr = fix(fornTr + lord);
+            fornByName[nome].trLordo = fix(fornByName[nome].trLordo + lord);
           }
         });
       });
 
-      diffCash = entCash - totC;
+      totL = fix(totL); totEle = fix(totEle); totUscCash = fix(totUscCash);
+      tIvaD = fix(tIvaD); tIvaC = fix(tIvaC); entCash = fix(entCash);
+      const diffCash = fix(entCash - totUscCash);
 
-      const res = document.getElementById('s-res');
-      res.classList.remove('hidden');
+      const payRows = Object.entries(payByName).sort((a,b)=>b[1]-a[1]).map(([nome,v]) => `
+        <tr class="border-b border-white/10"><td class="py-2 text-left font-bold">${escapeHtml(nome)}</td><td class="py-2 text-right">${euro(v)}</td></tr>
+      `).join("") || `<tr><td colspan="2" class="py-3 text-center text-slate-300">Nessun pagamento elettronico nel periodo</td></tr>`;
 
-      const fornRows = Object.entries(fornByName)
-        .sort((a,b) => (b[1].lordo - a[1].lordo))
-        .map(([nome, v]) => `
-          <tr class="border-b border-white/10">
-            <td class="py-2 text-left font-bold">${nome}</td>
-            <td class="py-2 text-right">${euro(v.lordo)}</td>
-            <td class="py-2 text-right text-green-300">${euro(v.iva)}</td>
-            <td class="py-2 text-right text-red-300">${euro(v.cashLordo)}</td>
-            <td class="py-2 text-right text-blue-200">${euro(v.trLordo)}</td>
-          </tr>
-        `).join("");
+      const fornRows = Object.entries(fornByName).sort((a,b)=>b[1].lordo-a[1].lordo).map(([nome,v]) => `
+        <tr class="border-b border-white/10">
+          <td class="py-2 text-left font-bold">${escapeHtml(nome)}</td>
+          <td class="py-2 text-right">${euro(v.lordo)}</td>
+          <td class="py-2 text-right text-green-300">${euro(v.iva)}</td>
+          <td class="py-2 text-right text-red-300">${euro(v.cashLordo)}</td>
+          <td class="py-2 text-right text-blue-200">${euro(v.trLordo)}</td>
+        </tr>
+      `).join("") || `<tr><td colspan="5" class="py-3 text-center text-slate-300">Nessun fornitore nel periodo</td></tr>`;
 
       const dayBlocks = fil.map(r => {
+        const pd = Array.isArray(r.payDet) ? r.payDet : legacyPayDet(r);
+        const payTxt = pd.length
+          ? pd.map(p => `• <span class="font-bold">${escapeHtml(p.nome || "Pagamento")}</span> — ${euro(p.valore || 0)}`).join("<br>")
+          : `<span class="text-slate-300">Nessun pagamento elettronico</span>`;
+
         const forn = (r.detFornitori || [])
           .filter(x => (x.lordo || 0) > 0)
-          .map(x => `• <span class="font-bold">${x.nome}</span> — ${euro(x.lordo)} <span class="text-[10px] ${x.cash ? 'text-red-300' : 'text-blue-200'}">(${x.cash ? 'CONTANTI' : 'TRACCIABILE'})</span>`)
+          .map(x => `• <span class="font-bold">${escapeHtml(x.nome)}</span> — ${euro(x.lordo)} <span class="text-[10px] ${x.cash ? 'text-red-300' : 'text-blue-200'}">(${x.cash ? 'CONTANTI' : 'TRACCIABILE'})</span>`)
           .join("<br>") || `<span class="text-slate-300">Nessuna spesa fornitori</span>`;
 
         return `
-          <div class="p-4 rounded-2xl bg-white/5 border border-white/10">
-            <div class="flex justify-between items-center mb-2">
-              <div class="font-black text-blue-200">${r.data}</div>
+          <div class="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-3">
+            <div class="flex justify-between items-center">
+              <div class="font-black text-blue-200">${escapeHtml(r.data)}</div>
               <div class="text-[10px] font-bold text-slate-300 uppercase">
                 Lordo ${euro(r.lordoZ || 0)} • Elettr. ${euro(r.totEle || 0)} • Usc. Cash ${euro(r.uscCash || 0)}
               </div>
             </div>
-            <div class="text-[11px] leading-5">${forn}</div>
+            <div class="text-[11px] leading-5">
+              <div class="font-black text-[10px] uppercase text-slate-300 mb-1">Pagamenti elettronici</div>
+              ${payTxt}
+            </div>
+            <div class="text-[11px] leading-5">
+              <div class="font-black text-[10px] uppercase text-slate-300 mb-1">Fornitori</div>
+              ${forn}
+            </div>
           </div>
         `;
       }).join("");
 
+      const res = document.getElementById('s-res');
+      res.classList.remove('hidden');
       res.innerHTML = `
         <div class="p-5 bg-slate-900 text-white rounded-3xl space-y-6 shadow-xl">
           <h4 class="text-center font-black text-blue-400 text-xs uppercase">Report Dettagliato per Periodo</h4>
 
-          <!-- Sintesi (entrate/uscite/differenza/da versare) -->
           <div class="space-y-2">
             <div class="flex justify-between border-b border-white/10 pb-2">
               <span>Entrate (Lordo Z)</span>
               <strong class="text-lg">${euro(totL)}</strong>
             </div>
-
+            <div class="flex justify-between text-slate-200">
+              <span>Totale Elettronico</span>
+              <span>${euro(totEle)}</span>
+            </div>
             <div class="flex justify-between text-slate-200">
               <span>Entrate Contanti (Lordo - Elettronico)</span>
               <span>${euro(entCash)}</span>
             </div>
-
             <div class="flex justify-between text-red-300">
               <span>Uscite Contanti</span>
-              <span>${euro(totC)}</span>
+              <span>${euro(totUscCash)}</span>
             </div>
-
             <div class="flex justify-between font-black text-green-300">
               <span>Differenza Contanti</span>
               <span>${euro(diffCash)}</span>
             </div>
-
             <div class="pt-3 flex justify-between font-black text-orange-400 border-t border-white/20">
               <span>IVA DA VERSARE</span>
               <span>${euro(fix(tIvaD - tIvaC))}</span>
             </div>
           </div>
 
-          <!-- Categorie pagamenti -->
-          <div class="p-4 rounded-2xl bg-white/5 border border-white/10">
-            <div class="font-black text-[11px] uppercase text-slate-200 mb-3">Categorie Pagamenti (Elettronico)</div>
-            <div class="grid grid-cols-2 gap-2 text-[11px]">
-              <div class="flex justify-between"><span>POS</span><span class="font-bold">${euro(tPos)}</span></div>
-              <div class="flex justify-between"><span>Satispay</span><span class="font-bold">${euro(tSat)}</span></div>
-              <div class="flex justify-between"><span>Delivery</span><span class="font-bold">${euro(tDel)}</span></div>
-              <div class="flex justify-between"><span>App/Web</span><span class="font-bold">${euro(tTap)}</span></div>
-            </div>
+          <div class="p-4 rounded-2xl bg-white/5 border border-white/10 overflow-x-auto">
+            <div class="font-black text-[11px] uppercase text-slate-200 mb-3">Pagamenti Elettronici per Categoria</div>
+            <table class="w-full text-[11px] min-w-[420px]">
+              <thead class="text-slate-200">
+                <tr class="border-b border-white/10">
+                  <th class="py-2 text-left">Categoria</th>
+                  <th class="py-2 text-right">Totale</th>
+                </tr>
+              </thead>
+              <tbody>${payRows}</tbody>
+            </table>
           </div>
 
-          <!-- Categorie spese fornitori -->
           <div class="p-4 rounded-2xl bg-white/5 border border-white/10">
             <div class="font-black text-[11px] uppercase text-slate-200 mb-3">Categorie Spese Fornitori</div>
             <div class="grid grid-cols-2 gap-2 text-[11px]">
@@ -599,7 +956,6 @@
             </div>
           </div>
 
-          <!-- Fornitori raggruppati -->
           <div class="p-4 rounded-2xl bg-white/5 border border-white/10 overflow-x-auto">
             <div class="font-black text-[11px] uppercase text-slate-200 mb-3">Fornitori Raggruppati</div>
             <table class="w-full text-[11px] min-w-[560px]">
@@ -612,13 +968,10 @@
                   <th class="py-2 text-right">Tracciabile</th>
                 </tr>
               </thead>
-              <tbody>
-                ${fornRows || `<tr><td colspan="5" class="py-3 text-center text-slate-300">Nessun fornitore nel periodo</td></tr>`}
-              </tbody>
+              <tbody>${fornRows}</tbody>
             </table>
           </div>
 
-          <!-- Dettaglio giornaliero -->
           <div class="space-y-3">
             <div class="font-black text-[11px] uppercase text-slate-200">Dettaglio Giornaliero</div>
             ${dayBlocks || `<div class="text-slate-300">Nessun dato nel periodo</div>`}
@@ -627,21 +980,48 @@
       `;
     }
 
+    // ===== Report fiscale =====
     function generaReportProfessionale() {
       const f = document.getElementById('p-from').value;
       const t = document.getElementById('p-to').value;
       if (!f || !t) return alert("Seleziona il periodo fiscale!");
       if (f > t) return alert("⚠️ Intervallo non valido: DATA INIZIO è dopo DATA FINE.");
 
-      const dataFil = db
-        .filter(r => r.data >= f && r.data <= t)
-        .sort((a, b) => a.data.localeCompare(b.data));
+      const dataFil = db.filter(r => r.data >= f && r.data <= t).sort((a, b) => a.data.localeCompare(b.data));
 
       const mesi = ["GENNAIO","FEBBRAIO","MARZO","APRILE","MAGGIO","GIUGNO","LUGLIO","AGOSTO","SETTEMBRE","OTTOBRE","NOVEMBRE","DICEMBRE"];
       let titolo = `REPORT FISCALE DAL ${f} AL ${t}`;
       if (f.substring(0, 7) === t.substring(0, 7) && f.endsWith("-01")) {
         titolo = `REGISTRO CORRISPETTIVI E ACQUISTI - ${mesi[new Date(f).getMonth()]} ${new Date(f).getFullYear()}`;
       }
+
+      let sZ = 0, sIV = 0, sE = 0, sIA = 0, sAL = 0;
+      const payAgg = {};
+
+      dataFil.forEach(r => {
+        sZ += fix(r.lordoZ || 0);
+        sIV += fix(r.ivaV || 0);
+        sE += fix(r.totEle || 0);
+
+        const pd = Array.isArray(r.payDet) ? r.payDet : legacyPayDet(r);
+        pd.forEach(p => {
+          const nome = normName(p.nome || "") || "Senza Nome";
+          const val = fix(p.valore || 0);
+          payAgg[nome] = fix((payAgg[nome] || 0) + val);
+        });
+
+        (r.detFornitori || []).forEach(fx => {
+          sIA += fix(fx.iva || 0);
+          sAL += fix(fx.lordo || 0);
+        });
+      });
+
+      sZ = fix(sZ); sIV = fix(sIV); sE = fix(sE); sIA = fix(sIA); sAL = fix(sAL);
+
+      const payAggRows = Object.entries(payAgg)
+        .sort((a, b) => b[1] - a[1])
+        .map(([nome, v]) => `<tr><td class="border p-2 font-bold">${escapeHtml(nome)}</td><td class="border p-2 text-right">€${fix(v).toFixed(2)}</td></tr>`)
+        .join('') || `<tr><td class="border p-2" colspan="2">Nessun pagamento elettronico nel periodo</td></tr>`;
 
       let h = `<div class="bg-white p-8 text-slate-900 printable-content">
         <div class="flex justify-between items-start border-b-2 border-slate-900 pb-4 mb-8">
@@ -650,7 +1030,7 @@
             <p class="text-xs font-bold text-slate-500 uppercase tracking-widest">Sistemi di Controllo Fiscale v3.0</p>
           </div>
           <div class="text-right">
-            <p class="font-black text-sm uppercase">${titolo}</p>
+            <p class="font-black text-sm uppercase">${escapeHtml(titolo)}</p>
             <p class="text-[10px] text-slate-400 uppercase">Documento generato il: ${new Date().toLocaleDateString('it-IT')}</p>
           </div>
         </div>`;
@@ -664,22 +1044,20 @@
               <th class="border p-2">Lordo Z</th>
               <th class="border p-2">Scorporo IVA</th>
               <th class="border p-2">Elettronico</th>
-              <th class="border p-2">Netto Cash (prima spese)</th>
+              <th class="border p-2">Entrate Contanti (Lordo - Elettr.)</th>
             </tr>
           </thead>
           <tbody>`;
 
-      let sZ = 0, sIV = 0, sE = 0;
       dataFil.forEach(r => {
-        sZ += (r.lordoZ || 0);
-        sIV += (r.ivaV || 0);
-        sE += (r.totEle || 0);
+        const lordo = fix(r.lordoZ || 0);
+        const ele = fix(r.totEle || 0);
         h += `<tr>
-          <td class="border p-2 font-bold">${r.data}</td>
-          <td class="border p-2 font-black">€${(r.lordoZ||0).toFixed(2)}</td>
-          <td class="border p-2 text-red-600">€${(r.ivaV||0).toFixed(2)}</td>
-          <td class="border p-2">€${(r.totEle||0).toFixed(2)}</td>
-          <td class="border p-2 font-bold">€${((r.lordoZ||0) - (r.totEle||0)).toFixed(2)}</td>
+          <td class="border p-2 font-bold">${escapeHtml(r.data)}</td>
+          <td class="border p-2 font-black">€${lordo.toFixed(2)}</td>
+          <td class="border p-2 text-red-600">€${fix(r.ivaV || 0).toFixed(2)}</td>
+          <td class="border p-2">€${ele.toFixed(2)}</td>
+          <td class="border p-2 font-bold">€${fix(lordo - ele).toFixed(2)}</td>
         </tr>`;
       });
 
@@ -688,11 +1066,21 @@
         <td class="border p-2">€${sZ.toFixed(2)}</td>
         <td class="border p-2 text-red-600">€${sIV.toFixed(2)}</td>
         <td class="border p-2">€${sE.toFixed(2)}</td>
-        <td class="border p-2">€${(sZ - sE).toFixed(2)}</td>
+        <td class="border p-2">€${fix(sZ - sE).toFixed(2)}</td>
       </tr></tbody></table></div>`;
 
       h += `<div class="mb-10">
-        <h3 class="bg-slate-900 text-white text-[10px] px-3 py-1 font-black uppercase mb-3 inline-block">2. Registro Acquisti e Fornitori (Dettaglio)</h3>
+        <h3 class="bg-slate-900 text-white text-[10px] px-3 py-1 font-black uppercase mb-3 inline-block">1B. Pagamenti Elettronici per Categoria</h3>
+        <table class="w-full text-[11px]">
+          <thead class="bg-slate-100">
+            <tr><th class="border p-2">Categoria</th><th class="border p-2 text-right">Totale</th></tr>
+          </thead>
+          <tbody>${payAggRows}</tbody>
+        </table>
+      </div>`;
+
+      h += `<div class="mb-10">
+        <h3 class="bg-slate-900 text-white text-[10px] px-3 py-1 font-black uppercase mb-3 inline-block">2. Registro Acquisti e Fornitori</h3>
         <table class="w-full text-[11px]">
           <thead class="bg-slate-100">
             <tr>
@@ -705,16 +1093,13 @@
           </thead>
           <tbody>`;
 
-      let sIA = 0, sAL = 0;
       dataFil.forEach(r => {
         (r.detFornitori || []).forEach(fx => {
-          sIA += (fx.iva || 0);
-          sAL += (fx.lordo || 0);
           h += `<tr>
-            <td class="border p-2 font-bold">${fx.nome || "Senza Nome"}</td>
-            <td class="border p-2 text-center">${r.data}</td>
-            <td class="border p-2 text-green-600 text-right">€${(fx.iva||0).toFixed(2)}</td>
-            <td class="border p-2 text-right">€${(fx.lordo||0).toFixed(2)}</td>
+            <td class="border p-2 font-bold">${escapeHtml(fx.nome || "Senza Nome")}</td>
+            <td class="border p-2 text-center">${escapeHtml(r.data)}</td>
+            <td class="border p-2 text-green-600 text-right">€${fix(fx.iva || 0).toFixed(2)}</td>
+            <td class="border p-2 text-right">€${fix(fx.lordo || 0).toFixed(2)}</td>
             <td class="border p-2 text-center text-[9px] font-bold">${fx.cash ? 'CONTANTI' : 'TRACCIABILE'}</td>
           </tr>`;
 
@@ -722,7 +1107,7 @@
             h += `<tr>
               <td class="border p-2" colspan="5" style="text-align:left;">
                 <span style="font-weight:700;">Righe IVA:</span>
-                ${fx.righe.map(rr => ` [${rr.tipo === 'N' ? 'NETTO+' : 'LORDO'} ${rr.ivaPerc}%: €${Number(rr.valore||0).toFixed(2)}]`).join(' ')}
+                ${fx.righe.map(rr => ` [${rr.tipo === 'N' ? 'NETTO+' : 'LORDO'} ${Number(rr.ivaPerc || 0)}%: €${fix(rr.valore || 0).toFixed(2)}]`).join(' ')}
               </td>
             </tr>`;
           }
@@ -759,6 +1144,7 @@
       document.getElementById('area-stampa').innerHTML = h;
     }
 
+    // ===== Setup: delete range =====
     function cancellaPeriodo() {
       const f = document.getElementById('d-from').value;
       const t = document.getElementById('d-to').value;
@@ -778,10 +1164,170 @@
       const sr = document.getElementById('s-res');
       if (sr) { sr.classList.add('hidden'); sr.innerHTML = ""; }
 
+      const cur = document.getElementById('data-lavoro').value;
+      if (cur && cur >= f && cur <= t) clearDayUI(true);
+
       alert(`Cancellazione completata. Rimasti ${db.length} record.`);
     }
 
-    document.getElementById('data-lavoro').valueAsDate = new Date();
+    // ===== PASSKEY (Face ID / Touch ID) =====
+    // Nota: WebAuthn richiede HTTPS + dominio. In file:// non funziona.
+    function supportsPasskey() {
+      return !!(window.PublicKeyCredential && navigator.credentials && navigator.credentials.create && navigator.credentials.get);
+    }
+
+    function b64uToBuf(b64u) {
+      const pad = '='.repeat((4 - (b64u.length % 4)) % 4);
+      const b64 = (b64u + pad).replace(/-/g, '+').replace(/_/g, '/');
+      const str = atob(b64);
+      const buf = new Uint8Array(str.length);
+      for (let i = 0; i < str.length; i++) buf[i] = str.charCodeAt(i);
+      return buf.buffer;
+    }
+
+    function bufToB64u(buf) {
+      const bytes = new Uint8Array(buf);
+      let bin = '';
+      bytes.forEach(b => bin += String.fromCharCode(b));
+      const b64 = btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+      return b64;
+    }
+
+    function randomBuf(len=32) {
+      const a = new Uint8Array(len);
+      crypto.getRandomValues(a);
+      return a.buffer;
+    }
+
+    function refreshPasskeyStatusUI() {
+      const enabled = localStorage.getItem(LS_PASSKEY_ON) === '1';
+      const credId = localStorage.getItem(LS_PASSKEY_ID);
+      const status = document.getElementById('passkey-status');
+      if (!status) return;
+
+      if (!supportsPasskey()) {
+        status.innerText = "Passkey non supportata su questo browser/dispositivo.";
+        return;
+      }
+      if (enabled && credId) status.innerText = "Passkey attiva: puoi sbloccare con Face ID / Touch ID.";
+      else status.innerText = "Passkey non attiva.";
+    }
+
+    function refreshLockPasskeyButton() {
+      const btn = document.getElementById('btn-passkey-login');
+      if (!btn) return;
+
+      const enabled = localStorage.getItem(LS_PASSKEY_ON) === '1';
+      const credId = localStorage.getItem(LS_PASSKEY_ID);
+      const ok = supportsPasskey() && enabled && !!credId;
+      btn.classList.toggle('hidden', !ok);
+    }
+
+    async function enablePasskey() {
+      if (!supportsPasskey()) return alert("Questo browser/dispositivo non supporta le Passkey.");
+      if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+        return alert("Per usare Face ID/Touch ID serve HTTPS (oppure localhost).");
+      }
+
+      try {
+        // Username locale (non personale): solo per etichetta
+        const userId = randomBuf(16);
+
+        const publicKey = {
+          challenge: randomBuf(32),
+          rp: { name: "Commander Elite", id: location.hostname },
+          user: {
+            id: userId,
+            name: "commander",
+            displayName: "Commander Elite"
+          },
+          pubKeyCredParams: [{ type: "public-key", alg: -7 }, { type: "public-key", alg: -257 }],
+          authenticatorSelection: {
+            authenticatorAttachment: "platform",
+            userVerification: "required",
+            residentKey: "preferred",
+            requireResidentKey: false
+          },
+          timeout: 60000,
+          attestation: "none"
+        };
+
+        const cred = await navigator.credentials.create({ publicKey });
+        if (!cred) throw new Error("Creazione passkey annullata.");
+
+        // Salviamo l'ID credenziale (per richiamarla in get)
+        const credIdB64u = bufToB64u(cred.rawId);
+        localStorage.setItem(LS_PASSKEY_ID, credIdB64u);
+        localStorage.setItem(LS_PASSKEY_ON, '1');
+
+        refreshPasskeyStatusUI();
+        refreshLockPasskeyButton();
+        alert("Passkey attivata. Ora puoi sbloccare con Face ID / Touch ID.");
+      } catch (e) {
+        alert("Impossibile attivare la passkey: " + (e?.message || e));
+      }
+    }
+
+    function disablePasskey() {
+      localStorage.removeItem(LS_PASSKEY_ID);
+      localStorage.setItem(LS_PASSKEY_ON, '0');
+      refreshPasskeyStatusUI();
+      refreshLockPasskeyButton();
+      alert("Passkey disattivata.");
+    }
+
+    async function loginPasskey() {
+      if (!supportsPasskey()) return alert("Passkey non supportata.");
+      const credIdB64u = localStorage.getItem(LS_PASSKEY_ID);
+      if (!credIdB64u) return alert("Nessuna passkey configurata.");
+
+      try {
+        const publicKey = {
+          challenge: randomBuf(32),
+          allowCredentials: [{
+            type: "public-key",
+            id: b64uToBuf(credIdB64u)
+          }],
+          userVerification: "required",
+          timeout: 60000
+        };
+
+        const assertion = await navigator.credentials.get({ publicKey });
+        if (!assertion) throw new Error("Autenticazione annullata.");
+
+        // Se arriviamo qui, Face ID/Touch ID ha verificato.
+        document.getElementById('lock-screen').style.display = 'none';
+      } catch (e) {
+        alert("Sblocco non riuscito: " + (e?.message || e));
+      }
+    }
+
+    // ===== Init =====
+    (function init() {
+      document.getElementById('data-lavoro').valueAsDate = new Date();
+
+      // seed settings only if missing
+      if (!localStorage.getItem(LS_PAYMENTS)) setPaymentNames(["POS", "Satispay", "JustEat/Glovo", "App/Web"]);
+      if (!localStorage.getItem(LS_SUPPLIERS)) setSupplierNames([]);
+
+      refreshDatalistSuppliers();
+
+      // seed 1 payment row
+      const payNames = getPaymentNames();
+      if (payNames.length) addPayRow(payNames[0], "");
+
+      calcola();
+      onChangeData();
+
+      // lock: show passkey button if enabled
+      refreshLockPasskeyButton();
+
+      // big numeric keyboard helpers
+      document.getElementById('pin-input').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') checkPin();
+      });
+    })();
   </script>
+
 </body>
 </html>
