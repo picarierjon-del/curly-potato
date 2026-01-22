@@ -477,29 +477,42 @@
       calcola();
     }
 
-    function addRowIVA(btn) {
-      const row = document.createElement('div');
-      row.className = "grid grid-cols-3 gap-2 r-item mt-2";
-      row.innerHTML = `
-        <input type="number" placeholder="Valore" class="r-val !p-2 text-sm font-bold" oninput="calcola()" inputmode="decimal" step="0.01">
-        <select class="r-iva !p-2 text-[10px] font-bold" onchange="calcola()">
-          <option value="22">22%</option>
-          <option value="10" selected>10%</option>
-          <option value="5">5%</option>
-          <option value="4">4%</option>
-          <option value="0">0%</option>
-        </select>
-        <div class="flex gap-2 items-center">
-          <select class="r-tipo !p-2 text-[10px] font-bold bg-blue-50 border-blue-100" onchange="calcola()">
-            <option value="L">LORDO</option>
-            <option value="N">NETTO +</option>
-          </select>
-          <button type="button" onclick="this.closest('.r-item').remove(); calcola()" class="w-10 h-10 bg-red-50 text-red-500 rounded-full font-black flex items-center justify-center">✕</button>
-        </div>
-      `;
-      btn.parentElement.previousElementSibling.appendChild(row);
-    }
+function addRowIVA(btn) {
+  // contenitore delle righe IVA del blocco fornitore
+  const cont = btn.parentElement.previousElementSibling; // .r-cont
 
+  // prendo il tipo (LORDO/NETTO+) dall'ultima riga esistente
+  const lastItem = cont ? cont.querySelector('.r-item:last-child') : null;
+  const lastTipo = lastItem ? (lastItem.querySelector('.r-tipo')?.value || 'L') : 'L';
+
+  const row = document.createElement('div');
+  row.className = "grid grid-cols-3 gap-2 r-item mt-2";
+  row.innerHTML = `
+    <input type="number" placeholder="Valore" class="r-val !p-2 text-sm font-bold" oninput="calcola()" inputmode="decimal" step="0.01">
+    <select class="r-iva !p-2 text-[10px] font-bold" onchange="calcola()">
+      <option value="22">22%</option>
+      <option value="10" selected>10%</option>
+      <option value="5">5%</option>
+      <option value="4">4%</option>
+      <option value="0">0%</option>
+    </select>
+    <div class="flex gap-2 items-center">
+      <select class="r-tipo !p-2 text-[10px] font-bold bg-blue-50 border-blue-100" onchange="calcola()">
+        <option value="L">LORDO</option>
+        <option value="N">NETTO +</option>
+      </select>
+      <button type="button" onclick="this.closest('.r-item').remove(); calcola()" class="w-10 h-10 bg-red-50 text-red-500 rounded-full font-black flex items-center justify-center">✕</button>
+    </div>
+  `;
+
+  cont.appendChild(row);
+
+  // imposto il tipo copiato dalla riga precedente
+  const tipoEl = row.querySelector('.r-tipo');
+  if (tipoEl) tipoEl.value = (lastTipo === 'N') ? 'N' : 'L';
+
+  calcola();
+}
     // ===== Day calc/save/load =====
     function calcola() {
       const lordoZ = fix(parseFloat(document.getElementById('inp-tot').value) || 0);
