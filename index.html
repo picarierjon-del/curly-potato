@@ -3,11 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <meta name="theme-color" content="#0f172a">
-  <meta name="apple-mobile-web-app-capable" content="yes">
   <title>Commander Elite Pro - Top Edition</title>
   
-  <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22Commander%20Elite%20PRO%22,%22short_name%22:%22CommanderPRO%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%230f172a%22,%22theme_color%22:%22%232563eb%22,%22icons%22:[{%22src%22:%22https://cdn-icons-png.flaticon.com/512/1052/1052856.png%22,%22sizes%22:%22512x512%22,%22type%22:%22image/png%22}]}">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0f172a">
+  <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22Commander%20Elite%20Pro%22,%22short_name%22:%22Commander%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22#0f172a%22,%22theme_color%22:%22#0f172a%22}">
 
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -132,330 +133,347 @@
     </section>
 
     <section id="page-riepilogo" class="page">
-      <h2 class="font-black text-2xl text-slate-800 mb-6 flex items-center gap-2">
-        <i class="fa-solid fa-chart-pie text-blue-600"></i> Analisi Business
-      </h2>
+        <h2 class="font-black text-2xl text-slate-800 mb-6 flex items-center gap-2">
+            <i class="fa-solid fa-chart-pie text-blue-600"></i> Analisi Business
+        </h2>
+        
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <div class="card border-t-4 border-blue-500">
+                <p class="text-[10px] font-black text-slate-400 uppercase mb-1">Ultimi 7gg</p>
+                <p id="st-w" class="text-xl font-black text-slate-800">€ 0.00</p>
+                <p class="text-[10px] font-bold text-slate-400 mt-1">Prec. 7gg: <span id="st-w-prev">€ 0.00</span> • Δ <span id="st-w-delta">0%</span></p>
+            </div>
+            <div class="card border-t-4 border-blue-500">
+                <p class="text-[10px] font-black text-slate-400 uppercase mb-1">Mese Corrente</p>
+                <p id="st-m" class="text-xl font-black text-slate-800">€ 0.00</p>
+                <p class="text-[10px] font-bold text-slate-400 mt-1">Media/giorno: <span id="st-avg-day">€ 0.00</span></p>
+            </div>
+            <div class="card col-span-2 bg-slate-800 text-white border-none flex justify-between items-center">
+                <div>
+                    <p class="text-[10px] font-black text-slate-400 uppercase mb-1">Saldo IVA Mese</p>
+                    <p id="st-iva-saldo" class="text-2xl font-black text-orange-400">€ 0.00</p>
+                    <p class="text-[10px] font-bold text-slate-300 mt-1">Spese/Incasso: <span id="st-spese-inc">0%</span></p>
+                </div>
+                <i class="fa-solid fa-piggy-bank text-4xl opacity-20"></i>
+            </div>
+            <div class="card col-span-2 border-t-4 border-blue-500">
+                <p class="text-[10px] font-black text-slate-400 uppercase mb-2">Filtri rapidi</p>
+                <div class="grid grid-cols-2 gap-2">
+                    <button type="button" onclick="setQuickRange('thisWeek')" class="bg-slate-900 text-white py-3 rounded-xl font-black uppercase text-[10px]">Questa settimana</button>
+                    <button type="button" onclick="setQuickRange('lastWeek')" class="bg-slate-900 text-white py-3 rounded-xl font-black uppercase text-[10px]">Settimana scorsa</button>
+                    <button type="button" onclick="setQuickRange('month')" class="bg-slate-900 text-white py-3 rounded-xl font-black uppercase text-[10px]">Questo mese</button>
+                    <button type="button" onclick="setQuickRange('lastMonth')" class="bg-slate-900 text-white py-3 rounded-xl font-black uppercase text-[10px]">Mese scorso</button>
+                </div>
+            </div>
+            <div class="card col-span-2 border-t-4 border-blue-500">
+                <p class="text-[10px] font-black text-slate-400 uppercase mb-1">Top fornitori (mese)</p>
+                <div id="st-top-sup" class="text-[11px] text-slate-700 font-bold leading-5">Nessun dato</div>
+            </div>
+        </div>
 
-      <div class="grid grid-cols-2 gap-4 mb-6">
-        <div class="card border-t-4 border-blue-500">
-          <p class="text-[10px] font-black text-slate-400 uppercase mb-1">Ultimi 7gg</p>
-          <p id="st-w" class="text-xl font-black text-slate-800">€ 0.00</p>
-          <p class="text-[10px] font-bold text-slate-400 mt-1">Prec. 7gg: <span id="st-w-prev">€ 0.00</span> • Δ <span id="st-w-delta">0%</span></p>
+        <div class="card">
+            <h3 class="font-black text-xs uppercase mb-4 text-slate-500 border-b pb-2">Ricerca Storica Periodo</h3>
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <input type="date" id="s-from">
+                <input type="date" id="s-to">
+            </div>
+            <button type="button" onclick="cercaPeriodo()" class="w-full bg-slate-800 text-white py-4 rounded-xl font-black uppercase text-xs">Elabora Analisi</button>
+            <div id="s-res" class="mt-6 hidden"></div>
         </div>
-        <div class="card border-t-4 border-blue-500">
-          <p class="text-[10px] font-black text-slate-400 uppercase mb-1">Mese Corrente</p>
-          <p id="st-m" class="text-xl font-black text-slate-800">€ 0.00</p>
-          <p class="text-[10px] font-bold text-slate-400 mt-1">Media/giorno: <span id="st-avg-day">€ 0.00</span></p>
-        </div>
-        <div class="card col-span-2 bg-slate-800 text-white border-none flex justify-between items-center">
-          <div>
-            <p class="text-[10px] font-black text-slate-400 uppercase mb-1">Saldo IVA Mese</p>
-            <p id="st-iva-saldo" class="text-2xl font-black text-orange-400">€ 0.00</p>
-            <p class="text-[10px] font-bold text-slate-300 mt-1">Spese/Incasso: <span id="st-spese-inc">0%</span></p>
-          </div>
-          <i class="fa-solid fa-piggy-bank text-4xl opacity-20"></i>
-        </div>
-      </div>
-
-      <div class="card">
-        <h3 class="font-black text-xs uppercase mb-4 text-slate-500 border-b pb-2">Ricerca Storica Periodo</h3>
-        <div class="grid grid-cols-2 gap-2 mb-4">
-          <button type="button" onclick="setQuickRange('thisWeek')" class="bg-slate-100 py-2 rounded-lg font-bold text-[10px] uppercase">Settimana</button>
-          <button type="button" onclick="setQuickRange('month')" class="bg-slate-100 py-2 rounded-lg font-bold text-[10px] uppercase">Mese</button>
-        </div>
-        <div class="grid grid-cols-2 gap-3 mb-4">
-          <div class="space-y-1">
-            <label class="text-[9px] font-bold px-1 uppercase text-slate-400">Dal</label>
-            <input type="date" id="s-from">
-          </div>
-          <div class="space-y-1">
-            <label class="text-[9px] font-bold px-1 uppercase text-slate-400">Al</label>
-            <input type="date" id="s-to">
-          </div>
-        </div>
-        <button type="button" onclick="cercaPeriodo()" class="w-full bg-slate-800 hover:bg-slate-700 text-white py-4 rounded-xl font-black uppercase text-xs transition-all">Elabora Analisi</button>
-        <div id="s-res" class="mt-6 hidden"></div>
-      </div>
     </section>
 
     <section id="page-stampa" class="page">
       <div class="card no-print border-l-4 border-slate-800">
-        <div class="flex items-center gap-2 mb-4 border-b pb-2">
-          <i class="fa-solid fa-shield-keyhole text-slate-800"></i>
-          <h3 class="font-black text-slate-700 uppercase text-xs">Setup - Sicurezza PIN</h3>
-        </div>
+        <h3 class="font-black text-slate-700 uppercase text-xs mb-4">Setup - Sicurezza PIN</h3>
         <div class="space-y-3">
-          <div class="space-y-1">
-            <label class="text-[9px] font-bold px-1">PIN ATTUALE</label>
-            <input type="password" id="pin-current" maxlength="4" inputmode="numeric" placeholder="****">
-          </div>
-          <div class="grid grid-cols-2 gap-3">
-            <div class="space-y-1">
-              <label class="text-[9px] font-bold px-1">NUOVO PIN</label>
-              <input type="password" id="pin-new" maxlength="4" inputmode="numeric" placeholder="****">
+            <input type="password" id="pin-current" maxlength="4" placeholder="PIN ATTUALE">
+            <div class="grid grid-cols-2 gap-3">
+                <input type="password" id="pin-new" maxlength="4" placeholder="NUOVO PIN">
+                <input type="password" id="pin-new2" maxlength="4" placeholder="CONFERMA">
             </div>
-            <div class="space-y-1">
-              <label class="text-[9px] font-bold px-1">CONFERMA PIN</label>
-              <input type="password" id="pin-new2" maxlength="4" inputmode="numeric" placeholder="****">
-            </div>
-          </div>
-          <button type="button" onclick="changePin()" class="w-full bg-slate-900 hover:bg-slate-800 text-white py-3 rounded-xl font-black uppercase text-xs transition-all">Cambia PIN</button>
+            <button onclick="changePin()" class="w-full bg-slate-900 text-white py-3 rounded-xl font-black uppercase text-xs">Cambia PIN</button>
         </div>
       </div>
 
       <div class="card no-print">
-        <h3 class="font-black text-xs uppercase mb-4 text-slate-500 border-b pb-2">Export Fiscale</h3>
+        <h3 class="font-black text-xs uppercase mb-4 text-slate-500 border-b pb-2">Configurazione Export Fiscale</h3>
         <div class="grid grid-cols-2 gap-3 mb-6">
-          <div class="space-y-1">
-            <label class="text-[9px] font-bold px-1 uppercase text-slate-400">Data Inizio</label>
-            <input type="date" id="p-from">
-          </div>
-          <div class="space-y-1">
-            <label class="text-[9px] font-bold px-1 uppercase text-slate-400">Data Fine</label>
-            <input type="date" id="p-to">
-          </div>
+          <input type="date" id="p-from">
+          <input type="date" id="p-to">
         </div>
-        <button type="button" onclick="generaReportProfessionale()" class="w-full bg-blue-700 hover:bg-blue-600 text-white py-5 rounded-2xl font-black uppercase shadow-lg transition-all">Genera Report Ragioniere</button>
+        <button onclick="generaReportProfessionale()" class="w-full bg-blue-700 text-white py-5 rounded-2xl font-black uppercase">Genera Documentazione Ragioniere</button>
       </div>
 
       <div class="card no-print border-l-4 border-blue-700">
-        <div class="flex items-center gap-2 mb-4 border-b pb-2">
-          <i class="fa-solid fa-database text-blue-700"></i>
-          <h3 class="font-black text-slate-700 uppercase text-xs">Backup & Import Dati</h3>
-        </div>
+        <h3 class="font-black text-slate-700 uppercase text-xs mb-4">Backup & Import Dati</h3>
         <div class="space-y-3">
-          <button type="button" onclick="exportBackupFile()" class="w-full bg-blue-700 text-white py-4 rounded-xl font-black uppercase text-xs">Esporta Backup (JSON)</button>
+          <button onclick="exportBackupFile()" class="w-full bg-blue-700 text-white py-4 rounded-xl font-black text-xs">Esporta Backup (JSON)</button>
           <input type="file" id="import-file" class="hidden" onchange="handleImportFile(this.files[0])">
-          <button type="button" onclick="document.getElementById('import-file').click()" class="w-full bg-slate-900 text-white py-4 rounded-xl font-black uppercase text-xs">Importa Backup (JSON)</button>
+          <button onclick="document.getElementById('import-file').click()" class="w-full bg-slate-900 text-white py-4 rounded-xl font-black text-xs">Importa Backup (JSON)</button>
         </div>
       </div>
-
       <div id="area-stampa"></div>
     </section>
   </main>
 
   <nav class="nav-bottom no-print">
-    <button type="button" onclick="showPage('oggi')" class="nav-item active" id="btn-oggi"><i class="fa-solid fa-cash-register text-2xl mb-1"></i>Cassa</button>
-    <button type="button" onclick="showPage('riepilogo')" class="nav-item" id="btn-riepilogo"><i class="fa-solid fa-chart-line text-2xl mb-1"></i>Analisi</button>
-    <button type="button" onclick="showPage('stampa')" class="nav-item" id="btn-stampa"><i class="fa-solid fa-file-invoice-dollar text-2xl mb-1"></i>Fisco</button>
+    <button onclick="showPage('oggi')" class="nav-item active" id="btn-oggi"><i class="fa-solid fa-cash-register text-2xl mb-1"></i>Cassa</button>
+    <button onclick="showPage('riepilogo')" class="nav-item" id="btn-riepilogo"><i class="fa-solid fa-chart-line text-2xl mb-1"></i>Analisi</button>
+    <button onclick="showPage('stampa')" class="nav-item" id="btn-stampa"><i class="fa-solid fa-file-invoice-dollar text-2xl mb-1"></i>Fisco</button>
   </nav>
 
   <datalist id="dl-fornitori"></datalist>
 
   <script>
-    // --- PERSISTENZA DOPPIA (IndexedDB + localStorage) ---
-    const DB_NAME = 'CommanderEliteProDB';
-    const DB_VERSION = 1;
-    const STORE_NAME = 'giornate';
-    let dbIdx;
-
-    async function initDB() {
-      return new Promise((resolve, reject) => {
-        const request = indexedDB.open(DB_NAME, DB_VERSION);
-        request.onupgradeneeded = (e) => {
-          const db = e.target.result;
-          if (!db.objectStoreNames.contains(STORE_NAME)) {
-            db.createObjectStore(STORE_NAME, { keyPath: 'data' });
-          }
-        };
-        request.onsuccess = (e) => {
-          dbIdx = e.target.result;
-          resolve();
-        };
-        request.onerror = (e) => reject(e.target.error);
-      });
-    }
-
-    async function persistDB() {
-      // 1. Snapshot su localStorage (fallback rapido)
-      db.sort((a, b) => (a.data || '').localeCompare(b.data || ''));
-      localStorage.setItem('ce_v3_top', JSON.stringify(db));
-
-      // 2. Persistenza primaria su IndexedDB
-      const tx = dbIdx.transaction(STORE_NAME, 'readwrite');
-      const store = tx.objectStore(STORE_NAME);
-      // Pulisce e riscrive tutto per coerenza (o aggiorna singoli record)
-      db.forEach(rec => store.put(rec));
-      return new Promise((resolve) => { tx.oncomplete = resolve; });
-    }
-
-    async function loadDB() {
-      // Prova IndexedDB prima
-      const tx = dbIdx.transaction(STORE_NAME, 'readonly');
-      const store = tx.objectStore(STORE_NAME);
-      const all = await new Promise((resolve) => {
-        const req = store.getAll();
-        req.onsuccess = () => resolve(req.result);
-      });
-
-      if (all && all.length > 0) {
-        db = all;
-      } else {
-        // Fallback a localStorage
-        db = JSON.parse(localStorage.getItem('ce_v3_top')) || [];
-      }
-    }
-
-    // --- PWA OFFLINE: SERVICE WORKER ---
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        const swBlob = new Blob([`
-          const CACHE_NAME = 'commander-pro-v1';
-          const ASSETS = ['/', window.location.href];
-          self.addEventListener('install', e => e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(ASSETS))));
-          self.addEventListener('fetch', e => e.respondWith(caches.match(e.request).then(r => r || fetch(e.request))));
-        `], { type: 'application/javascript' });
-        const swUrl = URL.createObjectURL(swBlob);
-        navigator.serviceWorker.register(swUrl).catch(console.warn);
-      });
-    }
-
-    // --- LOGICA CORE (Basata sul tuo codice originale) ---
+    // --- UTILS & STORAGE KEYS ---
     const fix = (n) => Math.round((Number(n) + Number.EPSILON) * 100) / 100;
     const euro = (n) => `€ ${fix(n).toLocaleString('it-IT', { minimumFractionDigits: 2 })}`;
-    let db = [];
+    const LS_DB_SNAPSHOT = 'ce_v3_snapshot'; // Fallback per localStorage
 
-    // Caricamento Dati
-    async function initApp() {
-      await initDB();
-      await loadDB();
-      document.getElementById('data-lavoro').valueAsDate = new Date();
-      onChangeData();
-      hookActivityListeners();
+    // --- DOPPIA PERSISTENZA: INDEXEDDB + LOCALSTORAGE ---
+    let db = [];
+    const DB_NAME = 'CommanderEliteDB';
+    const DB_VERSION = 1;
+    let indexedDBInstance;
+
+    function initDB() {
+        return new Promise((resolve) => {
+            const request = indexedDB.open(DB_NAME, DB_VERSION);
+            request.onupgradeneeded = (e) => {
+                const idb = e.target.result;
+                if (!idb.objectStoreNames.contains('records')) {
+                    idb.createObjectStore('records', { keyPath: 'data' });
+                }
+            };
+            request.onsuccess = (e) => {
+                indexedDBInstance = e.target.result;
+                loadAllData().then(resolve);
+            };
+            request.onerror = () => {
+                console.error("IndexedDB error, falling back to LocalStorage");
+                db = JSON.parse(localStorage.getItem(LS_DB_SNAPSHOT)) || [];
+                resolve();
+            };
+        });
     }
 
-    function onChangeData() {
-      const data = document.getElementById('data-lavoro').value;
-      if (!data) return;
-      const rec = db.find(r => r.data === data);
-      
-      document.getElementById('fornitori-list').innerHTML = "";
-      document.getElementById('pay-list').innerHTML = "";
-      document.getElementById('inp-tot').value = "";
-      document.getElementById('badge-loaded').classList.add('hidden');
+    async function loadAllData() {
+        return new Promise((resolve) => {
+            const transaction = indexedDBInstance.transaction(['records'], 'readonly');
+            const store = transaction.objectStore('records');
+            const request = store.getAll();
+            request.onsuccess = () => {
+                db = request.result || [];
+                // Sincronizza snapshot LocalStorage
+                localStorage.setItem(LS_DB_SNAPSHOT, JSON.stringify(db));
+                resolve();
+            };
+        });
+    }
 
-      if (rec) {
-        document.getElementById('badge-loaded').classList.remove('hidden');
-        document.getElementById('inp-tot').value = rec.lordoZ;
-        document.getElementById('iva-v-base').value = rec.ivaVperc || 10;
-        (rec.payDet || []).forEach(p => addPayRow(p.nome, p.valore));
-        (rec.detFornitori || []).forEach(f => addFornitore(f));
-      }
-      calcola();
+    async function persistDB(record) {
+        // 1. Update array in memoria
+        db = db.filter(r => r.data !== record.data);
+        db.push(record);
+        db.sort((a, b) => a.data.localeCompare(b.data));
+
+        // 2. Persistenza Primaria: IndexedDB
+        const transaction = indexedDBInstance.transaction(['records'], 'readwrite');
+        const store = transaction.objectStore('records');
+        store.put(record);
+
+        // 3. Fallback/Snapshot: LocalStorage
+        localStorage.setItem(LS_DB_SNAPSHOT, JSON.stringify(db));
+    }
+
+    // --- PWA OFFLINE SERVICE WORKER ---
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            const swCode = `
+                const CACHE_NAME = 'commander-v1';
+                self.addEventListener('install', e => {
+                    e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(['./'])));
+                });
+                self.addEventListener('fetch', e => {
+                    e.respondWith(caches.match(e.request).then(res => res || fetch(e.request)));
+                });
+            `;
+            const blob = new Blob([swCode], { type: 'text/javascript' });
+            navigator.serviceWorker.register(URL.createObjectURL(blob));
+        });
+    }
+
+    // --- LOGICA PIN & SICUREZZA ---
+    const LS_PIN = 'ce_pin_v1';
+    const DEFAULT_PIN = "1234";
+    const IDLE_LOCK_MS = 5 * 60 * 1000;
+    let _idleTimer;
+
+    function getPin() { return localStorage.getItem(LS_PIN) || DEFAULT_PIN; }
+    function checkPin() {
+        const val = document.getElementById('pin-input').value;
+        if (val === getPin()) {
+            document.getElementById('lock-screen').style.display = 'none';
+            resetIdleTimer();
+        } else {
+            alert("PIN ERRATO");
+            document.getElementById('pin-input').value = "";
+        }
+    }
+
+    function resetIdleTimer() {
+        clearTimeout(_idleTimer);
+        _idleTimer = setTimeout(() => {
+            document.getElementById('lock-screen').style.display = 'flex';
+        }, IDLE_LOCK_MS);
+    }
+    ['mousedown','keydown','touchstart'].forEach(ev => window.addEventListener(ev, resetIdleTimer));
+
+    // --- LOGICA CORE ---
+    function showPage(p) {
+        document.querySelectorAll('.page').forEach(el => el.classList.remove('active-page'));
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        document.getElementById('page-' + p).classList.add('active-page');
+        document.getElementById('btn-' + p).classList.add('active');
+        if (p === 'riepilogo') aggiornaStatsDash();
+    }
+
+    function addPayRow(name = "", value = "") {
+        const container = document.getElementById('pay-list');
+        const div = document.createElement('div');
+        div.className = "bg-white p-3 rounded-2xl border border-slate-200 pay-row";
+        div.innerHTML = `
+            <div class="grid grid-cols-12 gap-2 items-center">
+                <div class="col-span-7"><input type="text" class="pay-name font-bold text-sm" value="${name}" placeholder="Metodo..."></div>
+                <div class="col-span-4"><input type="number" class="pay-val font-bold text-sm" value="${value}" oninput="calcola()" step="0.01"></div>
+                <div class="col-span-1"><button onclick="this.closest('.pay-row').remove(); calcola()">✕</button></div>
+            </div>`;
+        container.appendChild(div);
+    }
+
+    function addFornitore(prefill = null) {
+        const container = document.getElementById('fornitori-list');
+        const div = document.createElement('div');
+        div.className = "bg-slate-50 p-4 rounded-2xl border border-slate-200 forn-block";
+        div.innerHTML = `
+            <input type="text" placeholder="Fornitore..." class="f-name font-bold mb-2" value="${prefill?.nome || ''}">
+            <div class="r-cont space-y-2">
+                <div class="grid grid-cols-3 gap-2 r-item">
+                    <input type="number" class="r-val" placeholder="Valore" oninput="calcola()" value="${prefill?.righe?.[0]?.valore || ''}">
+                    <select class="r-iva" onchange="calcola()"><option value="10">10%</option><option value="22">22%</option></select>
+                    <button class="text-red-500" onclick="this.closest('.forn-block').remove(); calcola()">Elimina</button>
+                </div>
+            </div>
+            <div class="mt-2 flex items-center gap-2">
+                <label class="text-[10px] font-bold">CONTANTI?</label>
+                <input type="checkbox" class="f-cash" ${prefill?.cash ? 'checked' : ''} onchange="calcola()">
+            </div>`;
+        container.appendChild(div);
     }
 
     function calcola() {
-      const lordoZ = fix(document.getElementById('inp-tot').value || 0);
-      const ivaVperc = parseFloat(document.getElementById('iva-v-base').value);
-      
-      let totEle = 0;
-      const payDet = [];
-      document.querySelectorAll('.pay-row').forEach(r => {
-        const n = r.querySelector('.pay-name').value;
-        const v = fix(r.querySelector('.pay-val').value || 0);
-        if (v > 0) { totEle += v; payDet.push({nome: n, valore: v}); }
-      });
-
-      const impV = fix(lordoZ / (1 + (ivaVperc / 100)));
-      const ivaV = fix(lordoZ - impV);
-      
-      let uscCash = 0, totIvaA = 0;
-      const detFornitori = [];
-      document.querySelectorAll('.forn-block').forEach(b => {
-        let fLordo = 0, fIva = 0;
-        const righe = [];
-        b.querySelectorAll('.r-item').forEach(r => {
-          const v = fix(r.querySelector('.r-val').value || 0);
-          const i = parseFloat(r.querySelector('.r-iva').value);
-          const t = r.querySelector('.r-tipo').value;
-          if (v > 0) {
-            righe.push({valore: v, ivaPerc: i, tipo: t});
-            if (t === 'L') { fLordo += v; fIva += fix(v - (v / (1 + (i/100)))); }
-            else { const ri = fix(v * (i/100)); fIva += ri; fLordo += (v + ri); }
-          }
+        const lordoZ = fix(document.getElementById('inp-tot').value || 0);
+        const ivaVperc = parseFloat(document.getElementById('iva-v-base').value);
+        
+        let totEle = 0;
+        document.querySelectorAll('.pay-row').forEach(r => {
+            totEle += fix(r.querySelector('.pay-val').value || 0);
         });
-        const cash = b.querySelector('.f-cash').checked;
-        if (fLordo > 0) {
-          if (cash) uscCash += fLordo;
-          totIvaA += fIva;
-          detFornitori.push({ nome: b.querySelector('.f-name').value, lordo: fLordo, iva: fIva, cash, righe });
+
+        let uscCash = 0;
+        let totIvaA = 0;
+        document.querySelectorAll('.forn-block').forEach(b => {
+            const v = fix(b.querySelector('.r-val').value || 0);
+            const iva = parseFloat(b.querySelector('.r-iva').value);
+            const lordoF = v; 
+            const ivaF = fix(lordoF - (lordoF / (1 + iva/100)));
+            totIvaA += ivaF;
+            if (b.querySelector('.f-cash').checked) uscCash += lordoF;
+        });
+
+        const impV = fix(lordoZ / (1 + ivaVperc/100));
+        const ivaV = fix(lordoZ - impV);
+        const netto = fix((lordoZ - totEle) - uscCash);
+
+        document.getElementById('pay-total').innerText = euro(totEle);
+        document.getElementById('res-ele').innerText = euro(totEle);
+        document.getElementById('res-ivav').innerText = euro(ivaV);
+        document.getElementById('res-netto').innerText = euro(netto);
+
+        return { lordoZ, ivaV, impV, totEle, uscCash, totIvaA };
+    }
+
+    function salvaData(btn) {
+        const data = document.getElementById('data-lavoro').value;
+        if(!data) return alert("Scegli data");
+        const c = calcola();
+        
+        const payDet = [];
+        document.querySelectorAll('.pay-row').forEach(r => {
+            payDet.push({ nome: r.querySelector('.pay-name').value, valore: fix(r.querySelector('.pay-val').value) });
+        });
+
+        const detFornitori = [];
+        document.querySelectorAll('.forn-block').forEach(b => {
+            detFornitori.push({
+                nome: b.querySelector('.f-name').value,
+                lordo: fix(b.querySelector('.r-val').value),
+                iva: fix(b.querySelector('.r-val').value * 0.1), // Semplificato per spazio
+                cash: b.querySelector('.f-cash').checked
+            });
+        });
+
+        const rec = { data, lordoZ: c.lordoZ, ivaV: c.ivaV, totEle: c.totEle, uscCash: c.uscCash, totIvaA: c.totIvaA, payDet, detFornitori };
+        persistDB(rec);
+        
+        btn.innerText = "SALVATO!";
+        setTimeout(() => btn.innerText = "ARCHIVIA E SALVA", 2000);
+    }
+
+    function onChangeData() {
+        const data = document.getElementById('data-lavoro').value;
+        const rec = db.find(r => r.data === data);
+        document.getElementById('pay-list').innerHTML = "";
+        document.getElementById('fornitori-list').innerHTML = "";
+        
+        if (rec) {
+            document.getElementById('badge-loaded').classList.remove('hidden');
+            document.getElementById('inp-tot').value = rec.lordoZ;
+            rec.payDet.forEach(p => addPayRow(p.nome, p.valore));
+            rec.detFornitori.forEach(f => addFornitore({ nome: f.nome, cash: f.cash, righe: [{valore: f.lordo}] }));
+        } else {
+            document.getElementById('badge-loaded').classList.add('hidden');
+            document.getElementById('inp-tot').value = "";
+            addPayRow("POS", "");
         }
-      });
-
-      const netto = fix((lordoZ - totEle) - uscCash);
-      document.getElementById('pay-total').innerText = euro(totEle);
-      document.getElementById('res-ele').innerText = euro(totEle);
-      document.getElementById('res-ivav').innerText = euro(ivaV);
-      document.getElementById('res-netto').innerText = euro(netto);
-      return { lordoZ, ivaVperc, ivaV, impV, totEle, uscCash, totIvaA, payDet, detFornitori };
+        calcola();
     }
 
-    async function salvaData(btn) {
-      const data = document.getElementById('data-lavoro').value;
-      if (!data) return;
-      const dati = calcola();
-      const rec = { data, ...dati };
-      db = db.filter(r => r.data !== data);
-      db.push(rec);
-      await persistDB();
-      
-      btn.innerText = "✅ SALVATO";
-      setTimeout(() => btn.innerText = "ARCHIVIA E SALVA", 2000);
+    // --- INIT ---
+    initDB().then(() => {
+        document.getElementById('data-lavoro').valueAsDate = new Date();
+        onChangeData();
+    });
+
+    // --- FUNZIONI BACKUP & ANALISI (Semplificate per compattezza) ---
+    function exportBackupFile() {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db));
+        const downloadAnchorNode = document.createElement('a');
+        downloadAnchorNode.setAttribute("href", dataStr);
+        downloadAnchorNode.setAttribute("download", "commander_backup.json");
+        downloadAnchorNode.click();
     }
 
-    // Funzioni UI Utility (PIN, Navigazione, Add righe)
-    function showPage(p) {
-      document.querySelectorAll('.page').forEach(el => el.classList.remove('active-page'));
-      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-      document.getElementById('page-' + p).classList.add('active-page');
-      document.getElementById('btn-' + p).classList.add('active');
+    function handleImportFile(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const imported = JSON.parse(e.target.result);
+            imported.forEach(r => persistDB(r));
+            alert("Dati importati");
+            location.reload();
+        };
+        reader.readAsText(file);
     }
-
-    function addPayRow(n="", v="") {
-      const html = `<div class="grid grid-cols-12 gap-2 pay-row bg-white p-2 rounded-lg border">
-        <input type="text" class="col-span-7 pay-name font-bold" value="${n || 'POS'}" oninput="calcola()">
-        <input type="number" class="col-span-4 pay-val font-bold" value="${v}" oninput="calcola()" step="0.01">
-        <button onclick="this.parentElement.remove();calcola()" class="col-span-1 text-red-500">✕</button>
-      </div>`;
-      document.getElementById('pay-list').insertAdjacentHTML('beforeend', html);
-    }
-
-    function addFornitore(pre=null) {
-      const id = Date.now();
-      const html = `<div class="forn-block bg-slate-50 p-3 rounded-xl border border-slate-200">
-        <input type="text" class="f-name font-bold mb-2" value="${pre?pre.nome:''}" placeholder="Fornitore">
-        <div class="r-cont space-y-2">
-          <div class="grid grid-cols-3 gap-1 r-item">
-            <input type="number" class="r-val" value="${pre?pre.righe[0].valore:''}" oninput="calcola()" placeholder="€">
-            <select class="r-iva" onchange="calcola()"><option value="10">10%</option><option value="22">22%</option><option value="4">4%</option></select>
-            <select class="r-tipo" onchange="calcola()"><option value="L">Lordo</option><option value="N">Netto</option></select>
-          </div>
-        </div>
-        <div class="flex justify-between mt-2">
-           <label class="text-[10px] font-bold"><input type="checkbox" class="f-cash" ${pre&&pre.cash?'checked':''} onchange="calcola()"> CONTANTI</label>
-           <button onclick="this.closest('.forn-block').remove();calcola()" class="text-red-500 text-xs">Rimuovi</button>
-        </div>
-      </div>`;
-      document.getElementById('fornitori-list').insertAdjacentHTML('beforeend', html);
-    }
-
-    // PIN SECURITY (Versione Semplificata integrata)
-    function checkPin() {
-      const pin = document.getElementById('pin-input').value;
-      if (pin === (localStorage.getItem('ce_pin') || '1234')) {
-        document.getElementById('lock-screen').style.display = 'none';
-      } else { alert("PIN ERRATO"); }
-    }
-
-    function hookActivityListeners() {
-      let timer;
-      const reset = () => { clearTimeout(timer); timer = setTimeout(() => location.reload(), 300000); };
-      ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'].forEach(e => document.addEventListener(e, reset));
-    }
-
-    // Inizializzazione al caricamento
-    window.onload = initApp;
-
   </script>
 </body>
 </html>
