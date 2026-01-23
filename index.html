@@ -4,12 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Commander Elite Pro - Top Edition</title>
-  
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="theme-color" content="#0f172a">
-  <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22Commander%20Elite%20Pro%22,%22short_name%22:%22Commander%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22#0f172a%22,%22theme_color%22:%22#0f172a%22}">
-
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
@@ -35,6 +29,7 @@
 </head>
 <body>
 
+  <!-- LOCK -->
   <div id="lock-screen">
     <div class="text-center mb-8">
       <i class="fa-solid fa-shield-halved text-5xl text-blue-500 mb-4"></i>
@@ -48,7 +43,7 @@
 
   <header class="bg-white/80 backdrop-blur-md border-b sticky top-0 z-50 p-4 no-print flex justify-between items-center">
     <div class="flex items-center gap-2">
-      <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-black italic">C</div>
+      <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-content-center text-white font-black italic flex items-center justify-center">C</div>
       <h1 class="font-black text-slate-800 uppercase tracking-tight text-lg">Commander <span class="text-blue-600">Elite</span></h1>
     </div>
     <button type="button" onclick="location.reload()" class="w-10 h-10 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center">
@@ -58,7 +53,9 @@
 
   <main class="max-w-2xl mx-auto p-4">
 
+    <!-- PAGINA OGGI -->
     <section id="page-oggi" class="page active-page">
+
       <div class="card bg-gradient-to-r from-blue-600 to-blue-800 border-none">
         <label class="text-[10px] font-black text-blue-100 uppercase mb-1 block">Data Operativa</label>
         <input type="date" id="data-lavoro" class="bg-white/10 border-none text-white font-bold text-lg cursor-pointer" onchange="onChangeData()">
@@ -70,11 +67,13 @@
           <i class="fa-solid fa-receipt text-blue-600"></i>
           <h3 class="font-black text-slate-700 uppercase text-xs">Incassi e Corrispettivi</h3>
         </div>
+
         <div class="space-y-4">
           <div>
             <label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Totale Chiusura Z (Lordo)</label>
             <input type="number" id="inp-tot" placeholder="0.00" class="text-3xl font-black text-slate-800" oninput="calcola()" inputmode="decimal" step="0.01">
           </div>
+
           <div>
             <label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Aliquota IVA Vendite</label>
             <select id="iva-v-base" onchange="calcola()" class="font-bold bg-slate-50">
@@ -83,6 +82,8 @@
               <option value="4">IVA 4% (Alimentari)</option>
             </select>
           </div>
+
+          <!-- Pagamenti elettronici dinamici -->
           <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4">
             <div class="flex justify-between items-center mb-3">
               <div class="flex items-center gap-2">
@@ -91,12 +92,15 @@
               </div>
               <button type="button" onclick="addPayRow()" class="bg-slate-900 text-white px-4 py-2 rounded-xl text-[10px] font-black shadow-sm">+ AGGIUNGI</button>
             </div>
+
             <div id="pay-list" class="space-y-2"></div>
+
             <div class="mt-3 text-[10px] font-bold uppercase text-slate-500 flex justify-between border-t border-slate-200 pt-3">
               <span>Totale elettronico</span>
               <span id="pay-total">€ 0,00</span>
             </div>
           </div>
+
         </div>
       </div>
 
@@ -122,358 +126,1877 @@
             <p id="res-ivav" class="text-xl font-bold text-orange-400">€ 0,00</p>
           </div>
         </div>
+
         <div class="bg-white/5 p-4 rounded-2xl flex justify-between items-center border border-white/10">
           <span class="font-black text-green-400 uppercase tracking-wider">Netto Contanti</span>
           <span id="res-netto" class="text-3xl font-black text-green-400 tracking-tighter">€ 0,00</span>
         </div>
+
         <button type="button" onclick="salvaData(this)" class="w-full mt-6 bg-blue-600 hover:bg-blue-500 py-5 rounded-2xl font-black uppercase text-sm tracking-widest shadow-lg shadow-blue-900/20 active:scale-95 transition-all">
           Archivia e Salva
         </button>
       </div>
+
     </section>
 
+    <!-- PAGINA RIEPILOGO -->
     <section id="page-riepilogo" class="page">
-        <h2 class="font-black text-2xl text-slate-800 mb-6 flex items-center gap-2">
-            <i class="fa-solid fa-chart-pie text-blue-600"></i> Analisi Business
-        </h2>
-        
-        <div class="grid grid-cols-2 gap-4 mb-6">
-            <div class="card border-t-4 border-blue-500">
-                <p class="text-[10px] font-black text-slate-400 uppercase mb-1">Ultimi 7gg</p>
-                <p id="st-w" class="text-xl font-black text-slate-800">€ 0.00</p>
-                <p class="text-[10px] font-bold text-slate-400 mt-1">Prec. 7gg: <span id="st-w-prev">€ 0.00</span> • Δ <span id="st-w-delta">0%</span></p>
-            </div>
-            <div class="card border-t-4 border-blue-500">
-                <p class="text-[10px] font-black text-slate-400 uppercase mb-1">Mese Corrente</p>
-                <p id="st-m" class="text-xl font-black text-slate-800">€ 0.00</p>
-                <p class="text-[10px] font-bold text-slate-400 mt-1">Media/giorno: <span id="st-avg-day">€ 0.00</span></p>
-            </div>
-            <div class="card col-span-2 bg-slate-800 text-white border-none flex justify-between items-center">
-                <div>
-                    <p class="text-[10px] font-black text-slate-400 uppercase mb-1">Saldo IVA Mese</p>
-                    <p id="st-iva-saldo" class="text-2xl font-black text-orange-400">€ 0.00</p>
-                    <p class="text-[10px] font-bold text-slate-300 mt-1">Spese/Incasso: <span id="st-spese-inc">0%</span></p>
-                </div>
-                <i class="fa-solid fa-piggy-bank text-4xl opacity-20"></i>
-            </div>
-            <div class="card col-span-2 border-t-4 border-blue-500">
-                <p class="text-[10px] font-black text-slate-400 uppercase mb-2">Filtri rapidi</p>
-                <div class="grid grid-cols-2 gap-2">
-                    <button type="button" onclick="setQuickRange('thisWeek')" class="bg-slate-900 text-white py-3 rounded-xl font-black uppercase text-[10px]">Questa settimana</button>
-                    <button type="button" onclick="setQuickRange('lastWeek')" class="bg-slate-900 text-white py-3 rounded-xl font-black uppercase text-[10px]">Settimana scorsa</button>
-                    <button type="button" onclick="setQuickRange('month')" class="bg-slate-900 text-white py-3 rounded-xl font-black uppercase text-[10px]">Questo mese</button>
-                    <button type="button" onclick="setQuickRange('lastMonth')" class="bg-slate-900 text-white py-3 rounded-xl font-black uppercase text-[10px]">Mese scorso</button>
-                </div>
-            </div>
-            <div class="card col-span-2 border-t-4 border-blue-500">
-                <p class="text-[10px] font-black text-slate-400 uppercase mb-1">Top fornitori (mese)</p>
-                <div id="st-top-sup" class="text-[11px] text-slate-700 font-bold leading-5">Nessun dato</div>
-            </div>
-        </div>
+      <h2 class="font-black text-2xl text-slate-800 mb-6 flex items-center gap-2">
+        <i class="fa-solid fa-chart-pie text-blue-600"></i> Analisi Business
+      </h2>
 
-        <div class="card">
-            <h3 class="font-black text-xs uppercase mb-4 text-slate-500 border-b pb-2">Ricerca Storica Periodo</h3>
-            <div class="grid grid-cols-2 gap-3 mb-4">
-                <input type="date" id="s-from">
-                <input type="date" id="s-to">
-            </div>
-            <button type="button" onclick="cercaPeriodo()" class="w-full bg-slate-800 text-white py-4 rounded-xl font-black uppercase text-xs">Elabora Analisi</button>
-            <div id="s-res" class="mt-6 hidden"></div>
+   <!-- DAL: DASHBOARD ANALISI PRO -->
+<!-- DAL: DASHBOARD ANALISI PRO (con settimane) -->
+<div class="grid grid-cols-2 gap-4 mb-6">
+
+  <div class="card border-t-4 border-blue-500">
+    <p class="text-[10px] font-black text-slate-400 uppercase mb-1">Ultimi 7gg</p>
+    <p id="st-w" class="text-xl font-black text-slate-800">€ 0.00</p>
+    <p class="text-[10px] font-bold text-slate-400 mt-1">
+      Prec. 7gg: <span id="st-w-prev">€ 0.00</span> • Δ <span id="st-w-delta">0%</span>
+    </p>
+  </div>
+
+  <div class="card border-t-4 border-blue-500">
+    <p class="text-[10px] font-black text-slate-400 uppercase mb-1">Mese Corrente</p>
+    <p id="st-m" class="text-xl font-black text-slate-800">€ 0.00</p>
+    <p class="text-[10px] font-bold text-slate-400 mt-1">
+      Media/giorno: <span id="st-avg-day">€ 0.00</span>
+    </p>
+  </div>
+
+  <div class="card col-span-2 bg-slate-800 text-white border-none flex justify-between items-center">
+    <div>
+      <p class="text-[10px] font-black text-slate-400 uppercase mb-1">Saldo IVA Mese</p>
+      <p id="st-iva-saldo" class="text-2xl font-black text-orange-400">€ 0.00</p>
+      <p class="text-[10px] font-bold text-slate-300 mt-1">
+        Spese/Incasso: <span id="st-spese-inc">0%</span>
+      </p>
+    </div>
+    <i class="fa-solid fa-piggy-bank text-4xl opacity-20"></i>
+  </div>
+
+  <div class="card col-span-2 border-t-4 border-blue-500">
+    <p class="text-[10px] font-black text-slate-400 uppercase mb-2">Filtri rapidi</p>
+
+    <div class="grid grid-cols-2 gap-2">
+      <button type="button" onclick="setQuickRange('thisWeek')" class="bg-slate-900 hover:bg-slate-800 text-white py-3 rounded-xl font-black uppercase text-[10px]">Questa settimana</button>
+      <button type="button" onclick="setQuickRange('lastWeek')" class="bg-slate-900 hover:bg-slate-800 text-white py-3 rounded-xl font-black uppercase text-[10px]">Settimana scorsa</button>
+
+      <button type="button" onclick="setQuickRange('month')" class="bg-slate-900 hover:bg-slate-800 text-white py-3 rounded-xl font-black uppercase text-[10px]">Questo mese</button>
+      <button type="button" onclick="setQuickRange('lastMonth')" class="bg-slate-900 hover:bg-slate-800 text-white py-3 rounded-xl font-black uppercase text-[10px]">Mese scorso</button>
+
+      <button type="button" onclick="setQuickRange('last30')" class="bg-slate-900 hover:bg-slate-800 text-white py-3 rounded-xl font-black uppercase text-[10px]">Ultimi 30</button>
+      <button type="button" onclick="setQuickRange('last90')" class="bg-slate-900 hover:bg-slate-800 text-white py-3 rounded-xl font-black uppercase text-[10px]">Ultimi 90</button>
+    </div>
+
+    <p class="text-[11px] text-slate-500 mt-3 leading-4">
+      Imposta automaticamente DAL/AL e lancia l’analisi del periodo.
+    </p>
+  </div>
+
+  <div class="card col-span-2 border-t-4 border-blue-500">
+    <p class="text-[10px] font-black text-slate-400 uppercase mb-1">Top fornitori (mese)</p>
+    <div id="st-top-sup" class="text-[11px] text-slate-700 font-bold leading-5">
+      Nessun dato
+    </div>
+  </div>
+
+</div>
+<!-- AL: DASHBOARD ANALISI PRO (con settimane) -->
+      <div class="card">
+        <h3 class="font-black text-xs uppercase mb-4 text-slate-500 border-b pb-2">Ricerca Storica Periodo</h3>
+        <div class="grid grid-cols-2 gap-3 mb-4">
+          <div class="space-y-1">
+            <label class="text-[9px] font-bold px-1">DAL</label>
+            <input type="date" id="s-from">
+          </div>
+          <div class="space-y-1">
+            <label class="text-[9px] font-bold px-1">AL</label>
+            <input type="date" id="s-to">
+          </div>
         </div>
+        <button type="button" onclick="cercaPeriodo()" class="w-full bg-slate-800 hover:bg-slate-700 text-white py-4 rounded-xl font-black uppercase text-xs transition-all">
+          Elabora Analisi
+        </button>
+        <div id="s-res" class="mt-6 hidden"></div>
+      </div>
     </section>
 
+    <!-- PAGINA STAMPA / SETUP -->
     <section id="page-stampa" class="page">
-      <div class="card no-print border-l-4 border-slate-800">
-        <h3 class="font-black text-slate-700 uppercase text-xs mb-4">Setup - Sicurezza PIN</h3>
-        <div class="space-y-3">
-            <input type="password" id="pin-current" maxlength="4" placeholder="PIN ATTUALE">
-            <div class="grid grid-cols-2 gap-3">
-                <input type="password" id="pin-new" maxlength="4" placeholder="NUOVO PIN">
-                <input type="password" id="pin-new2" maxlength="4" placeholder="CONFERMA">
-            </div>
-            <button onclick="changePin()" class="w-full bg-slate-900 text-white py-3 rounded-xl font-black uppercase text-xs">Cambia PIN</button>
-        </div>
-      </div>
+<!-- DAL: SETUP PIN -->
+<div class="card no-print border-l-4 border-slate-800">
+  <div class="flex items-center gap-2 mb-4 border-b pb-2">
+    <i class="fa-solid fa-shield-keyhole text-slate-800"></i>
+    <h3 class="font-black text-slate-700 uppercase text-xs">Setup - Sicurezza PIN</h3>
+  </div>
 
+  <div class="space-y-3">
+    <div class="space-y-1">
+      <label class="text-[9px] font-bold px-1">PIN ATTUALE</label>
+      <input type="password" id="pin-current" maxlength="4" inputmode="numeric" placeholder="****">
+    </div>
+
+    <div class="grid grid-cols-2 gap-3">
+      <div class="space-y-1">
+        <label class="text-[9px] font-bold px-1">NUOVO PIN</label>
+        <input type="password" id="pin-new" maxlength="4" inputmode="numeric" placeholder="****">
+      </div>
+      <div class="space-y-1">
+        <label class="text-[9px] font-bold px-1">CONFERMA PIN</label>
+        <input type="password" id="pin-new2" maxlength="4" inputmode="numeric" placeholder="****">
+      </div>
+    </div>
+
+    <button type="button" onclick="changePin()" class="w-full bg-slate-900 hover:bg-slate-800 text-white py-3 rounded-xl font-black uppercase text-xs transition-all">
+      Cambia PIN
+    </button>
+
+    <button type="button" onclick="resetPinToDefault()" class="w-full bg-red-600 hover:bg-red-500 text-white py-3 rounded-xl font-black uppercase text-xs transition-all">
+      Reset PIN (1234)
+    </button>
+
+    <p class="text-[11px] text-slate-500 leading-4">
+      Blocco automatico dopo 5 minuti di inattività. Blocco per 5 minuti dopo 5 tentativi errati.
+    </p>
+  </div>
+</div>
+<!-- AL: SETUP PIN -->
       <div class="card no-print">
         <h3 class="font-black text-xs uppercase mb-4 text-slate-500 border-b pb-2">Configurazione Export Fiscale</h3>
         <div class="grid grid-cols-2 gap-3 mb-6">
-          <input type="date" id="p-from">
-          <input type="date" id="p-to">
+          <div class="space-y-1">
+            <label class="text-[9px] font-bold px-1">DATA INIZIO</label>
+            <input type="date" id="p-from">
+          </div>
+          <div class="space-y-1">
+            <label class="text-[9px] font-bold px-1">DATA FINE</label>
+            <input type="date" id="p-to">
+          </div>
         </div>
-        <button onclick="generaReportProfessionale()" class="w-full bg-blue-700 text-white py-5 rounded-2xl font-black uppercase">Genera Documentazione Ragioniere</button>
+        <button type="button" onclick="generaReportProfessionale()" class="w-full bg-blue-700 hover:bg-blue-600 text-white py-5 rounded-2xl font-black uppercase shadow-lg shadow-blue-200 transition-all">
+          Genera Documentazione Ragioniere
+        </button>
       </div>
 
-      <div class="card no-print border-l-4 border-blue-700">
-        <h3 class="font-black text-slate-700 uppercase text-xs mb-4">Backup & Import Dati</h3>
-        <div class="space-y-3">
-          <button onclick="exportBackupFile()" class="w-full bg-blue-700 text-white py-4 rounded-xl font-black text-xs">Esporta Backup (JSON)</button>
-          <input type="file" id="import-file" class="hidden" onchange="handleImportFile(this.files[0])">
-          <button onclick="document.getElementById('import-file').click()" class="w-full bg-slate-900 text-white py-4 rounded-xl font-black text-xs">Importa Backup (JSON)</button>
+      <!-- SETUP: pagamenti elettronici e fornitori fissi -->
+      <div class="card no-print border-l-4 border-slate-800">
+        <div class="flex items-center gap-2 mb-4 border-b pb-2">
+          <i class="fa-solid fa-gear text-slate-800"></i>
+          <h3 class="font-black text-slate-700 uppercase text-xs">Setup - Liste Base</h3>
+        </div>
+
+        <div class="space-y-5">
+          <div>
+            <label class="text-[10px] font-black text-slate-500 uppercase block mb-2">Pagamenti elettronici (uno per riga)</label>
+            <textarea id="setup-payments" rows="5" class="font-bold bg-slate-50" placeholder="Es: POS&#10;Satispay&#10;JustEat&#10;Glovo&#10;App/Web"></textarea>
+            <button type="button" onclick="savePaymentsSettings()" class="mt-3 w-full bg-slate-900 hover:bg-slate-800 text-white py-3 rounded-xl font-black uppercase text-xs transition-all">
+              Salva pagamenti
+            </button>
+          </div>
+
+          <div>
+            <label class="text-[10px] font-black text-slate-500 uppercase block mb-2">Fornitori fissi (uno per riga)</label>
+            <textarea id="setup-suppliers" rows="6" class="font-bold bg-slate-50" placeholder="Es: Metro&#10;Carrefour&#10;Acqua e Bevande SRL&#10;Servizi Tecnici"></textarea>
+            <button type="button" onclick="saveSuppliersSettings()" class="mt-3 w-full bg-slate-900 hover:bg-slate-800 text-white py-3 rounded-xl font-black uppercase text-xs transition-all">
+              Salva fornitori
+            </button>
+          </div>
         </div>
       </div>
+
+      <!-- SETUP: cancellazione range -->
+      <div class="card no-print border-l-4 border-slate-800">
+        <div class="flex items-center gap-2 mb-4 border-b pb-2">
+          <i class="fa-solid fa-trash text-slate-800"></i>
+          <h3 class="font-black text-slate-700 uppercase text-xs">Setup - Pulizia Archivio</h3>
+        </div>
+        <div class="grid grid-cols-2 gap-3 mb-4">
+          <div class="space-y-1">
+            <label class="text-[9px] font-bold px-1">CANCELLA DAL</label>
+            <input type="date" id="d-from">
+          </div>
+          <div class="space-y-1">
+            <label class="text-[9px] font-bold px-1">CANCELLA AL</label>
+            <input type="date" id="d-to">
+          </div>
+        </div>
+        <button type="button" onclick="cancellaPeriodo()" class="w-full bg-slate-900 hover:bg-slate-800 text-white py-4 rounded-xl font-black uppercase text-xs transition-all">
+          Cancella Dati dal/al
+        </button>
+        <p class="mt-3 text-[11px] text-slate-500 leading-4">
+          Elimina dal dispositivo i record compresi tra le due date (inclusi) per ridurre lo spazio occupato.
+        </p>
+      </div>
+
+      <!-- BACKUP / IMPORT DATI (AGGIUNTA) -->
+      <div class="card no-print border-l-4 border-blue-700">
+        <div class="flex items-center gap-2 mb-4 border-b pb-2">
+          <i class="fa-solid fa-database text-blue-700"></i>
+          <h3 class="font-black text-slate-700 uppercase text-xs">Backup & Import Dati</h3>
+        </div>
+
+        <div class="space-y-3">
+          <button type="button" onclick="exportBackupFile()" class="w-full bg-blue-700 hover:bg-blue-600 text-white py-4 rounded-xl font-black uppercase text-xs transition-all">
+            Esporta Backup (JSON)
+          </button>
+
+          <input type="file" id="import-file" accept=".json,application/json" class="hidden" onchange="handleImportFile(this.files && this.files[0])">
+
+          <button type="button" onclick="document.getElementById('import-file').click()" class="w-full bg-slate-900 hover:bg-slate-800 text-white py-4 rounded-xl font-black uppercase text-xs transition-all">
+            Importa Backup (JSON)
+          </button>
+
+          <button type="button" onclick="restoreFromLocalBackup()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 py-4 rounded-xl font-black uppercase text-xs transition-all border border-slate-200">
+            Ripristina da Backup Automatico (dispositivo)
+          </button>
+
+          <p class="text-[11px] text-slate-500 leading-4">
+            Suggerimento: esporta spesso un backup JSON e salvalo su Drive/PC. L’import sovrascrive l’archivio sul dispositivo.
+          </p>
+        </div>
+      </div>
+
       <div id="area-stampa"></div>
     </section>
+
   </main>
 
   <nav class="nav-bottom no-print">
-    <button onclick="showPage('oggi')" class="nav-item active" id="btn-oggi"><i class="fa-solid fa-cash-register text-2xl mb-1"></i>Cassa</button>
-    <button onclick="showPage('riepilogo')" class="nav-item" id="btn-riepilogo"><i class="fa-solid fa-chart-line text-2xl mb-1"></i>Analisi</button>
-    <button onclick="showPage('stampa')" class="nav-item" id="btn-stampa"><i class="fa-solid fa-file-invoice-dollar text-2xl mb-1"></i>Fisco</button>
+    <button type="button" onclick="showPage('oggi')" class="nav-item active" id="btn-oggi"><i class="fa-solid fa-cash-register text-2xl mb-1"></i>Cassa</button>
+    <button type="button" onclick="showPage('riepilogo')" class="nav-item" id="btn-riepilogo"><i class="fa-solid fa-chart-line text-2xl mb-1"></i>Analisi</button>
+    <button type="button" onclick="showPage('stampa')" class="nav-item" id="btn-stampa"><i class="fa-solid fa-file-invoice-dollar text-2xl mb-1"></i>Fisco</button>
   </nav>
 
+  <!-- datalist fornitori -->
   <datalist id="dl-fornitori"></datalist>
 
   <script>
-    // --- UTILS & STORAGE KEYS ---
+    // ===== Utils =====
     const fix = (n) => Math.round((Number(n) + Number.EPSILON) * 100) / 100;
-    const euro = (n) => `€ ${fix(n).toLocaleString('it-IT', { minimumFractionDigits: 2 })}`;
-    const LS_DB_SNAPSHOT = 'ce_v3_snapshot'; // Fallback per localStorage
+    const euro = (n) => `€ ${fix(n).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    const normalizeLines = (txt) => (txt || "")
+      .split(/\r?\n/)
+      .map(s => (s || "").trim())
+      .filter(Boolean);
 
-    // --- DOPPIA PERSISTENZA: INDEXEDDB + LOCALSTORAGE ---
-    let db = [];
-    const DB_NAME = 'CommanderEliteDB';
-    const DB_VERSION = 1;
-    let indexedDBInstance;
+    // ===== Storage keys =====
+    const LS_DB = 'ce_v3_top';
+    const LS_PAYMENTS = 'ce_payments_list';
+    const LS_SUPPLIERS = 'ce_suppliers_list';
 
-    function initDB() {
-        return new Promise((resolve) => {
-            const request = indexedDB.open(DB_NAME, DB_VERSION);
-            request.onupgradeneeded = (e) => {
-                const idb = e.target.result;
-                if (!idb.objectStoreNames.contains('records')) {
-                    idb.createObjectStore('records', { keyPath: 'data' });
-                }
-            };
-            request.onsuccess = (e) => {
-                indexedDBInstance = e.target.result;
-                loadAllData().then(resolve);
-            };
-            request.onerror = () => {
-                console.error("IndexedDB error, falling back to LocalStorage");
-                db = JSON.parse(localStorage.getItem(LS_DB_SNAPSHOT)) || [];
-                resolve();
-            };
-        });
-    }
+    // ==========================================================
+    // ✅ Persistenza doppia: IndexedDB (primaria) + localStorage
+    // ==========================================================
+    // - localStorage resta come snapshot/fallback (compatibilità)
+    // - IndexedDB è la fonte primaria quando disponibile
+    const IDB_NAME = 'ce_elite_pro_db';
+    const IDB_VERSION = 1;
+    const IDB_STORE = 'records'; // keyPath: 'data'
 
-    async function loadAllData() {
-        return new Promise((resolve) => {
-            const transaction = indexedDBInstance.transaction(['records'], 'readonly');
-            const store = transaction.objectStore('records');
-            const request = store.getAll();
-            request.onsuccess = () => {
-                db = request.result || [];
-                // Sincronizza snapshot LocalStorage
-                localStorage.setItem(LS_DB_SNAPSHOT, JSON.stringify(db));
-                resolve();
-            };
-        });
-    }
+    let _idb = null;
+    let _idbAvailable = true;
+    let _idbSyncTimer = null;
 
-    async function persistDB(record) {
-        // 1. Update array in memoria
-        db = db.filter(r => r.data !== record.data);
-        db.push(record);
-        db.sort((a, b) => a.data.localeCompare(b.data));
-
-        // 2. Persistenza Primaria: IndexedDB
-        const transaction = indexedDBInstance.transaction(['records'], 'readwrite');
-        const store = transaction.objectStore('records');
-        store.put(record);
-
-        // 3. Fallback/Snapshot: LocalStorage
-        localStorage.setItem(LS_DB_SNAPSHOT, JSON.stringify(db));
-    }
-
-    // --- PWA OFFLINE SERVICE WORKER ---
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            const swCode = `
-                const CACHE_NAME = 'commander-v1';
-                self.addEventListener('install', e => {
-                    e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(['./'])));
-                });
-                self.addEventListener('fetch', e => {
-                    e.respondWith(caches.match(e.request).then(res => res || fetch(e.request)));
-                });
-            `;
-            const blob = new Blob([swCode], { type: 'text/javascript' });
-            navigator.serviceWorker.register(URL.createObjectURL(blob));
-        });
-    }
-
-    // --- LOGICA PIN & SICUREZZA ---
-    const LS_PIN = 'ce_pin_v1';
-    const DEFAULT_PIN = "1234";
-    const IDLE_LOCK_MS = 5 * 60 * 1000;
-    let _idleTimer;
-
-    function getPin() { return localStorage.getItem(LS_PIN) || DEFAULT_PIN; }
-    function checkPin() {
-        const val = document.getElementById('pin-input').value;
-        if (val === getPin()) {
-            document.getElementById('lock-screen').style.display = 'none';
-            resetIdleTimer();
-        } else {
-            alert("PIN ERRATO");
-            document.getElementById('pin-input').value = "";
+    function idbOpen() {
+      return new Promise((resolve, reject) => {
+        if (!_idbAvailable || !('indexedDB' in window)) {
+          _idbAvailable = false;
+          return reject(new Error("IndexedDB non disponibile"));
         }
+        if (_idb) return resolve(_idb);
+
+        const req = indexedDB.open(IDB_NAME, IDB_VERSION);
+
+        req.onupgradeneeded = (e) => {
+          const dbi = e.target.result;
+          if (!dbi.objectStoreNames.contains(IDB_STORE)) {
+            dbi.createObjectStore(IDB_STORE, { keyPath: 'data' });
+          }
+        };
+
+        req.onsuccess = () => {
+          _idb = req.result;
+          _idb.onversionchange = () => {
+            try { _idb.close(); } catch(_) {}
+            _idb = null;
+          };
+          resolve(_idb);
+        };
+
+        req.onerror = () => {
+          _idbAvailable = false;
+          reject(req.error || new Error("Errore apertura IndexedDB"));
+        };
+      });
     }
 
-    function resetIdleTimer() {
-        clearTimeout(_idleTimer);
-        _idleTimer = setTimeout(() => {
-            document.getElementById('lock-screen').style.display = 'flex';
-        }, IDLE_LOCK_MS);
+    function idbTx(storeName, mode = 'readonly') {
+      if (!_idb) throw new Error("IDB non inizializzato");
+      return _idb.transaction(storeName, mode).objectStore(storeName);
     }
-    ['mousedown','keydown','touchstart'].forEach(ev => window.addEventListener(ev, resetIdleTimer));
 
-    // --- LOGICA CORE ---
+    function idbGetAllRecords() {
+      return idbOpen().then(() => new Promise((resolve, reject) => {
+        try {
+          const store = idbTx(IDB_STORE, 'readonly');
+          const req = store.getAll();
+          req.onsuccess = () => resolve(Array.isArray(req.result) ? req.result : []);
+          req.onerror = () => reject(req.error || new Error("Errore lettura IDB"));
+        } catch (e) { reject(e); }
+      }));
+    }
+
+    function idbPutRecord(rec) {
+      return idbOpen().then(() => new Promise((resolve, reject) => {
+        try {
+          const store = idbTx(IDB_STORE, 'readwrite');
+          const req = store.put(rec);
+          req.onsuccess = () => resolve(true);
+          req.onerror = () => reject(req.error || new Error("Errore scrittura record IDB"));
+        } catch (e) { reject(e); }
+      }));
+    }
+
+    function idbDeleteRecordByDate(dateKey) {
+      return idbOpen().then(() => new Promise((resolve, reject) => {
+        try {
+          const store = idbTx(IDB_STORE, 'readwrite');
+          const req = store.delete(dateKey);
+          req.onsuccess = () => resolve(true);
+          req.onerror = () => reject(req.error || new Error("Errore delete IDB"));
+        } catch (e) { reject(e); }
+      }));
+    }
+
+    function idbClearAndBulkPut(all) {
+      return idbOpen().then(() => new Promise((resolve, reject) => {
+        try {
+          const tx = _idb.transaction(IDB_STORE, 'readwrite');
+          const store = tx.objectStore(IDB_STORE);
+
+          const clr = store.clear();
+          clr.onerror = () => reject(clr.error || new Error("Errore clear IDB"));
+
+          clr.onsuccess = () => {
+            (all || []).forEach(rec => { try { store.put(rec); } catch(_) {} });
+          };
+
+          tx.oncomplete = () => resolve(true);
+          tx.onerror = () => reject(tx.error || new Error("Errore bulk IDB"));
+        } catch (e) { reject(e); }
+      }));
+    }
+
+    // Snapshot locale (fallback + compatibilità con vecchie versioni)
+    function persistLocalSnapshot() {
+      db.sort((a, b) => (a.data || '').localeCompare(b.data || ''));
+      localStorage.setItem(LS_DB, JSON.stringify(db));
+    }
+
+    // Sync verso IDB (debounced) – non blocca UI
+    function scheduleIdbSyncFull() {
+      if (!_idbAvailable) return;
+      if (_idbSyncTimer) clearTimeout(_idbSyncTimer);
+      _idbSyncTimer = setTimeout(() => {
+        _idbSyncTimer = null;
+        idbClearAndBulkPut(db).catch(err => {
+          console.warn("Sync IDB fallita (uso snapshot LS):", err);
+          _idbAvailable = false;
+        });
+      }, 250);
+    }
+
+    // Carica prima snapshot LS, poi prova IDB e se trova dati li usa come primari
+    async function hydrateFromPrimaryStorage() {
+      // db già inizializzato da snapshot LS sotto; qui tentiamo override con IDB se disponibile
+      try {
+        const all = await idbGetAllRecords();
+        if (Array.isArray(all) && all.length) {
+          db = all.sort((a, b) => (a.data || '').localeCompare(b.data || ''));
+          // aggiorna snapshot LS così resta allineata come fallback
+          persistLocalSnapshot();
+        } else {
+          // se IDB è vuota ma LS ha dati, inizializza IDB con LS
+          if (Array.isArray(db) && db.length) scheduleIdbSyncFull();
+        }
+      } catch (e) {
+        console.warn("IDB non disponibile, continuo con localStorage:", e);
+        _idbAvailable = false;
+      }
+    }
+
+    // ===== DB =====
+    // (fallback immediato) snapshot LS, poi hydrate da IDB in init
+    let db = JSON.parse(localStorage.getItem(LS_DB)) || [];
+
+    function persistDB() {
+      // snapshot sempre (fallback + snapshot)
+      persistLocalSnapshot();
+      // primaria IDB (se disponibile)
+      scheduleIdbSyncFull();
+    }
+
+    // ===== Settings =====
+    function getPaymentNames() {
+      const raw = JSON.parse(localStorage.getItem(LS_PAYMENTS) || '[]');
+      return Array.isArray(raw) ? raw.map(x => String(x).trim()).filter(Boolean) : [];
+    }
+    function setPaymentNames(arr) {
+      const clean = Array.from(new Set((arr || []).map(s => String(s).trim()).filter(Boolean)));
+      localStorage.setItem(LS_PAYMENTS, JSON.stringify(clean));
+    }
+    function getSupplierNames() {
+      const raw = JSON.parse(localStorage.getItem(LS_SUPPLIERS) || '[]');
+      return Array.isArray(raw) ? raw.map(x => String(x).trim()).filter(Boolean) : [];
+    }
+    function setSupplierNames(arr) {
+      const clean = Array.from(new Set((arr || []).map(s => String(s).trim()).filter(Boolean)));
+      localStorage.setItem(LS_SUPPLIERS, JSON.stringify(clean));
+    }
+
+    function refreshDatalistSuppliers() {
+      const dl = document.getElementById('dl-fornitori');
+      const names = getSupplierNames();
+      dl.innerHTML = names.map(n => `<option value="${escapeHtml(n)}"></option>`).join('');
+    }
+
+    function loadSetupUI() {
+      document.getElementById('setup-payments').value = getPaymentNames().join('\n');
+      document.getElementById('setup-suppliers').value = getSupplierNames().join('\n');
+      refreshDatalistSuppliers();
+    }
+
+    function savePaymentsSettings() {
+      setPaymentNames(normalizeLines(document.getElementById('setup-payments').value));
+      alert("Pagamenti salvati.");
+    }
+
+    function saveSuppliersSettings() {
+      setSupplierNames(normalizeLines(document.getElementById('setup-suppliers').value));
+      refreshDatalistSuppliers();
+      alert("Fornitori salvati.");
+    }
+
+    // ===== Security =====
+// DAL: SECURITY PIN + BLOCCO (5 minuti) + 5 tentativi
+const LS_PIN = 'ce_pin_v1';
+const LS_FAILS = 'ce_pin_fails_v1';
+const LS_LOCK_UNTIL = 'ce_pin_lock_until_v1';
+
+const DEFAULT_PIN = "1234";
+const MAX_FAILS = 5;
+const LOCKOUT_MS = 5 * 60 * 1000;   // 5 minuti
+const IDLE_LOCK_MS = 5 * 60 * 1000; // 5 minuti
+
+let _idleTimer = null;
+
+function getPin() {
+  const p = String(localStorage.getItem(LS_PIN) || DEFAULT_PIN).trim();
+  return (/^\d{4}$/.test(p)) ? p : DEFAULT_PIN;
+}
+function setPin(p) { localStorage.setItem(LS_PIN, String(p).trim()); }
+
+function getFails() { return parseInt(localStorage.getItem(LS_FAILS) || "0", 10) || 0; }
+function setFails(n) { localStorage.setItem(LS_FAILS, String(Math.max(0, n|0))); }
+
+function getLockUntil() { return parseInt(localStorage.getItem(LS_LOCK_UNTIL) || "0", 10) || 0; }
+function setLockUntil(ts) { localStorage.setItem(LS_LOCK_UNTIL, String(ts|0)); }
+
+function isLockedOut() { return Date.now() < getLockUntil(); }
+function remainingLockSeconds() { return Math.ceil(Math.max(0, getLockUntil() - Date.now()) / 1000); }
+
+function lockSystem() {
+  const ls = document.getElementById('lock-screen');
+  if (ls) ls.style.display = 'flex';
+  const pinInp = document.getElementById('pin-input');
+  if (pinInp) pinInp.value = "";
+  stopIdleTimer();
+}
+
+function unlockSystem() {
+  const ls = document.getElementById('lock-screen');
+  if (ls) ls.style.display = 'none';
+  setFails(0);
+  setLockUntil(0);
+  resetIdleTimer();
+}
+
+// ✅ SOSTITUISCE la vecchia checkPin()
+function checkPin() {
+  if (isLockedOut()) {
+    alert(`⚠️ Troppi tentativi. Riprova tra ${remainingLockSeconds()} secondi.`);
+    return;
+  }
+
+  const inserted = String(document.getElementById('pin-input').value || "").trim();
+  if (inserted === getPin()) {
+    unlockSystem();
+    return;
+  }
+
+  const f = getFails() + 1;
+  setFails(f);
+
+  if (f >= MAX_FAILS) {
+    setLockUntil(Date.now() + LOCKOUT_MS);
+    alert("⛔ Troppi tentativi. Blocco attivo per 5 minuti.");
+    lockSystem();
+    return;
+  }
+
+  alert(`❌ PIN errato. Tentativi rimasti: ${MAX_FAILS - f}`);
+}
+
+// ===== Cambio PIN =====
+function changePin() {
+  if (isLockedOut()) {
+    alert(`⚠️ Sistema bloccato. Riprova tra ${remainingLockSeconds()} secondi.`);
+    return;
+  }
+
+  const cur = String(document.getElementById('pin-current')?.value || "").trim();
+  const n1  = String(document.getElementById('pin-new')?.value || "").trim();
+  const n2  = String(document.getElementById('pin-new2')?.value || "").trim();
+
+  if (cur !== getPin()) return alert("⚠️ PIN attuale errato.");
+  if (!/^\d{4}$/.test(n1)) return alert("⚠️ Il nuovo PIN deve essere di 4 cifre.");
+  if (n1 !== n2) return alert("⚠️ Conferma PIN non coincide.");
+
+  setPin(n1);
+  setFails(0);
+  setLockUntil(0);
+
+  document.getElementById('pin-current').value = "";
+  document.getElementById('pin-new').value = "";
+  document.getElementById('pin-new2').value = "";
+
+  alert("✅ PIN aggiornato.");
+}
+
+// ===== Reset PIN =====
+function resetPinToDefault() {
+  const ok = confirm("Confermi RESET PIN? Verrà ripristinato a 1234.");
+  if (!ok) return;
+
+  setPin(DEFAULT_PIN);
+  setFails(0);
+  setLockUntil(0);
+
+  if (document.getElementById('pin-current')) document.getElementById('pin-current').value = "";
+  if (document.getElementById('pin-new')) document.getElementById('pin-new').value = "";
+  if (document.getElementById('pin-new2')) document.getElementById('pin-new2').value = "";
+
+  alert("✅ PIN resettato a 1234.");
+}
+
+// ===== Blocco automatico dopo 5 minuti di inattività =====
+function stopIdleTimer() {
+  if (_idleTimer) clearTimeout(_idleTimer);
+  _idleTimer = null;
+}
+
+function resetIdleTimer() {
+  stopIdleTimer();
+  // parte solo se lock-screen è nascosta
+  const ls = document.getElementById('lock-screen');
+  if (!ls || ls.style.display !== 'none') return;
+
+  _idleTimer = setTimeout(() => {
+    lockSystem();
+  }, IDLE_LOCK_MS);
+}
+
+function hookActivityListeners() {
+  ['mousemove','mousedown','keydown','touchstart','scroll'].forEach(ev => {
+    window.addEventListener(ev, () => resetIdleTimer(), { passive: true });
+  });
+}
+// AL: SECURITY PIN + BLOCCO (5 minuti) + 5 tentativi
+    // ===== Navigation =====
     function showPage(p) {
-        document.querySelectorAll('.page').forEach(el => el.classList.remove('active-page'));
-        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-        document.getElementById('page-' + p).classList.add('active-page');
-        document.getElementById('btn-' + p).classList.add('active');
-        if (p === 'riepilogo') aggiornaStatsDash();
+      document.querySelectorAll('.page').forEach(el => el.classList.remove('active-page'));
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      document.getElementById('page-' + p).classList.add('active-page');
+      document.getElementById('btn-' + p).classList.add('active');
+      if (p === 'riepilogo') aggiornaStatsDash();
+      if (p === 'stampa') loadSetupUI();
     }
 
+    // ===== Electronic Payments (dynamic rows) =====
     function addPayRow(name = "", value = "") {
-        const container = document.getElementById('pay-list');
-        const div = document.createElement('div');
-        div.className = "bg-white p-3 rounded-2xl border border-slate-200 pay-row";
-        div.innerHTML = `
-            <div class="grid grid-cols-12 gap-2 items-center">
-                <div class="col-span-7"><input type="text" class="pay-name font-bold text-sm" value="${name}" placeholder="Metodo..."></div>
-                <div class="col-span-4"><input type="number" class="pay-val font-bold text-sm" value="${value}" oninput="calcola()" step="0.01"></div>
-                <div class="col-span-1"><button onclick="this.closest('.pay-row').remove(); calcola()">✕</button></div>
-            </div>`;
-        container.appendChild(div);
+      const container = document.getElementById('pay-list');
+      const div = document.createElement('div');
+      div.className = "bg-white p-3 rounded-2xl border border-slate-200 pay-row";
+
+      const payNames = getPaymentNames();
+      const hasList = payNames.length > 0;
+
+      div.innerHTML = `
+        <div class="grid grid-cols-12 gap-2 items-center">
+          <div class="col-span-7">
+            ${hasList ? `
+              <select class="pay-name font-bold bg-slate-50 !p-2" onchange="calcola()">
+                ${payNames.map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('')}
+              </select>
+            ` : `
+              <input type="text" class="pay-name font-bold text-sm bg-white border-slate-200 !p-2" placeholder="Nome pagamento..." oninput="calcola()">
+            `}
+          </div>
+          <div class="col-span-4">
+            <input type="number" class="pay-val font-bold text-sm !p-2" placeholder="0.00" oninput="calcola()" inputmode="decimal" step="0.01">
+          </div>
+          <div class="col-span-1 flex justify-end">
+            <button type="button" class="w-9 h-9 bg-red-50 text-red-500 rounded-full font-black" onclick="this.closest('.pay-row').remove(); calcola()">✕</button>
+          </div>
+        </div>
+      `;
+
+      container.appendChild(div);
+
+      // set values after append
+      const nameEl = div.querySelector('.pay-name');
+      const valEl = div.querySelector('.pay-val');
+
+      if (nameEl.tagName === 'SELECT') {
+        // if provided name exists, set it; else keep first
+        if (name && payNames.includes(name)) nameEl.value = name;
+      } else {
+        nameEl.value = name || "";
+      }
+      valEl.value = value !== undefined && value !== null ? value : "";
+
+      // ensure selects get default set if list exists
+      if (nameEl.tagName === 'SELECT' && !nameEl.value) nameEl.value = payNames[0];
+
+      calcola();
     }
 
+    function readPayDet() {
+      const rows = Array.from(document.querySelectorAll('.pay-row'));
+      const out = [];
+      rows.forEach(r => {
+        const nameEl = r.querySelector('.pay-name');
+        const valEl = r.querySelector('.pay-val');
+        const nome = String(nameEl?.value || "").trim();
+        const valore = fix(parseFloat(valEl?.value) || 0);
+        if (nome && valore > 0) out.push({ nome, valore });
+      });
+      return out;
+    }
+
+    // ===== Suppliers =====
     function addFornitore(prefill = null) {
-        const container = document.getElementById('fornitori-list');
-        const div = document.createElement('div');
-        div.className = "bg-slate-50 p-4 rounded-2xl border border-slate-200 forn-block";
-        div.innerHTML = `
-            <input type="text" placeholder="Fornitore..." class="f-name font-bold mb-2" value="${prefill?.nome || ''}">
-            <div class="r-cont space-y-2">
-                <div class="grid grid-cols-3 gap-2 r-item">
-                    <input type="number" class="r-val" placeholder="Valore" oninput="calcola()" value="${prefill?.righe?.[0]?.valore || ''}">
-                    <select class="r-iva" onchange="calcola()"><option value="10">10%</option><option value="22">22%</option></select>
-                    <button class="text-red-500" onclick="this.closest('.forn-block').remove(); calcola()">Elimina</button>
-                </div>
-            </div>
-            <div class="mt-2 flex items-center gap-2">
-                <label class="text-[10px] font-bold">CONTANTI?</label>
-                <input type="checkbox" class="f-cash" ${prefill?.cash ? 'checked' : ''} onchange="calcola()">
-            </div>`;
-        container.appendChild(div);
-    }
+      const container = document.getElementById('fornitori-list');
+      const div = document.createElement('div');
+      div.className = "bg-slate-50 p-4 rounded-2xl border border-slate-200 forn-block";
+      div.innerHTML = `
+        <div class="flex gap-2 mb-3">
+          <input type="text" list="dl-fornitori" placeholder="Ragione Sociale Fornitore..." class="flex-1 font-bold text-sm f-name bg-white border-slate-200">
+          <button type="button" onclick="this.parentElement.parentElement.remove(); calcola()" class="w-10 h-10 bg-red-50 text-red-500 rounded-full">✕</button>
+        </div>
 
-    function calcola() {
-        const lordoZ = fix(document.getElementById('inp-tot').value || 0);
-        const ivaVperc = parseFloat(document.getElementById('iva-v-base').value);
-        
-        let totEle = 0;
-        document.querySelectorAll('.pay-row').forEach(r => {
-            totEle += fix(r.querySelector('.pay-val').value || 0);
-        });
+        <div class="space-y-2 r-cont">
+          <div class="grid grid-cols-3 gap-2 r-item">
+            <input type="number" placeholder="Valore" class="r-val !p-2 text-sm font-bold" oninput="calcola()" inputmode="decimal" step="0.01">
+            <select class="r-iva !p-2 text-[10px] font-bold" onchange="calcola()">
+              <option value="22">IVA 22%</option>
+              <option value="10" selected>IVA 10%</option>
+              <option value="5">IVA 5%</option>
+              <option value="4">IVA 4%</option>
+              <option value="0">Esente</option>
+            </select>
+            <select class="r-tipo !p-2 text-[10px] font-bold bg-blue-50 border-blue-100" onchange="calcola()">
+              <option value="L">LORDO</option>
+              <option value="N">NETTO +</option>
+            </select>
+          </div>
+        </div>
 
-        let uscCash = 0;
-        let totIvaA = 0;
-        document.querySelectorAll('.forn-block').forEach(b => {
-            const v = fix(b.querySelector('.r-val').value || 0);
-            const iva = parseFloat(b.querySelector('.r-iva').value);
-            const lordoF = v; 
-            const ivaF = fix(lordoF - (lordoF / (1 + iva/100)));
-            totIvaA += ivaF;
-            if (b.querySelector('.f-cash').checked) uscCash += lordoF;
-        });
+        <div class="mt-3 flex justify-between items-center border-t border-slate-200 pt-3">
+          <button type="button" onclick="addRowIVA(this)" class="text-[10px] font-black text-blue-600 hover:underline uppercase tracking-tighter">
+            + Aggiungi Riga IVA
+          </button>
+          <label class="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase">
+            Contanti? <input type="checkbox" class="f-cash w-5 h-5 accent-red-600" onchange="calcola()">
+          </label>
+        </div>
+      `;
+      container.appendChild(div);
 
-        const impV = fix(lordoZ / (1 + ivaVperc/100));
-        const ivaV = fix(lordoZ - impV);
-        const netto = fix((lordoZ - totEle) - uscCash);
+      if (prefill && typeof prefill === 'object') {
+        const nameEl = div.querySelector('.f-name');
+        const cashEl = div.querySelector('.f-cash');
+        if (nameEl) nameEl.value = prefill.nome || "";
+        if (cashEl) cashEl.checked = !!prefill.cash;
 
-        document.getElementById('pay-total').innerText = euro(totEle);
-        document.getElementById('res-ele').innerText = euro(totEle);
-        document.getElementById('res-ivav').innerText = euro(ivaV);
-        document.getElementById('res-netto').innerText = euro(netto);
+        // fill rows (first existing + extras)
+        const firstRow = div.querySelector('.r-item');
+        if (firstRow && Array.isArray(prefill.righe) && prefill.righe.length) {
+          const [r0, ...rest] = prefill.righe;
+          firstRow.querySelector('.r-val').value = r0.valore ?? "";
+          firstRow.querySelector('.r-iva').value = String(r0.ivaPerc ?? 10);
+          firstRow.querySelector('.r-tipo').value = (r0.tipo === 'N') ? 'N' : 'L';
 
-        return { lordoZ, ivaV, impV, totEle, uscCash, totIvaA };
-    }
-
-    function salvaData(btn) {
-        const data = document.getElementById('data-lavoro').value;
-        if(!data) return alert("Scegli data");
-        const c = calcola();
-        
-        const payDet = [];
-        document.querySelectorAll('.pay-row').forEach(r => {
-            payDet.push({ nome: r.querySelector('.pay-name').value, valore: fix(r.querySelector('.pay-val').value) });
-        });
-
-        const detFornitori = [];
-        document.querySelectorAll('.forn-block').forEach(b => {
-            detFornitori.push({
-                nome: b.querySelector('.f-name').value,
-                lordo: fix(b.querySelector('.r-val').value),
-                iva: fix(b.querySelector('.r-val').value * 0.1), // Semplificato per spazio
-                cash: b.querySelector('.f-cash').checked
-            });
-        });
-
-        const rec = { data, lordoZ: c.lordoZ, ivaV: c.ivaV, totEle: c.totEle, uscCash: c.uscCash, totIvaA: c.totIvaA, payDet, detFornitori };
-        persistDB(rec);
-        
-        btn.innerText = "SALVATO!";
-        setTimeout(() => btn.innerText = "ARCHIVIA E SALVA", 2000);
-    }
-
-    function onChangeData() {
-        const data = document.getElementById('data-lavoro').value;
-        const rec = db.find(r => r.data === data);
-        document.getElementById('pay-list').innerHTML = "";
-        document.getElementById('fornitori-list').innerHTML = "";
-        
-        if (rec) {
-            document.getElementById('badge-loaded').classList.remove('hidden');
-            document.getElementById('inp-tot').value = rec.lordoZ;
-            rec.payDet.forEach(p => addPayRow(p.nome, p.valore));
-            rec.detFornitori.forEach(f => addFornitore({ nome: f.nome, cash: f.cash, righe: [{valore: f.lordo}] }));
-        } else {
-            document.getElementById('badge-loaded').classList.add('hidden');
-            document.getElementById('inp-tot').value = "";
-            addPayRow("POS", "");
+          rest.forEach(rr => {
+            const btn = div.querySelector('button[onclick^="addRowIVA"]');
+            addRowIVA(btn);
+            const last = div.querySelector('.r-cont .r-item:last-child');
+            if (last) {
+              last.querySelector('.r-val').value = rr.valore ?? "";
+              last.querySelector('.r-iva').value = String(rr.ivaPerc ?? 10);
+              last.querySelector('.r-tipo').value = (rr.tipo === 'N') ? 'N' : 'L';
+            }
+          });
         }
-        calcola();
+      }
+
+      calcola();
     }
 
-    // --- INIT ---
-    initDB().then(() => {
-        document.getElementById('data-lavoro').valueAsDate = new Date();
-        onChangeData();
+function addRowIVA(btn) {
+  // container delle righe IVA del fornitore
+  const rowsContainer = btn.parentElement.previousElementSibling; // .r-cont
+  const lastRow = rowsContainer.querySelector('.r-item:last-child');
+
+  // valori da copiare dalla riga sopra (se esiste)
+  const lastIva = lastRow?.querySelector('.r-iva')?.value ?? "10";
+  const lastTipo = lastRow?.querySelector('.r-tipo')?.value ?? "L";
+
+  const row = document.createElement('div');
+  row.className = "grid grid-cols-3 gap-2 r-item mt-2";
+  row.innerHTML = `
+    <input type="number" placeholder="Valore" class="r-val !p-2 text-sm font-bold" oninput="calcola()" inputmode="decimal" step="0.01">
+    <select class="r-iva !p-2 text-[10px] font-bold" onchange="calcola()">
+      <option value="22">22%</option>
+      <option value="10">10%</option>
+      <option value="5">5%</option>
+      <option value="4">4%</option>
+      <option value="0">0%</option>
+    </select>
+    <div class="flex gap-2 items-center">
+      <select class="r-tipo !p-2 text-[10px] font-bold bg-blue-50 border-blue-100" onchange="calcola()">
+        <option value="L">LORDO</option>
+        <option value="N">NETTO +</option>
+      </select>
+      <button type="button" onclick="this.closest('.r-item').remove(); calcola()" class="w-10 h-10 bg-red-50 text-red-500 rounded-full font-black flex items-center justify-center">✕</button>
+    </div>
+  `;
+
+  rowsContainer.appendChild(row);
+
+  // imposta gli stessi valori della riga sopra
+  row.querySelector('.r-iva').value = String(lastIva);
+  row.querySelector('.r-tipo').value = (lastTipo === 'N') ? 'N' : 'L';
+
+  calcola();
+}
+
+    // ===== Day calc/save/load =====
+    function calcola() {
+      const lordoZ = fix(parseFloat(document.getElementById('inp-tot').value) || 0);
+      const ivaVperc = parseFloat(document.getElementById('iva-v-base').value || "10");
+
+      // electronic payments from rows
+      const payDet = readPayDet();
+      let totEle = 0;
+      payDet.forEach(p => totEle += fix(p.valore || 0));
+      totEle = fix(totEle);
+
+      document.getElementById('pay-total').innerText = euro(totEle);
+
+      const impV = fix(lordoZ / (1 + (ivaVperc / 100)));
+      const ivaV = fix(lordoZ - impV);
+
+      let uscCash = 0;
+      let totIvaA = 0;
+      let detFornitori = [];
+
+      document.querySelectorAll('.forn-block').forEach(b => {
+        let fLordo = 0;
+        let fIva = 0;
+        const righe = [];
+
+        b.querySelectorAll('.r-item').forEach(r => {
+          const v = fix(parseFloat(r.querySelector('.r-val')?.value) || 0);
+          const i = parseFloat(r.querySelector('.r-iva')?.value) || 0;
+          const t = r.querySelector('.r-tipo')?.value || 'L';
+
+          if (v > 0) righe.push({ valore: v, ivaPerc: i, tipo: t });
+
+          if (t === 'L') {
+            fLordo += v;
+            fIva += fix(v - (v / (1 + (i / 100))));
+          } else {
+            const r_iva = fix(v * (i / 100));
+            fIva += r_iva;
+            fLordo += (v + r_iva);
+          }
+        });
+
+        const isCash = !!b.querySelector('.f-cash')?.checked;
+
+        // filter out empty supplier blocks
+        const nome = String(b.querySelector('.f-name')?.value || "").trim();
+        if ((nome || fLordo > 0 || fIva > 0) && righe.some(x => (x.valore || 0) > 0)) {
+          totIvaA += fix(fIva);
+          if (isCash) uscCash += fix(fLordo);
+
+          detFornitori.push({
+            nome: nome || "Senza Nome",
+            lordo: fix(fLordo),
+            iva: fix(fIva),
+            cash: isCash,
+            righe: righe
+              .filter(x => (x.valore || 0) > 0)
+              .map(x => ({
+                valore: fix(x.valore || 0),
+                ivaPerc: Number(x.ivaPerc || 0),
+                tipo: x.tipo === 'N' ? 'N' : 'L'
+              }))
+          });
+        }
+      });
+
+      totIvaA = fix(totIvaA);
+      uscCash = fix(uscCash);
+
+      // netto contanti coerente: (lordo - elettronico) - uscite contanti
+      const netto = fix((lordoZ - totEle) - uscCash);
+
+      document.getElementById('res-ele').innerText = euro(totEle);
+      document.getElementById('res-ivav').innerText = euro(ivaV);
+      document.getElementById('res-netto').innerText = euro(netto);
+
+      return {
+        lordoZ, ivaV, impV,
+        totEle, uscCash, totIvaA,
+        payDet, detFornitori
+      };
+    }
+   function clearDayUI() {
+      document.getElementById('inp-tot').value = "";
+      document.getElementById('iva-v-base').value = "10";
+      document.getElementById('fornitori-list').innerHTML = "";
+      document.getElementById('pay-list').innerHTML = "";
+      document.getElementById('badge-loaded').classList.add('hidden');
+      // keep 1 payment row ready if list exists
+      const payNames = getPaymentNames();
+      if (payNames.length) addPayRow(payNames[0], "");
+      calcola();
+    }
+   function onChangeData() {
+      const data = document.getElementById('data-lavoro').value;
+      if (!data) return;
+
+      const rec = db.find(r => r.data === data);
+
+      // reset UI
+      document.getElementById('fornitori-list').innerHTML = "";
+      document.getElementById('pay-list').innerHTML = "";
+      document.getElementById('inp-tot').value = "";
+      document.getElementById('iva-v-base').value = "10";
+      document.getElementById('badge-loaded').classList.add('hidden');
+
+      // seed 1 payment row if configured
+      const payNames = getPaymentNames();
+      if (payNames.length) addPayRow(payNames[0], "");
+
+      if (!rec) { calcola(); return; }
+
+      document.getElementById('badge-loaded').classList.remove('hidden');
+      document.getElementById('inp-tot').value = rec.lordoZ ?? "";
+      if (rec.ivaVperc) document.getElementById('iva-v-base').value = String(rec.ivaVperc);
+
+      // payments
+      const pd = Array.isArray(rec.payDet) ? rec.payDet : legacyPayDet(rec);
+      document.getElementById('pay-list').innerHTML = "";
+      if (pd.length) {
+        pd.forEach(p => addPayRow(p.nome || "", p.valore ?? ""));
+      } else {
+        if (payNames.length) addPayRow(payNames[0], "");
+      }
+
+      // suppliers
+      const fl = Array.isArray(rec.detFornitori) ? rec.detFornitori : [];
+      fl.forEach(f => addFornitore({
+        nome: f.nome,
+        cash: !!f.cash,
+        righe: Array.isArray(f.righe) && f.righe.length ? f.righe : [{
+          valore: f.lordo || 0, ivaPerc: 10, tipo: 'L'
+        }]
+      }));
+
+      calcola();
+    }
+
+    // ===== Legacy support (old records with pos/sat/del/tap) =====
+    function legacyPayDet(rec) {
+      const out = [];
+      const add = (nome, val) => {
+        const v = fix(parseFloat(val) || 0);
+        if (nome && v > 0) out.push({ nome, valore: v });
+      };
+      add("POS", rec.pos);
+      add("Satispay", rec.sat);
+      add("Delivery", rec.del);
+      add("App/Web", rec.tap);
+      return out;
+    }
+   // DAL: ANALISI PRO HELPERS + QUICK RANGE
+function fmtPerc(x) {
+  if (!isFinite(x)) return "0%";
+  return `${(x * 100).toFixed(1)}%`;
+}
+function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
+
+function startOfMonth(d) {
+  return new Date(d.getFullYear(), d.getMonth(), 1);
+}
+function endOfMonth(d) {
+  return new Date(d.getFullYear(), d.getMonth() + 1, 0);
+}
+function toISODate(d) {
+  const z = new Date(d.getTime() - (d.getTimezoneOffset() * 60000));
+  return z.toISOString().slice(0, 10);
+}
+function daysInclusive(fromISO, toISO) {
+  const a = new Date(fromISO);
+  const b = new Date(toISO);
+  a.setHours(0,0,0,0);
+  b.setHours(0,0,0,0);
+  const diff = Math.round((b - a) / 86400000);
+  return diff >= 0 ? (diff + 1) : 0;
+}
+
+function getRangeRecords(fromISO, toISO) {
+  return db
+    .filter(r => (r.data >= fromISO && r.data <= toISO))
+    .sort((a, b) => (a.data || "").localeCompare(b.data || ""));
+}
+
+function getRangeAgg(fromISO, toISO) {
+  const recs = getRangeRecords(fromISO, toISO);
+  let lordo = 0, ele = 0, uscCash = 0, ivaD = 0, ivaA = 0, spese = 0;
+
+  const payAgg = {};
+  const supAgg = {};
+
+  let activeDays = 0;
+
+  recs.forEach(r => {
+    const l = fix(r.lordoZ || 0);
+    const e = fix(r.totEle || 0);
+    const u = fix(r.uscCash || 0);
+    const iv = fix(r.ivaV || 0);
+    const ia = fix(r.totIvaA || 0);
+
+    lordo += l; ele += e; uscCash += u; ivaD += iv; ivaA += ia;
+
+    const hasActivity = (l > 0) || (e > 0) || (u > 0) || ((r.detFornitori || []).some(x => (x.lordo || 0) > 0));
+    if (hasActivity) activeDays++;
+
+    const pd = Array.isArray(r.payDet) ? r.payDet : legacyPayDet(r);
+    pd.forEach(p => {
+      const nome = String(p.nome || "").trim() || "Senza Nome";
+      const val = fix(p.valore || 0);
+      payAgg[nome] = fix((payAgg[nome] || 0) + val);
     });
 
-    // --- FUNZIONI BACKUP & ANALISI (Semplificate per compattezza) ---
+    (r.detFornitori || []).forEach(fx => {
+      const n = String(fx.nome || "Senza Nome").trim() || "Senza Nome";
+      const lfx = fix(fx.lordo || 0);
+      const ifx = fix(fx.iva || 0);
+      spese += lfx;
+
+      if (!supAgg[n]) supAgg[n] = { lordo: 0, iva: 0, cash: 0, tr: 0 };
+      supAgg[n].lordo = fix(supAgg[n].lordo + lfx);
+      supAgg[n].iva = fix(supAgg[n].iva + ifx);
+      if (fx.cash) supAgg[n].cash = fix(supAgg[n].cash + lfx);
+      else supAgg[n].tr = fix(supAgg[n].tr + lfx);
+    });
+  });
+
+  lordo = fix(lordo); ele = fix(ele); uscCash = fix(uscCash); ivaD = fix(ivaD); ivaA = fix(ivaA); spese = fix(spese);
+
+  const days = daysInclusive(fromISO, toISO);
+  const avgDay = days ? fix(lordo / days) : 0;
+
+  return {
+    recs,
+    days,
+    activeDays,
+    lordo, ele, uscCash,
+    ivaD, ivaA,
+    spese,
+    payAgg,
+    supAgg
+  };
+}
+
+// DAL: setQuickRange (con settimane)
+function setQuickRange(type) {
+  const now = new Date();
+  let from, to;
+
+  // set settimana: lunedì → domenica
+  const mondayOf = (d) => {
+    const x = new Date(d);
+    const day = x.getDay(); // 0=dom, 1=lun...
+    const diff = (day === 0) ? -6 : (1 - day); // porta a lunedì
+    x.setDate(x.getDate() + diff);
+    x.setHours(0,0,0,0);
+    return x;
+  };
+  const sundayOf = (monday) => {
+    const x = new Date(monday);
+    x.setDate(x.getDate() + 6);
+    x.setHours(0,0,0,0);
+    return x;
+  };
+
+  if (type === 'thisWeek') {
+    from = mondayOf(now);
+    to = now; // fino ad oggi
+  } else if (type === 'lastWeek') {
+    const thisMon = mondayOf(now);
+    const lastMon = new Date(thisMon);
+    lastMon.setDate(lastMon.getDate() - 7);
+    from = lastMon;
+    to = sundayOf(lastMon);
+  } else if (type === 'month') {
+    from = startOfMonth(now);
+    to = now;
+  } else if (type === 'lastMonth') {
+    const d = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    from = startOfMonth(d);
+    to = endOfMonth(d);
+  } else if (type === 'last30') {
+    to = now;
+    from = new Date(now);
+    from.setDate(now.getDate() - 29);
+  } else if (type === 'last90') {
+    to = now;
+    from = new Date(now);
+    from.setDate(now.getDate() - 89);
+  } else {
+    return;
+  }
+
+  const f = toISODate(from);
+  const t = toISODate(to);
+
+  const elF = document.getElementById('s-from');
+  const elT = document.getElementById('s-to');
+  if (elF) elF.value = f;
+  if (elT) elT.value = t;
+
+  cercaPeriodo();
+}
+// AL: setQuickRange (con settimane)
+
+function recordAnomalies(r, avgLordo = null) {
+  const issues = [];
+  const lordo = fix(r.lordoZ || 0);
+  const ele = fix(r.totEle || 0);
+  const usc = fix(r.uscCash || 0);
+
+  if (ele > lordo + 0.01) issues.push("Elettronico > Lordo");
+  if (lordo === 0 && ((r.detFornitori || []).some(x => (x.lordo || 0) > 0))) issues.push("Spese con incasso 0");
+
+  const entCash = fix(lordo - ele);
+  const diffCash = fix(entCash - usc);
+  if (diffCash < -0.01) issues.push("Differenza contanti negativa");
+
+  // outlier semplice: se avgLordo noto, segnala giornate molto alte/basse
+  if (avgLordo !== null && avgLordo > 0) {
+    if (lordo > avgLordo * 1.8) issues.push("Incasso molto sopra media");
+    if (lordo > 0 && lordo < avgLordo * 0.3) issues.push("Incasso molto sotto media");
+  }
+
+  return issues;
+}
+// AL: ANALISI PRO HELPERS + QUICK RANGE
+    // ===== Dashboard stats =====
+// DAL: aggiornaStatsDash PRO
+function aggiornaStatsDash() {
+  const now = new Date();
+
+  // Ultimi 7gg (incluso oggi) e 7gg precedenti
+  const to7 = toISODate(now);
+  const from7d = new Date(now); from7d.setDate(now.getDate() - 6);
+  const from7 = toISODate(from7d);
+
+  const prevToD = new Date(from7d); prevToD.setDate(from7d.getDate() - 1);
+  const prevFromD = new Date(prevToD); prevFromD.setDate(prevToD.getDate() - 6);
+  const prevFrom = toISODate(prevFromD);
+  const prevTo = toISODate(prevToD);
+
+  const a7 = getRangeAgg(from7, to7);
+  const p7 = getRangeAgg(prevFrom, prevTo);
+
+  const delta = (p7.lordo > 0) ? ((a7.lordo - p7.lordo) / p7.lordo) : (a7.lordo > 0 ? 1 : 0);
+
+  // Mese corrente
+  const mFrom = toISODate(startOfMonth(now));
+  const mTo = toISODate(now);
+  const am = getRangeAgg(mFrom, mTo);
+
+  // Saldo IVA mese
+  const saldoIva = fix(am.ivaD - am.ivaA);
+
+  // Spese/Incasso mese
+  const speseInc = (am.lordo > 0) ? (am.spese / am.lordo) : 0;
+
+  // Top fornitori (mese) - top 5
+  const topSup = Object.entries(am.supAgg || {})
+    .sort((a, b) => (b[1].lordo - a[1].lordo))
+    .slice(0, 5);
+
+  // Render
+  const elW = document.getElementById('st-w');
+  if (elW) elW.innerText = euro(a7.lordo);
+
+  const elWPrev = document.getElementById('st-w-prev');
+  if (elWPrev) elWPrev.innerText = euro(p7.lordo);
+
+  const elWD = document.getElementById('st-w-delta');
+  if (elWD) {
+    const sign = delta > 0 ? "+" : "";
+    elWD.innerText = `${sign}${(delta * 100).toFixed(1)}%`;
+  }
+
+  const elM = document.getElementById('st-m');
+  if (elM) elM.innerText = euro(am.lordo);
+
+  const elAvg = document.getElementById('st-avg-day');
+  if (elAvg) elAvg.innerText = euro(am.days ? fix(am.lordo / am.days) : 0);
+
+  const elIva = document.getElementById('st-iva-saldo');
+  if (elIva) elIva.innerText = euro(saldoIva);
+
+  const elSI = document.getElementById('st-spese-inc');
+  if (elSI) elSI.innerText = fmtPerc(speseInc);
+
+  const elTop = document.getElementById('st-top-sup');
+  if (elTop) {
+    if (!topSup.length) {
+      elTop.innerHTML = `Nessun dato`;
+    } else {
+      elTop.innerHTML = topSup
+        .map(([n, v]) => `• ${escapeHtml(n)} — <span class="font-black">${euro(v.lordo)}</span>`)
+        .join("<br>");
+    }
+  }
+}
+// AL: aggiornaStatsDash PRO
+
+    // ===== Analisi per periodo (dettagli: pagamenti + fornitori + giornaliero) =====
+// DAL: cercaPeriodo PRO
+function cercaPeriodo() {
+  const f = document.getElementById('s-from').value;
+  const t = document.getElementById('s-to').value;
+  if (!f || !t) return alert("Scegli le date!");
+  if (f > t) return alert("⚠️ Intervallo non valido: DAL è dopo AL.");
+
+  const agg = getRangeAgg(f, t);
+  const fil = agg.recs;
+
+  let totL = agg.lordo;
+  let totEle = agg.ele;
+  let totUscCash = agg.uscCash;
+  let tIvaD = agg.ivaD;
+  let tIvaC = agg.ivaA;
+
+  const entCash = fix(totL - totEle);
+  const diffCash = fix(entCash - totUscCash);
+
+  const days = agg.days || 0;
+  const activeDays = agg.activeDays || 0;
+
+  const avgLordoDay = days ? fix(totL / days) : 0;
+  const avgEleDay = days ? fix(totEle / days) : 0;
+  const avgCashInDay = days ? fix(entCash / days) : 0;
+
+  const speseTot = fix(agg.spese || 0);
+  const speseInc = (totL > 0) ? (speseTot / totL) : 0;
+
+  // payments breakdown + %
+  const payByName = agg.payAgg || {};
+  const payTotal = fix(Object.values(payByName).reduce((s, v) => s + fix(v || 0), 0));
+
+  const payRows = Object.entries(payByName)
+    .sort((a, b) => b[1] - a[1])
+    .map(([nome, v]) => {
+      const perc = payTotal > 0 ? (fix(v) / payTotal) : 0;
+      return `
+        <tr class="border-b border-white/10">
+          <td class="py-2 text-left font-bold">${escapeHtml(nome)}</td>
+          <td class="py-2 text-right">${euro(v)}</td>
+          <td class="py-2 text-right text-slate-300">${fmtPerc(perc)}</td>
+        </tr>
+      `;
+    }).join("");
+
+  // suppliers breakdown + top5
+  const supAgg = agg.supAgg || {};
+  const topSup = Object.entries(supAgg)
+    .sort((a, b) => (b[1].lordo - a[1].lordo))
+    .slice(0, 5);
+
+  const topSupHtml = topSup.length
+    ? topSup.map(([n, v]) => `• <span class="font-bold">${escapeHtml(n)}</span> — ${euro(v.lordo)}`).join("<br>")
+    : `<span class="text-slate-300">Nessun fornitore nel periodo</span>`;
+
+  const fornRows = Object.entries(supAgg)
+    .sort((a, b) => (b[1].lordo - a[1].lordo))
+    .map(([nome, v]) => `
+      <tr class="border-b border-white/10">
+        <td class="py-2 text-left font-bold">${escapeHtml(nome)}</td>
+        <td class="py-2 text-right">${euro(v.lordo)}</td>
+        <td class="py-2 text-right text-green-300">${euro(v.iva)}</td>
+        <td class="py-2 text-right text-red-300">${euro(v.cash || 0)}</td>
+        <td class="py-2 text-right text-blue-200">${euro(v.tr || 0)}</td>
+      </tr>
+    `).join("");
+
+  // anomalie: lista compatta
+  const anomalies = [];
+  fil.forEach(r => {
+    const issues = recordAnomalies(r, avgLordoDay || null);
+    if (issues.length) anomalies.push({ data: r.data, issues });
+  });
+
+  const anomaliesHtml = anomalies.length
+    ? anomalies.slice(0, 10).map(a => `• <span class="font-bold">${escapeHtml(a.data)}</span> — ${escapeHtml(a.issues.join(", "))}`).join("<br>")
+    : `<span class="text-slate-300">Nessuna anomalia rilevata</span>`;
+
+  // dettaglio giornaliero (come tuo, ma aggiunge badge anomalie)
+  const dayBlocks = fil.map(r => {
+    const pd = Array.isArray(r.payDet) ? r.payDet : legacyPayDet(r);
+
+    const payTxt = pd.length
+      ? pd.map(p => `• <span class="font-bold">${escapeHtml(p.nome || "Pagamento")}</span> — ${euro(p.valore || 0)}`).join("<br>")
+      : `<span class="text-slate-300">Nessun pagamento elettronico</span>`;
+
+    const forn = (r.detFornitori || [])
+      .filter(x => (x.lordo || 0) > 0)
+      .map(x => confirmSafeSupplierLine(x))
+      .join("<br>") || `<span class="text-slate-300">Nessuna spesa fornitori</span>`;
+
+    const issues = recordAnomalies(r, avgLordoDay || null);
+    const badge = issues.length
+      ? `<div class="mt-2 text-[10px] font-black uppercase text-red-300">⚠ ${escapeHtml(issues.join(" • "))}</div>`
+      : `<div class="mt-2 text-[10px] font-black uppercase text-green-300">OK</div>`;
+
+    return `
+      <div class="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-3">
+        <div class="flex justify-between items-center">
+          <div class="font-black text-blue-200">${escapeHtml(r.data)}</div>
+          <div class="text-[10px] font-bold text-slate-300 uppercase">
+            Lordo ${euro(r.lordoZ || 0)} • Elettr. ${euro(r.totEle || 0)} • Usc. Cash ${euro(r.uscCash || 0)}
+          </div>
+        </div>
+        <div class="text-[11px] leading-5">
+          <div class="font-black text-[10px] uppercase text-slate-300 mb-1">Pagamenti elettronici</div>
+          ${payTxt}
+        </div>
+        <div class="text-[11px] leading-5">
+          <div class="font-black text-[10px] uppercase text-slate-300 mb-1">Fornitori</div>
+          ${forn}
+        </div>
+        ${badge}
+      </div>
+    `;
+  }).join("");
+
+  const res = document.getElementById('s-res');
+  res.classList.remove('hidden');
+  res.innerHTML = `
+    <div class="p-5 bg-slate-900 text-white rounded-3xl space-y-6 shadow-xl">
+      <h4 class="text-center font-black text-blue-400 text-xs uppercase">Report PRO per Periodo</h4>
+
+      <div class="p-4 rounded-2xl bg-white/5 border border-white/10">
+        <div class="grid grid-cols-2 gap-3 text-[11px]">
+          <div class="flex justify-between"><span>Giorni nel periodo</span><span class="font-bold">${days}</span></div>
+          <div class="flex justify-between"><span>Giorni attivi</span><span class="font-bold">${activeDays}</span></div>
+          <div class="flex justify-between"><span>Media Lordo/giorno</span><span class="font-bold">${euro(avgLordoDay)}</span></div>
+          <div class="flex justify-between"><span>Media Elettr./giorno</span><span class="font-bold">${euro(avgEleDay)}</span></div>
+          <div class="flex justify-between col-span-2"><span>Spese/Incasso</span><span class="font-bold">${fmtPerc(speseInc)}</span></div>
+        </div>
+        <div class="mt-3 text-[11px] text-slate-200">
+          <div class="font-black text-[10px] uppercase text-slate-300 mb-1">Top fornitori</div>
+          ${topSupHtml}
+        </div>
+      </div>
+
+      <div class="space-y-2">
+        <div class="flex justify-between border-b border-white/10 pb-2">
+          <span>Entrate (Lordo Z)</span>
+          <strong class="text-lg">${euro(totL)}</strong>
+        </div>
+        <div class="flex justify-between text-slate-200">
+          <span>Totale Elettronico</span>
+          <span>${euro(totEle)}</span>
+        </div>
+        <div class="flex justify-between text-slate-200">
+          <span>Entrate Contanti (Lordo - Elettronico)</span>
+          <span>${euro(entCash)}</span>
+        </div>
+        <div class="flex justify-between text-red-300">
+          <span>Uscite Contanti</span>
+          <span>${euro(totUscCash)}</span>
+        </div>
+        <div class="flex justify-between font-black text-green-300">
+          <span>Differenza Contanti</span>
+          <span>${euro(diffCash)}</span>
+        </div>
+        <div class="pt-3 flex justify-between font-black text-orange-400 border-t border-white/20">
+          <span>IVA DA VERSARE</span>
+          <span>${euro(fix(tIvaD - tIvaC))}</span>
+        </div>
+      </div>
+
+      <div class="p-4 rounded-2xl bg-white/5 border border-white/10 overflow-x-auto">
+        <div class="font-black text-[11px] uppercase text-slate-200 mb-3">Pagamenti Elettronici per Categoria</div>
+        <table class="w-full text-[11px] min-w-[520px]">
+          <thead class="text-slate-200">
+            <tr class="border-b border-white/10">
+              <th class="py-2 text-left">Categoria</th>
+              <th class="py-2 text-right">Totale</th>
+              <th class="py-2 text-right">% su elettr.</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${payRows || `<tr><td colspan="3" class="py-3 text-center text-slate-300">Nessun pagamento elettronico nel periodo</td></tr>`}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="p-4 rounded-2xl bg-white/5 border border-white/10 overflow-x-auto">
+        <div class="font-black text-[11px] uppercase text-slate-200 mb-3">Fornitori Raggruppati</div>
+        <table class="w-full text-[11px] min-w-[560px]">
+          <thead class="text-slate-200">
+            <tr class="border-b border-white/10">
+              <th class="py-2 text-left">Fornitore</th>
+              <th class="py-2 text-right">Totale</th>
+              <th class="py-2 text-right">IVA</th>
+              <th class="py-2 text-right">Contanti</th>
+              <th class="py-2 text-right">Tracciabile</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${fornRows || `<tr><td colspan="5" class="py-3 text-center text-slate-300">Nessun fornitore nel periodo</td></tr>`}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="p-4 rounded-2xl bg-white/5 border border-white/10">
+        <div class="font-black text-[11px] uppercase text-slate-200 mb-3">Anomalie (max 10)</div>
+        <div class="text-[11px] leading-5">${anomaliesHtml}</div>
+      </div>
+
+      <div class="space-y-3">
+        <div class="font-black text-[11px] uppercase text-slate-200">Dettaglio Giornaliero</div>
+        ${dayBlocks || `<div class="text-slate-300">Nessun dato nel periodo</div>`}
+      </div>
+    </div>
+  `;
+
+  // helper per righe fornitori nel dettaglio giornaliero
+  function confirmSafeSupplierLine(x) {
+    const nome = escapeHtml(x.nome || "Senza Nome");
+    const lordo = euro(x.lordo || 0);
+    const meth = x.cash ? 'CONTANTI' : 'TRACCIABILE';
+    const cls = x.cash ? 'text-red-300' : 'text-blue-200';
+    return `• <span class="font-bold">${nome}</span> — ${lordo} <span class="text-[10px] ${cls}">(${meth})</span>`;
+  }
+}
+// AL: cercaPeriodo PRO
+    // ===== Report fiscale (con dettaglio pagamenti per categoria + fornitori) =====
+    function generaReportProfessionale() {
+      const f = document.getElementById('p-from').value;
+      const t = document.getElementById('p-to').value;
+      if (!f || !t) return alert("Seleziona il periodo fiscale!");
+      if (f > t) return alert("⚠️ Intervallo non valido: DATA INIZIO è dopo DATA FINE.");
+
+      const dataFil = db
+        .filter(r => r.data >= f && r.data <= t)
+        .sort((a, b) => a.data.localeCompare(b.data));
+
+      const mesi = ["GENNAIO","FEBBRAIO","MARZO","APRILE","MAGGIO","GIUGNO","LUGLIO","AGOSTO","SETTEMBRE","OTTOBRE","NOVEMBRE","DICEMBRE"];
+      let titolo = `REPORT FISCALE DAL ${f} AL ${t}`;
+      if (f.substring(0, 7) === t.substring(0, 7) && f.endsWith("-01")) {
+        titolo = `REGISTRO CORRISPETTIVI E ACQUISTI - ${mesi[new Date(f).getMonth()]} ${new Date(f).getFullYear()}`;
+      }
+
+      // aggregates
+      let sZ = 0, sIV = 0, sE = 0, sIA = 0, sAL = 0;
+      const payAgg = {};
+
+      dataFil.forEach(r => {
+        sZ += fix(r.lordoZ || 0);
+        sIV += fix(r.ivaV || 0);
+        sE += fix(r.totEle || 0);
+
+        const pd = Array.isArray(r.payDet) ? r.payDet : legacyPayDet(r);
+        pd.forEach(p => {
+          const nome = String(p.nome || "").trim() || "Senza Nome";
+          const val = fix(p.valore || 0);
+          if (!payAgg[nome]) payAgg[nome] = 0;
+          payAgg[nome] += val;
+        });
+
+        (r.detFornitori || []).forEach(fx => {
+          sIA += fix(fx.iva || 0);
+          sAL += fix(fx.lordo || 0);
+        });
+      });
+
+      sZ = fix(sZ); sIV = fix(sIV); sE = fix(sE); sIA = fix(sIA); sAL = fix(sAL);
+
+      const payAggRows = Object.entries(payAgg)
+        .sort((a, b) => b[1] - a[1])
+        .map(([nome, v]) => `<tr><td class="border p-2 font-bold">${escapeHtml(nome)}</td><td class="border p-2 text-right">€${fix(v).toFixed(2)}</td></tr>`)
+        .join('') || `<tr><td class="border p-2" colspan="2">Nessun pagamento elettronico nel periodo</td></tr>`;
+
+      let h = `<div class="bg-white p-8 text-slate-900 printable-content">
+        <div class="flex justify-between items-start border-b-2 border-slate-900 pb-4 mb-8">
+          <div>
+            <h1 class="font-black text-3xl italic tracking-tighter uppercase">Commander <span class="text-blue-600">Elite</span></h1>
+            <p class="text-xs font-bold text-slate-500 uppercase tracking-widest">Sistemi di Controllo Fiscale v3.0</p>
+          </div>
+          <div class="text-right">
+            <p class="font-black text-sm uppercase">${escapeHtml(titolo)}</p>
+            <p class="text-[10px] text-slate-400 uppercase">Documento generato il: ${new Date().toLocaleDateString('it-IT')}</p>
+          </div>
+        </div>`;
+
+      // 1. Corrispettivi
+      h += `<div class="mb-10">
+        <h3 class="bg-slate-900 text-white text-[10px] px-3 py-1 font-black uppercase mb-3 inline-block">1. Registro Corrispettivi</h3>
+        <table class="w-full text-[11px]">
+          <thead class="bg-slate-100">
+            <tr>
+              <th class="border p-2">Data</th>
+              <th class="border p-2">Lordo Z</th>
+              <th class="border p-2">Scorporo IVA</th>
+              <th class="border p-2">Elettronico</th>
+              <th class="border p-2">Entrate Contanti (Lordo - Elettr.)</th>
+            </tr>
+          </thead>
+          <tbody>`;
+
+      dataFil.forEach(r => {
+        const lordo = fix(r.lordoZ || 0);
+        const ele = fix(r.totEle || 0);
+        h += `<tr>
+          <td class="border p-2 font-bold">${escapeHtml(r.data)}</td>
+          <td class="border p-2 font-black">€${lordo.toFixed(2)}</td>
+          <td class="border p-2 text-red-600">€${fix(r.ivaV || 0).toFixed(2)}</td>
+          <td class="border p-2">€${ele.toFixed(2)}</td>
+          <td class="border p-2 font-bold">€${fix(lordo - ele).toFixed(2)}</td>
+        </tr>`;
+      });
+
+      h += `<tr class="bg-slate-50 font-black italic">
+        <td class="border p-2 uppercase">TOTALI PERIODO</td>
+        <td class="border p-2">€${sZ.toFixed(2)}</td>
+        <td class="border p-2 text-red-600">€${sIV.toFixed(2)}</td>
+        <td class="border p-2">€${sE.toFixed(2)}</td>
+        <td class="border p-2">€${fix(sZ - sE).toFixed(2)}</td>
+      </tr></tbody></table></div>`;
+
+      // 1b. Pagamenti elettronici per categoria
+      h += `<div class="mb-10">
+        <h3 class="bg-slate-900 text-white text-[10px] px-3 py-1 font-black uppercase mb-3 inline-block">1B. Pagamenti Elettronici per Categoria</h3>
+        <table class="w-full text-[11px]">
+          <thead class="bg-slate-100">
+            <tr>
+              <th class="border p-2">Categoria</th>
+              <th class="border p-2 text-right">Totale</th>
+            </tr>
+          </thead>
+          <tbody>${payAggRows}</tbody>
+        </table>
+      </div>`;
+
+      // 2. Acquisti (dettaglio)
+      h += `<div class="mb-10">
+        <h3 class="bg-slate-900 text-white text-[10px] px-3 py-1 font-black uppercase mb-3 inline-block">2. Registro Acquisti e Fornitori</h3>
+        <table class="w-full text-[11px]">
+          <thead class="bg-slate-100">
+            <tr>
+              <th class="border p-2">Fornitore</th>
+              <th class="border p-2">Data</th>
+              <th class="border p-2 text-right">IVA Credito</th>
+              <th class="border p-2 text-right">Totale</th>
+              <th class="border p-2">Metodo</th>
+            </tr>
+          </thead>
+          <tbody>`;
+
+      dataFil.forEach(r => {
+        (r.detFornitori || []).forEach(fx => {
+          h += `<tr>
+            <td class="border p-2 font-bold">${escapeHtml(fx.nome || "Senza Nome")}</td>
+            <td class="border p-2 text-center">${escapeHtml(r.data)}</td>
+            <td class="border p-2 text-green-600 text-right">€${fix(fx.iva || 0).toFixed(2)}</td>
+            <td class="border p-2 text-right">€${fix(fx.lordo || 0).toFixed(2)}</td>
+            <td class="border p-2 text-center text-[9px] font-bold">${fx.cash ? 'CONTANTI' : 'TRACCIABILE'}</td>
+          </tr>`;
+
+          if (Array.isArray(fx.righe) && fx.righe.length) {
+            h += `<tr>
+              <td class="border p-2" colspan="5" style="text-align:left;">
+                <span style="font-weight:700;">Righe IVA:</span>
+                ${fx.righe.map(rr => ` [${rr.tipo === 'N' ? 'NETTO+' : 'LORDO'} ${Number(rr.ivaPerc || 0)}%: €${fix(rr.valore || 0).toFixed(2)}]`).join(' ')}
+              </td>
+            </tr>`;
+          }
+        });
+      });
+
+      h += `<tr class="bg-slate-50 font-black italic">
+        <td colspan="2" class="border p-2 uppercase">TOTALE IVA DETRAIBILE</td>
+        <td class="border p-2 text-green-600 text-right">€${sIA.toFixed(2)}</td>
+        <td class="border p-2 text-right">€${sAL.toFixed(2)}</td>
+        <td class="border p-2"></td>
+      </tr></tbody></table></div>`;
+
+      // Sintesi IVA
+      h += `<div class="grid grid-cols-2 gap-8 items-center border-t-2 border-slate-900 pt-8 mt-12">
+        <div>
+          <p class="text-[9px] text-slate-500 uppercase font-black mb-1">Dichiarazione Liquidazione IVA</p>
+          <p class="text-xs italic text-slate-600">Si dichiara che i dati sopra esposti corrispondono alle chiusure dei registratori di cassa e ai documenti di spesa archiviati.</p>
+        </div>
+        <div class="bg-slate-50 p-6 rounded-2xl border border-slate-200">
+          <div class="flex justify-between text-xs mb-1"><span>IVA a Debito (Vendite):</span> <span class="font-bold">+ €${sIV.toFixed(2)}</span></div>
+          <div class="flex justify-between text-xs mb-4"><span>IVA a Credito (Acquisti):</span> <span class="font-bold">- €${sIA.toFixed(2)}</span></div>
+          <div class="flex justify-between font-black text-xl border-t border-slate-300 pt-3">
+            <span class="text-slate-800 tracking-tighter uppercase text-sm">SALDO IVA:</span>
+            <span class="text-blue-700 font-black">€${fix(sIV - sIA).toFixed(2)}</span>
+          </div>
+        </div>
+      </div>
+
+      <button onclick="window.print()" class="no-print w-full bg-slate-900 text-white py-5 mt-12 rounded-2xl font-black uppercase text-sm tracking-widest shadow-xl">
+        Invia alla Stampa / PDF
+      </button>
+      </div>`;
+
+      document.getElementById('area-stampa').innerHTML = h;
+    }
+
+    // ===== Setup: delete data range =====
+    async function cancellaPeriodo() {
+      const f = document.getElementById('d-from').value;
+      const t = document.getElementById('d-to').value;
+      if (!f || !t) return alert("Seleziona le date DAL/AL per cancellare.");
+      if (f > t) return alert("⚠️ Intervallo non valido: DAL è dopo AL.");
+
+      const rimossi = db.filter(r => (r.data >= f && r.data <= t)).length;
+      if (rimossi === 0) return alert("Nessun dato da cancellare nel periodo selezionato.");
+
+      const ok = confirm(`Confermi la cancellazione di ${rimossi} record dal ${f} al ${t}?`);
+      if (!ok) return;
+
+      // cancella da array
+      const toDel = db.filter(r => (r.data >= f && r.data <= t)).map(r => r.data);
+      db = db.filter(r => !(r.data >= f && r.data <= t));
+      persistDB();
+
+      // cancella anche in IDB (best effort, senza rompere nulla)
+      if (_idbAvailable) {
+        try {
+          for (const k of toDel) { await idbDeleteRecordByDate(k); }
+        } catch (e) {
+          console.warn("Delete IDB fallita:", e);
+        }
+      }
+
+      aggiornaStatsDash();
+      const sr = document.getElementById('s-res');
+      if (sr) { sr.classList.add('hidden'); sr.innerHTML = ""; }
+
+      // if current day is in deleted range, clear UI
+      const cur = document.getElementById('data-lavoro').value;
+      if (cur && cur >= f && cur <= t) {
+        document.getElementById('badge-loaded').classList.add('hidden');
+        clearDayUI();
+      }
+
+      alert(`Cancellazione completata. Rimasti ${db.length} record.`);
+    }
+
+    // ===== Helpers =====
+    function escapeHtml(str) {
+      return String(str || "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    // ===== Init =====
+    (function init() {
+      // default date
+      document.getElementById('data-lavoro').valueAsDate = new Date();
+
+      // seed settings if empty (non invasivo: solo se manca)
+      if (!localStorage.getItem(LS_PAYMENTS)) {
+        setPaymentNames(["POS", "Satispay", "JustEat/Glovo", "App/Web"]);
+      }
+      if (!localStorage.getItem(LS_SUPPLIERS)) {
+        setSupplierNames([]);
+      }
+
+      refreshDatalistSuppliers();
+
+      // ✅ Hydrate DB da IndexedDB (primaria) senza rompere compatibilità snapshot
+      // (non blocca UI: aggiorna db e poi ricarica giornata/stats)
+      hydrateFromPrimaryStorage().then(() => {
+        try { aggiornaStatsDash(); } catch(_) {}
+        try { onChangeData(); } catch(_) {}
+      });
+
+      // create 1 payment row by default
+      const payNames = getPaymentNames();
+      if (payNames.length) addPayRow(payNames[0], "");
+      calcola();
+
+      // load today if exists
+      hookActivityListeners();
+      onChangeData();
+    })();
+
+    // ===== Override salvaData to include iva percent in record (for reload consistency) =====
+  async function salvaData(btnEl) {
+  const data = document.getElementById('data-lavoro').value;
+  if (!data) return alert("⚠️ Seleziona la data prima di salvare!");
+  const dati = calcola();
+
+  if (dati.totEle > dati.lordoZ) {
+    const ok = confirm("⚠️ Il totale elettronico è maggiore del Lordo Z. Vuoi salvare comunque?");
+    if (!ok) return;
+  }
+
+  const haSpese = (dati.detFornitori || []).some(f => (f.lordo || 0) > 0);
+  const haIncasso = (dati.lordoZ || 0) > 0;
+  if (!haIncasso && !haSpese && (dati.payDet || []).length === 0) {
+    return alert("⚠️ Non ci sono dati da salvare.");
+  }
+
+  const rec = {
+    data,
+    ivaVperc: Number(document.getElementById('iva-v-base').value || 10),
+    lordoZ: fix(dati.lordoZ),
+    ivaV: fix(dati.ivaV),
+    impV: fix(dati.impV),
+    totEle: fix(dati.totEle),
+    uscCash: fix(dati.uscCash),
+    totIvaA: fix(dati.totIvaA),
+    payDet: (dati.payDet || []).map(p => ({ nome: String(p.nome || "").trim(), valore: fix(p.valore || 0) })).filter(p => p.nome && p.valore > 0),
+    detFornitori: (dati.detFornitori || []).map(x => ({
+      nome: x.nome || "Senza Nome",
+      lordo: fix(x.lordo || 0),
+      iva: fix(x.iva || 0),
+      cash: !!x.cash,
+      righe: Array.isArray(x.righe) ? x.righe.map(rr => ({
+        valore: fix(rr.valore || 0),
+        ivaPerc: Number(rr.ivaPerc || 0),
+        tipo: rr.tipo === 'N' ? 'N' : 'L'
+      })).filter(rr => rr.valore > 0) : []
+    })).filter(f => (f.lordo || 0) > 0 || (f.iva || 0) > 0)
+  };
+
+  db = db.filter(r => r.data !== data);
+  db.push(rec);
+  persistDB();
+
+  // ✅ write-through anche su IndexedDB (best effort, senza cambiare flusso)
+  if (_idbAvailable) {
+    try { await idbPutRecord(rec); } catch(e) { console.warn("Put IDB fallita:", e); }
+  }
+
+  document.getElementById('badge-loaded').classList.add('hidden');
+
+  if (btnEl) {
+    btnEl.innerText = "✅ GIORNATA SALVATA";
+    btnEl.classList.remove('bg-blue-600');
+    btnEl.classList.add('bg-green-600');
+    setTimeout(() => {
+      btnEl.innerText = "ARCHIVIA E SALVA";
+      btnEl.classList.remove('bg-green-600');
+      btnEl.classList.add('bg-blue-600');
+    }, 2000);
+  }
+}
+
+    // ===========================
+    // BACKUP / IMPORT (AGGIUNTA)
+    // ===========================
+
+    // Chiavi backup locale (aggiunte)
+    const LS_BACKUP_LATEST = 'ce_v3_backup_latest';
+    const LS_BACKUP_LATEST_TS = 'ce_v3_backup_latest_ts';
+
+    function buildBackupPayload() {
+      return {
+        meta: {
+          app: "Commander Elite PRO",
+          schema: "ce_backup_v1",
+          createdAt: new Date().toISOString()
+        },
+        data: {
+          db: Array.isArray(db) ? db : [],
+          payments: getPaymentNames(),
+          suppliers: getSupplierNames()
+        }
+      };
+    }
+
+    function saveLocalLatestBackup() {
+      try {
+        const payload = buildBackupPayload();
+        localStorage.setItem(LS_BACKUP_LATEST, JSON.stringify(payload));
+        localStorage.setItem(LS_BACKUP_LATEST_TS, payload.meta.createdAt);
+        return true;
+      } catch (e) {
+        console.warn("Backup locale fallito:", e);
+        return false;
+      }
+    }
+
+    function downloadJson(filename, obj) {
+      const json = JSON.stringify(obj, null, 2);
+      const blob = new Blob([json], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
     function exportBackupFile() {
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db));
-        const downloadAnchorNode = document.createElement('a');
-        downloadAnchorNode.setAttribute("href", dataStr);
-        downloadAnchorNode.setAttribute("download", "commander_backup.json");
-        downloadAnchorNode.click();
+      // salva anche copia "latest" sul device
+      saveLocalLatestBackup();
+
+      const payload = buildBackupPayload();
+      const ts = new Date();
+      const yyyy = ts.getFullYear();
+      const mm = String(ts.getMonth() + 1).padStart(2, '0');
+      const dd = String(ts.getDate()).padStart(2, '0');
+      const hh = String(ts.getHours()).padStart(2, '0');
+      const mi = String(ts.getMinutes()).padStart(2, '0');
+      const filename = `commander_elite_backup_${yyyy}-${mm}-${dd}_${hh}-${mi}.json`;
+
+      downloadJson(filename, payload);
+      alert("✅ Backup esportato. (Una copia è stata anche salvata come backup automatico sul dispositivo.)");
+    }
+
+    function validateBackupPayload(payload) {
+      if (!payload || typeof payload !== "object") return { ok: false, msg: "File non valido." };
+      if (!payload.meta || payload.meta.schema !== "ce_backup_v1") {
+        return { ok: false, msg: "Schema backup non riconosciuto." };
+      }
+      if (!payload.data || typeof payload.data !== "object") {
+        return { ok: false, msg: "Struttura dati mancante." };
+      }
+      if (!Array.isArray(payload.data.db)) {
+        return { ok: false, msg: "Archivio (db) non valido." };
+      }
+      return { ok: true };
+    }
+
+    async function applyBackupPayload(payload) {
+      const v = validateBackupPayload(payload);
+      if (!v.ok) return alert("⚠️ Import fallito: " + v.msg);
+
+      const incomingDB = Array.isArray(payload.data.db) ? payload.data.db : [];
+      const incomingPayments = Array.isArray(payload.data.payments) ? payload.data.payments : [];
+      const incomingSuppliers = Array.isArray(payload.data.suppliers) ? payload.data.suppliers : [];
+
+      // Sovrascrive i dati sul dispositivo
+      db = incomingDB;
+      persistDB();
+
+      // ✅ replica anche su IDB (primaria) – best effort
+      if (_idbAvailable) {
+        try { await idbClearAndBulkPut(db); } catch(e) { console.warn("Bulk IDB fallita:", e); }
+      }
+
+      // Sovrascrive le liste setup
+      setPaymentNames(incomingPayments);
+      setSupplierNames(incomingSuppliers);
+      refreshDatalistSuppliers();
+
+      // Aggiorna UI del giorno selezionato
+      onChangeData();
+
+      // Salva anche un latest backup post-import
+      saveLocalLatestBackup();
+
+      alert("✅ Import completato con successo.");
     }
 
     function handleImportFile(file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const imported = JSON.parse(e.target.result);
-            imported.forEach(r => persistDB(r));
-            alert("Dati importati");
-            location.reload();
-        };
-        reader.readAsText(file);
+      if (!file) return;
+
+      const ok = confirm("⚠️ Importando un backup sovrascriverai l'archivio attuale su questo dispositivo. Vuoi continuare?");
+      if (!ok) return;
+
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const txt = String(e.target.result || "");
+          const payload = JSON.parse(txt);
+          await applyBackupPayload(payload);
+        } catch (err) {
+          console.error(err);
+          alert("⚠️ File non valido o JSON corrotto.");
+        } finally {
+          // reset input per poter re-importare lo stesso file
+          const inp = document.getElementById('import-file');
+          if (inp) inp.value = "";
+        }
+      };
+      reader.readAsText(file);
     }
+
+    async function restoreFromLocalBackup() {
+      const raw = localStorage.getItem(LS_BACKUP_LATEST);
+      const ts = localStorage.getItem(LS_BACKUP_LATEST_TS);
+
+      if (!raw) return alert("Nessun backup automatico trovato su questo dispositivo.");
+
+      const ok = confirm(`Vuoi ripristinare il backup automatico${ts ? " (" + ts + ")" : ""}? Sovrascriverà i dati attuali.`);
+      if (!ok) return;
+
+      try {
+        const payload = JSON.parse(raw);
+        await applyBackupPayload(payload);
+      } catch (e) {
+        console.error(e);
+        alert("⚠️ Backup automatico corrotto. Ti consiglio di importare un file JSON esportato.");
+      }
+    }
+
+    // Aggancio automatico: ogni volta che persistDB salva, crea anche backup latest
+    (function hookPersistDBForBackup() {
+      const _persistDB = persistDB;
+      persistDB = function() {
+        _persistDB();
+        saveLocalLatestBackup();
+      };
+    })();
+
   </script>
+
 </body>
-</html>
+</html> 
